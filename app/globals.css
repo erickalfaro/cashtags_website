@@ -1,0 +1,175 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS Variables */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --container-bg: #161b22;
+  --border-color: #30363d;
+  --header-gradient-start: #1f2937;
+  --header-gradient-end: #2d3748;
+  --text-primary: #c9d1d9;
+  --link-color: #58a6ff;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --ticker-height: 300px;
+  --market-height: 300px;
+  --ledger-height: 180px;
+  --summary-height: 240px;
+  --post-height: 300px;
+  /* Replace hardcoded units with variables */
+  --spacing-sm: 0.3125rem; /* 5px */
+  --spacing-md: 0.625rem; /* 10px */
+  --spacing-lg: 0.9375rem; /* 15px */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --ticker-height: 360px; /* 20% larger for desktop */
+  }
+}
+
+/* Base Styles */
+body {
+  @apply bg-[var(--background)] text-[var(--text-primary)] font-sans m-0 text-sm;
+  padding: var(--spacing-sm);
+}
+
+@media (min-width: 768px) {
+  body {
+    padding: var(--spacing-md);
+  }
+}
+
+a {
+  @apply text-[var(--link-color)] no-underline;
+}
+
+a:hover {
+  @apply underline;
+}
+
+header {
+  @apply border-b border-[var(--border-color)] mb-[var(--spacing-lg)];
+}
+
+/* Component Styles */
+.container {
+  @apply bg-[var(--container-bg)] border border-[var(--border-color)] rounded-md overflow-hidden relative transition-shadow duration-200 ease-in-out;
+  box-shadow: var(--shadow-sm);
+}
+
+.container:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.container-header {
+  @apply bg-gradient-to-r from-[var(--header-gradient-start)] to-[var(--header-gradient-end)] px-3 py-2 border-b border-[var(--border-color)] rounded-t-md text-center text-gray-200 font-bold text-base;
+}
+
+.container-content {
+  @apply max-h-[calc(100%-34px)] overflow-y-auto rounded-b-md;
+}
+
+/* Specific Component Overrides */
+.TickerTape {
+  @apply container;
+  height: var(--ticker-height);
+}
+
+.TickerTape table {
+  @apply w-full border-collapse bg-[var(--container-bg)] text-[11px] table-fixed;
+}
+
+.TickerTape th,
+.TickerTape td {
+  @apply border border-[var(--border-color)] p-[6px_8px] text-left truncate transition-colors duration-200 ease-in;
+}
+
+.MarketCanvas {
+  @apply container mt-5;
+  height: var(--market-height);
+}
+
+@media (max-width: 767px) {
+  .MarketCanvas {
+    height: 150px;
+  }
+}
+
+.StockLedger {
+  @apply container mt-5;
+  height: var(--ledger-height);
+}
+
+.StockLedger table {
+  @apply w-full border-collapse bg-[var(--container-bg)] text-[11px];
+}
+
+.StockLedger th,
+.StockLedger td {
+  @apply border border-[var(--border-color)] p-[6px_8px] transition-colors duration-200 ease-in;
+}
+
+.PostViewer {
+  @apply container mt-5;
+  height: var(--post-height);
+}
+
+.PostViewer table {
+  @apply w-full border-collapse bg-[var(--container-bg)] text-[11px];
+}
+
+.PostViewer th,
+.PostViewer td {
+  @apply border border-[var(--border-color)] p-[6px_8px] text-left transition-colors duration-200 ease-in;
+}
+
+.GenAISummary {
+  @apply container mt-5;
+  height: var(--summary-height);
+}
+
+.GenAISummary > div:nth-child(2) {
+  @apply h-[calc(100%-34px)];
+}
+
+/* Header Controls */
+.header-controls {
+  @apply flex items-center gap-2 mb-2;
+}
+
+.header-controls h1 {
+  @apply text-base font-semibold;
+}
+
+.header-controls button {
+  @apply px-2 py-1 text-sm rounded;
+}
+
+.header-controls .refresh-btn {
+  @apply bg-blue-500 hover:bg-blue-600 text-white;
+}
+
+.header-controls .logout-btn {
+  @apply bg-red-600 hover:bg-red-700 text-white;
+}
+
+/* Spinner */
+.spinner {
+  @apply w-10 h-10 border-4 border-[var(--text-primary)] border-t-transparent rounded-full animate-spin;
+}
+
+/* Utilities */
+.hover\:bg-gray-800:hover {
+  @apply bg-gray-800;
+}
