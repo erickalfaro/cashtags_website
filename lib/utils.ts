@@ -1,3 +1,4 @@
+// lib/utils.ts
 export const debounce = <T extends unknown[]>(
   func: (...args: T) => void,
   wait: number
@@ -9,7 +10,8 @@ export const debounce = <T extends unknown[]>(
   };
 };
 
-export const getEnvironment = (): 'dev' | 'prod' => {
+export const getEnvironment = (): "dev" | "prod" => {
   const vercelEnv = process.env.VERCEL_ENV;
-  return vercelEnv === 'preview' || vercelEnv === 'development' ? 'dev' : 'prod';
+  const isLocal = process.env.NODE_ENV === "development" || typeof window !== "undefined" && window.location.hostname === "localhost";
+  return isLocal || vercelEnv === "preview" || vercelEnv === "development" ? "dev" : "prod";
 };

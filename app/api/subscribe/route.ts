@@ -32,13 +32,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing Stripe Price ID" }, { status: 500 });
     }
 
-    // Check for existing subscription in this environment
-    const { data: userSub } = await supabase
+    const { data: userSub, error: subError } = await supabase
       .from("user_subscriptions")
       .select("stripe_customer_id")
       .eq("user_id", userId)
       .eq("environment", environment)
       .single();
+
+    if (subError && subError.code !== "PGRST116") {
+      console.error("Error fetching subscription:", subError);
+      return NextResponse.json({ error: "Database error" }, { status: 500 });
+    }
 
     let customerId = userSub?.stripe_customer_id;
     if (!customerId) {
@@ -48,11 +52,18 @@ export async function POST(req: Request) {
       });
       customerId = customer.id;
 
-      await supabase.from("user_subscriptions").upsert({
+      const { error: upsertError } = await supabase.from("user_subscriptions").upsert({
         user_id: userId,
         stripe_customer_id: customerId,
         environment,
+        subscription_status: "FREE",
+        updated_at: new Date().toISOString(),
       });
+
+      if (upsertError) {
+        console.error("Error upserting subscription:", upsertError);
+        return NextResponse.json({ error: "Failed to create subscription record" }, { status: 500 });
+      }
     }
 
     const checkoutSession = await stripe.checkout.sessions.create({
