@@ -6,6 +6,7 @@ import { supabase } from "../../../lib/supabase";
 import { getEnvironment } from "../../../lib/utils";
 
 export async function POST(req: Request) {
+  console.log("Environment:", getEnvironment());
   const sig = req.headers.get("stripe-signature");
   const body = await req.text();
 
@@ -87,6 +88,7 @@ export async function POST(req: Request) {
     default:
       console.log("Unhandled event type:", event.type);
   }
-
+  console.log("Webhook received:", { sig, body });
+  console.log("Webhook event constructed:", event.type);
   return NextResponse.json({ received: true });
 }
