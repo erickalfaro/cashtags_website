@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { supabase } from "./supabase";
-import { debounce } from "./utils";
+import { debounce, getEnvironment } from "./utils";
 import {
   fetchTickerTapeData as apiFetchTickerTapeData,
   fetchStockLedgerData,
@@ -13,6 +13,14 @@ import {
   fetchPostsData,
 } from "./api";
 import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "../types/api";
+
+// Define a type for Supabase PostgREST errors
+interface SupabaseError {
+  code: string;
+  message: string;
+  details?: string | null;
+  hint?: string | null;
+}
 
 // Subscription status interface
 interface SubscriptionStatus {
@@ -57,12 +65,72 @@ export function useAuth() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      setUser(data.session?.user ?? null);
+      console.log("Fetching user session...");
+      const { data, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error("Error getting session:", sessionError);
+        return;
+      }
+
+      const loggedInUser = data.session?.user ?? null;
+      setUser(loggedInUser);
+
+      if (loggedInUser) {
+        const environment = getEnvironment();
+        console.log("User logged in:", loggedInUser.id, "Environment:", environment);
+
+        // Check if the user has a row in user_subscriptions
+        let existingSub = null;
+        try {
+          const { data: subData, error: checkError } = await supabase
+            .from("user_subscriptions")
+            .select("user_id")
+            .eq("user_id", loggedInUser.id)
+            .eq("environment", environment)
+            .single();
+
+          if (checkError && checkError.code !== "PGRST116") {
+            console.error("Unexpected error checking subscription:", checkError);
+            return;
+          }
+          existingSub = subData;
+        } catch (err: unknown) {
+          const supabaseErr = err as SupabaseError;
+          if (supabaseErr.code === "PGRST116") {
+            console.log("No subscription found for user:", loggedInUser.id);
+          } else {
+            console.error("Error querying subscription:", supabaseErr);
+            return;
+          }
+        }
+
+        // Insert a row if none exists
+        if (!existingSub) {
+          console.log("Inserting new subscription for user:", loggedInUser.id);
+          const { error: insertError } = await supabase
+            .from("user_subscriptions")
+            .insert({
+              user_id: loggedInUser.id,
+              environment,
+              subscription_status: "FREE",
+            });
+
+          if (insertError) {
+            console.error("Error inserting user subscription:", insertError);
+          } else {
+            console.log("Successfully inserted subscription for user:", loggedInUser.id);
+          }
+        } else {
+          console.log("Subscription already exists for user:", loggedInUser.id);
+        }
+      } else {
+        console.log("No user logged in.");
+      }
     };
     fetchUser();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event);
       setUser(session?.user ?? null);
       if (event === "SIGNED_OUT") {
         router.push("/");
@@ -83,7 +151,7 @@ export function useAuth() {
       console.log("Sign out successful");
       setUser(null);
       const baseUrl = getBaseUrl();
-      window.location.href = `${baseUrl}/`; // Hard redirect to ensure logout
+      window.location.href = `${baseUrl}/`;
     } catch (error) {
       console.error("Error signing out:", error);
     }
@@ -108,13 +176,15 @@ export function useSubscription(user: User | null): SubscriptionData {
     const fetchSubscription = async () => {
       setLoading(true);
       try {
+        const environment = getEnvironment();
         const { data, error } = await supabase
           .from("user_subscriptions")
           .select("subscription_status")
           .eq("user_id", user.id)
+          .eq("environment", environment)
           .single();
 
-        if (error && error.code !== "PGRST116") throw error; // Ignore "no rows" error
+        if (error && error.code !== "PGRST116") throw error;
 
         const status = data?.subscription_status || "FREE";
 
@@ -193,7 +263,6 @@ export function useTickerData(user: User | null): TickerData {
         return;
       }
 
-      // Record the click
       const { error: clickError } = await supabase
         .from("ticker_clicks")
         .insert({ user_id: user.id, ticker });
@@ -204,7 +273,6 @@ export function useTickerData(user: User | null): TickerData {
         return;
       }
 
-      // Update clicks left for FREE users
       if (subscription.status === "FREE") {
         setSubscription((prev) => ({ ...prev, clicksLeft: prev.clicksLeft - 1 }));
       }

@@ -1,37 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+# Todo: 
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Website: 
+- Days left in membership
+- Sign up recurring vs sign up one time
+- Add a legal page for disclaimers
+- website does a full refresh when looking away 
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Supabase: 
+- RLS? 
+- Public vs Private schema
+- Do i need dev vs prod tables? sign-ins etc
+- Table headers should be sticky
+- Allow users to search for tickers
+- Landing page should be cleaner 
+- Market Canvas needs better formatting
+- PostViewer should only be accessible via subscription
+- home page needs lots of formatting changes
+    - mobile needs to be fixed
+- Rename components to industry standard 
 
-## Learn More
+Stripe:
+- Add ability to cancel
+- How does membership expiration work? 
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Bugs
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 
+clicking on CELH caused this error: 
+TypeError: e.hours is null
+    NextJS 11
+        children
+        E
+        ll
+        aZ
+        ol
+        uu
+        ui
+        ui
+        i8
+        uD
+        T
+517-57b83a7ddced8955.js:1:120001
 
-## Deploy on Vercel
+#### 
+the website makes you sign in every time instead of remembering that you already signed in 
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-testtest
+# Prompts: 
+- Given the code below, what am i not doing right
+    - in terms of dev>preview, main>prod
+    - refreshing data 
+    - authentication
+
