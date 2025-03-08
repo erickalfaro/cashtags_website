@@ -10,11 +10,5 @@
         },
         "dest": "/api/webhook"
       }
-    ],
-    "functions": {
-      "api/webhook.ts": {
-        "includeFiles": false,
-        "requireAuth": false
-      }
-    }
+    ]
   }
