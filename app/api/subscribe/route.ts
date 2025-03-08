@@ -1,4 +1,3 @@
-// app/api/subscribe/route.ts
 import { NextResponse } from "next/server";
 import { stripe } from "../../../lib/stripe";
 import { supabase } from "../../../lib/supabase";
@@ -29,7 +28,10 @@ export async function POST(req: Request) {
         ? process.env.STRIPE_PRICE_ID_DEV
         : process.env.STRIPE_PRICE_ID_PROD;
 
+    console.log("Subscribe endpoint:", { environment, tableName, stripePriceId });
+
     if (!stripePriceId) {
+      console.error("Stripe Price ID missing for environment:", environment);
       return NextResponse.json({ error: "Missing Stripe Price ID" }, { status: 500 });
     }
 
@@ -63,6 +65,7 @@ export async function POST(req: Request) {
         console.error("Error upserting subscription:", upsertError);
         return NextResponse.json({ error: "Failed to create subscription record" }, { status: 500 });
       }
+      console.log("Created new customer and subscription record:", customerId);
     }
 
     const checkoutSession = await stripe.checkout.sessions.create({

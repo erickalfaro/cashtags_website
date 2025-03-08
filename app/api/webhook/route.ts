@@ -1,4 +1,3 @@
-// app/api/webhook/route.ts
 import { NextResponse } from "next/server";
 import { stripe } from "../../../lib/stripe";
 import { Stripe } from "stripe";
@@ -6,14 +5,13 @@ import { supabase } from "../../../lib/supabase";
 import { getEnvironment } from "../../../lib/utils";
 
 export async function POST(req: Request) {
-  console.log("Environment:", getEnvironment());
   const sig = req.headers.get("stripe-signature");
   const body = await req.text();
 
-  console.log("Webhook received:", { sig, body });
+  console.log("Webhook received:", { sig });
 
   if (!sig) {
-    console.error("No signature provided");
+    console.error("No Stripe signature provided");
     return NextResponse.json({ error: "No signature" }, { status: 400 });
   }
 
@@ -24,13 +22,20 @@ export async function POST(req: Request) {
       ? process.env.STRIPE_WEBHOOK_SECRET_DEV
       : process.env.STRIPE_WEBHOOK_SECRET_PROD;
 
+  console.log("Webhook environment:", environment, "Table:", tableName);
+
+  if (!webhookSecret) {
+    console.error("Webhook secret not configured for environment:", environment);
+    return NextResponse.json({ error: "Webhook secret missing" }, { status: 500 });
+  }
+
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, sig, webhookSecret as string);
-    console.log("Webhook event constructed:", event.type);
+    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+    console.log("Webhook event type:", event.type);
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
-    return NextResponse.json({ error: "Webhook Error" }, { status: 400 });
+    return NextResponse.json({ error: "Webhook signature verification failed" }, { status: 400 });
   }
 
   switch (event.type) {
@@ -40,7 +45,7 @@ export async function POST(req: Request) {
       const customerId = subscription.customer as string;
       const status = subscription.status === "active" ? "PREMIUM" : "FREE";
 
-      console.log("Processing subscription event:", { customerId, status });
+      console.log("Updating subscription:", { customerId, status, tableName });
 
       const { data: user, error: userError } = await supabase
         .from(tableName)
@@ -49,46 +54,50 @@ export async function POST(req: Request) {
         .single();
 
       if (userError) {
-        console.error("Supabase user fetch error:", userError);
-        return NextResponse.json({ error: "Database error" }, { status: 500 });
+        console.error("Error fetching user from Supabase:", userError);
+        return NextResponse.json({ error: "Database error fetching user" }, { status: 500 });
       }
 
-      if (user) {
-        const { error: updateError } = await supabase
-          .from(tableName)
-          .update({
-            subscription_status: status,
-            stripe_subscription_id: subscription.id,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("user_id", user.user_id);
-
-        if (updateError) {
-          console.error("Supabase update error:", updateError);
-          return NextResponse.json({ error: "Failed to update subscription" }, { status: 500 });
-        }
-        console.log("Subscription updated successfully for user:", user.user_id);
-      } else {
+      if (!user) {
         console.warn("No user found for customerId:", customerId);
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
+
+      const { error: updateError } = await supabase
+        .from(tableName)
+        .update({
+          subscription_status: status,
+          stripe_subscription_id: subscription.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.user_id);
+
+      if (updateError) {
+        console.error("Error updating subscription in Supabase:", updateError);
+        return NextResponse.json({ error: "Failed to update subscription" }, { status: 500 });
+      }
+      console.log("Subscription updated successfully for user:", user.user_id);
       break;
+
     case "customer.subscription.deleted":
       const deletedSub = event.data.object as Stripe.Subscription;
+      console.log("Deleting subscription:", { subscriptionId: deletedSub.id, tableName });
+
       const { error: deleteError } = await supabase
         .from(tableName)
         .update({ subscription_status: "FREE", stripe_subscription_id: null })
         .eq("stripe_subscription_id", deletedSub.id);
 
       if (deleteError) {
-        console.error("Supabase delete error:", deleteError);
+        console.error("Error deleting subscription in Supabase:", deleteError);
         return NextResponse.json({ error: "Failed to delete subscription" }, { status: 500 });
       }
       console.log("Subscription deleted successfully");
       break;
+
     default:
       console.log("Unhandled event type:", event.type);
   }
-  console.log("Webhook received:", { sig, body });
-  console.log("Webhook event constructed:", event.type);
+
   return NextResponse.json({ received: true });
 }

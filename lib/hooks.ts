@@ -171,6 +171,8 @@ export function useSubscription(user: User | null): SubscriptionData {
       try {
         const environment = getEnvironment();
         const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
+        console.log("Fetching subscription from:", tableName);
+
         const { data, error } = await supabase
           .from(tableName)
           .select("subscription_status")
@@ -180,6 +182,7 @@ export function useSubscription(user: User | null): SubscriptionData {
         if (error && error.code !== "PGRST116") throw error;
 
         const status = data?.subscription_status || "FREE";
+        console.log("Subscription status fetched:", status);
 
         if (status === "PREMIUM") {
           setSubscription({ status: "PREMIUM", clicksLeft: Infinity });
