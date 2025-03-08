@@ -1,3 +1,4 @@
+// File: app/api/auth/callback/route.ts
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../lib/supabase";
 
@@ -5,7 +6,6 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
 
-  // Determine the base URL dynamically
   const isLocal = process.env.NODE_ENV === "development";
   const baseUrl = isLocal
     ? "http://localhost:3000"
