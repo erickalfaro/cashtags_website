@@ -14,6 +14,14 @@ import {
 } from "./api";
 import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "../types/api";
 
+// Define a type for Supabase PostgREST errors
+interface SupabaseError {
+  code: string;
+  message: string;
+  details?: string | null;
+  hint?: string | null;
+}
+
 // Subscription status interface
 interface SubscriptionStatus {
   status: "FREE" | "PREMIUM";
@@ -86,11 +94,12 @@ export function useAuth() {
             return;
           }
           existingSub = subData;
-        } catch (err: any) {
-          if (err.code === "PGRST116") {
+        } catch (err: unknown) {
+          const supabaseErr = err as SupabaseError;
+          if (supabaseErr.code === "PGRST116") {
             console.log("No subscription found for user:", loggedInUser.id);
           } else {
-            console.error("Error querying subscription:", err);
+            console.error("Error querying subscription:", supabaseErr);
             return;
           }
         }
