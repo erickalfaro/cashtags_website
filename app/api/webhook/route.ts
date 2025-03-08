@@ -17,6 +17,7 @@ export async function POST(req: Request) {
   }
 
   const environment = getEnvironment();
+  const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
   const webhookSecret =
     environment === "dev"
       ? process.env.STRIPE_WEBHOOK_SECRET_DEV
@@ -41,10 +42,9 @@ export async function POST(req: Request) {
       console.log("Processing subscription event:", { customerId, status });
 
       const { data: user, error: userError } = await supabase
-        .from("user_subscriptions")
+        .from(tableName)
         .select("user_id")
         .eq("stripe_customer_id", customerId)
-        .eq("environment", environment)
         .single();
 
       if (userError) {
@@ -54,14 +54,13 @@ export async function POST(req: Request) {
 
       if (user) {
         const { error: updateError } = await supabase
-          .from("user_subscriptions")
+          .from(tableName)
           .update({
             subscription_status: status,
             stripe_subscription_id: subscription.id,
             updated_at: new Date().toISOString(),
           })
-          .eq("user_id", user.user_id)
-          .eq("environment", environment);
+          .eq("user_id", user.user_id);
 
         if (updateError) {
           console.error("Supabase update error:", updateError);
@@ -75,10 +74,9 @@ export async function POST(req: Request) {
     case "customer.subscription.deleted":
       const deletedSub = event.data.object as Stripe.Subscription;
       const { error: deleteError } = await supabase
-        .from("user_subscriptions")
+        .from(tableName)
         .update({ subscription_status: "FREE", stripe_subscription_id: null })
-        .eq("stripe_subscription_id", deletedSub.id)
-        .eq("environment", environment);
+        .eq("stripe_subscription_id", deletedSub.id);
 
       if (deleteError) {
         console.error("Supabase delete error:", deleteError);

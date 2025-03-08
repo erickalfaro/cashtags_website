@@ -31,26 +31,11 @@ Stripe:
 
 # Bugs
 
-### 
-clicking on CELH caused this error: 
-TypeError: e.hours is null
-    NextJS 11
-        children
-        E
-        ll
-        aZ
-        ol
-        uu
-        ui
-        ui
-        i8
-        uD
-        T
-517-57b83a7ddced8955.js:1:120001
-
 #### 
 the website makes you sign in every time instead of remembering that you already signed in 
 
+### 
+if you exist in user_subscriptions DEV as premium, are you premium on PROD by default? 
 
 # Prompts: 
 - Given the code below, what am i not doing right

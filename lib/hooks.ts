@@ -14,7 +14,6 @@ import {
 } from "./api";
 import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "../types/api";
 
-// Define a type for Supabase PostgREST errors
 interface SupabaseError {
   code: string;
   message: string;
@@ -22,20 +21,17 @@ interface SupabaseError {
   hint?: string | null;
 }
 
-// Subscription status interface
 interface SubscriptionStatus {
   status: "FREE" | "PREMIUM";
   clicksLeft: number;
 }
 
-// Define the return type for useSubscription
 interface SubscriptionData {
   subscription: SubscriptionStatus;
   setSubscription: React.Dispatch<React.SetStateAction<SubscriptionStatus>>;
   loading: boolean;
 }
 
-// Define the return type for useTickerData
 export interface TickerData {
   tickerTapeData: TickerTapeItem[];
   setTickerTapeData: React.Dispatch<React.SetStateAction<TickerTapeItem[]>>;
@@ -77,16 +73,15 @@ export function useAuth() {
 
       if (loggedInUser) {
         const environment = getEnvironment();
-        console.log("User logged in:", loggedInUser.id, "Environment:", environment);
+        const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
+        console.log("User logged in:", loggedInUser.id, "Using table:", tableName);
 
-        // Check if the user has a row in user_subscriptions
         let existingSub = null;
         try {
           const { data: subData, error: checkError } = await supabase
-            .from("user_subscriptions")
+            .from(tableName)
             .select("user_id")
             .eq("user_id", loggedInUser.id)
-            .eq("environment", environment)
             .single();
 
           if (checkError && checkError.code !== "PGRST116") {
@@ -104,14 +99,12 @@ export function useAuth() {
           }
         }
 
-        // Insert a row if none exists
         if (!existingSub) {
           console.log("Inserting new subscription for user:", loggedInUser.id);
           const { error: insertError } = await supabase
-            .from("user_subscriptions")
+            .from(tableName)
             .insert({
               user_id: loggedInUser.id,
-              environment,
               subscription_status: "FREE",
             });
 
@@ -177,11 +170,11 @@ export function useSubscription(user: User | null): SubscriptionData {
       setLoading(true);
       try {
         const environment = getEnvironment();
+        const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
         const { data, error } = await supabase
-          .from("user_subscriptions")
+          .from(tableName)
           .select("subscription_status")
           .eq("user_id", user.id)
-          .eq("environment", environment)
           .single();
 
         if (error && error.code !== "PGRST116") throw error;
@@ -216,6 +209,8 @@ export function useSubscription(user: User | null): SubscriptionData {
 
   return { subscription, setSubscription, loading };
 }
+
+// ... rest of the file (useTickerData remains unchanged)
 
 export function useTickerData(user: User | null): TickerData {
   const { subscription, setSubscription, loading: subLoading } = useSubscription(user);

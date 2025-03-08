@@ -23,6 +23,7 @@ export async function POST(req: Request) {
     }
 
     const environment = getEnvironment();
+    const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
     const stripePriceId =
       environment === "dev"
         ? process.env.STRIPE_PRICE_ID_DEV
@@ -33,10 +34,9 @@ export async function POST(req: Request) {
     }
 
     const { data: userSub, error: subError } = await supabase
-      .from("user_subscriptions")
+      .from(tableName)
       .select("stripe_customer_id")
       .eq("user_id", userId)
-      .eq("environment", environment)
       .single();
 
     if (subError && subError.code !== "PGRST116") {
@@ -48,14 +48,13 @@ export async function POST(req: Request) {
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: session.user.email,
-        metadata: { supabaseUserId: userId, environment },
+        metadata: { supabaseUserId: userId },
       });
       customerId = customer.id;
 
-      const { error: upsertError } = await supabase.from("user_subscriptions").upsert({
+      const { error: upsertError } = await supabase.from(tableName).upsert({
         user_id: userId,
         stripe_customer_id: customerId,
-        environment,
         subscription_status: "FREE",
         updated_at: new Date().toISOString(),
       });
