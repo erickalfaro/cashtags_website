@@ -21,20 +21,22 @@ export const getEnvironment = (): "dev" | "prod" => {
     "VERCEL_ENV:", vercelEnv,
     "VERCEL_BRANCH_URL:", vercelBranchUrl,
     "NODE_ENV:", nodeEnv,
-    "isLocal:", isLocal
+    "isLocal:", isLocal,
+    "Host:", typeof window !== "undefined" ? window.location.host : "N/A"
   );
 
-  if (vercelEnv === "production") {
-    console.log("Using prod environment");
-    return "prod";
-  }
-
-  if (vercelBranchUrl || isLocal || vercelEnv === "preview" || vercelEnv === "development") {
-    console.log("Using dev environment (preview or local)");
+  // Explicitly treat preview as dev
+  if (vercelEnv === "preview" || vercelBranchUrl || isLocal || vercelEnv === "development") {
+    console.log("Detected dev environment (preview or local)");
     return "dev";
   }
 
-  // Fallback: assume prod if unclear, but log a warning
-  console.warn("Unclear environment, defaulting to prod");
+  if (vercelEnv === "production") {
+    console.log("Detected prod environment");
+    return "prod";
+  }
+
+  // Fallback: If Vercel variables are missing in a non-local production build, assume prod but warn
+  console.warn("VERCEL_ENV and VERCEL_BRANCH_URL undefined in production build, defaulting to prod");
   return "prod";
 };

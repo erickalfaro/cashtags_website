@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature");
   const body = await req.text();
 
-  console.log("Webhook received:", { sig });
+  console.log("Webhook received - Signature:", sig);
 
   if (!sig) {
     console.error("No Stripe signature provided");
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       ? process.env.STRIPE_WEBHOOK_SECRET_DEV
       : process.env.STRIPE_WEBHOOK_SECRET_PROD;
 
-  console.log("Webhook environment:", environment, "Table:", tableName);
+  console.log("Webhook - Environment:", environment, "Table:", tableName, "Secret Defined:", !!webhookSecret);
 
   if (!webhookSecret) {
     console.error("Webhook secret not configured for environment:", environment);
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-    console.log("Webhook event type:", event.type);
+    console.log("Webhook event constructed - Type:", event.type, "ID:", event.id);
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
     return NextResponse.json({ error: "Webhook signature verification failed" }, { status: 400 });
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       const customerId = subscription.customer as string;
       const status = subscription.status === "active" ? "PREMIUM" : "FREE";
 
-      console.log("Updating subscription:", { customerId, status, tableName });
+      console.log("Processing subscription - Customer:", customerId, "Status:", status);
 
       const { data: user, error: userError } = await supabase
         .from(tableName)
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
         .single();
 
       if (userError) {
-        console.error("Error fetching user from Supabase:", userError);
+        console.error("Supabase fetch error:", userError);
         return NextResponse.json({ error: "Database error fetching user" }, { status: 500 });
       }
 
@@ -73,15 +73,15 @@ export async function POST(req: Request) {
         .eq("user_id", user.user_id);
 
       if (updateError) {
-        console.error("Error updating subscription in Supabase:", updateError);
+        console.error("Supabase update error:", updateError);
         return NextResponse.json({ error: "Failed to update subscription" }, { status: 500 });
       }
-      console.log("Subscription updated successfully for user:", user.user_id);
+      console.log("Subscription updated - User:", user.user_id, "Status:", status);
       break;
 
     case "customer.subscription.deleted":
       const deletedSub = event.data.object as Stripe.Subscription;
-      console.log("Deleting subscription:", { subscriptionId: deletedSub.id, tableName });
+      console.log("Deleting subscription - ID:", deletedSub.id);
 
       const { error: deleteError } = await supabase
         .from(tableName)
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
         .eq("stripe_subscription_id", deletedSub.id);
 
       if (deleteError) {
-        console.error("Error deleting subscription in Supabase:", deleteError);
+        console.error("Supabase delete error:", deleteError);
         return NextResponse.json({ error: "Failed to delete subscription" }, { status: 500 });
       }
       console.log("Subscription deleted successfully");

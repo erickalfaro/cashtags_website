@@ -30,6 +30,7 @@ interface SubscriptionData {
   subscription: SubscriptionStatus;
   setSubscription: React.Dispatch<React.SetStateAction<SubscriptionStatus>>;
   loading: boolean;
+  fetchSubscription: () => Promise<void>; // Added for manual refresh
 }
 
 export interface TickerData {
@@ -46,6 +47,7 @@ export interface TickerData {
   handleTickerClick: (ticker: string) => void;
   errorMessage: string | null;
   subscription: SubscriptionStatus;
+  fetchSubscription: () => Promise<void>; // Expose for manual refresh
 }
 
 export function useAuth() {
@@ -160,63 +162,85 @@ export function useSubscription(user: User | null): SubscriptionData {
   });
   const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
+  const fetchSubscription = async () => {
     if (!user) {
       setLoading(false);
       return;
     }
+    setLoading(true);
+    try {
+      const environment = getEnvironment();
+      const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
+      console.log("Fetching subscription from:", tableName);
 
-    const fetchSubscription = async () => {
-      setLoading(true);
-      try {
-        const environment = getEnvironment();
-        const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
-        console.log("Fetching subscription from:", tableName);
+      const { data, error } = await supabase
+        .from(tableName)
+        .select("subscription_status")
+        .eq("user_id", user.id)
+        .single();
 
-        const { data, error } = await supabase
-          .from(tableName)
-          .select("subscription_status")
+      if (error && error.code !== "PGRST116") throw error;
+
+      const status = data?.subscription_status || "FREE";
+      console.log("Subscription status fetched:", status);
+
+      if (status === "PREMIUM") {
+        setSubscription({ status: "PREMIUM", clicksLeft: Infinity });
+      } else {
+        const now = new Date();
+        const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+        const { data: clicks, error: clicksError } = await supabase
+          .from("ticker_clicks")
+          .select("id")
           .eq("user_id", user.id)
-          .single();
+          .eq("month_year", monthYear);
 
-        if (error && error.code !== "PGRST116") throw error;
+        if (clicksError) throw clicksError;
 
-        const status = data?.subscription_status || "FREE";
-        console.log("Subscription status fetched:", status);
-
-        if (status === "PREMIUM") {
-          setSubscription({ status: "PREMIUM", clicksLeft: Infinity });
-        } else {
-          const now = new Date();
-          const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-          const { data: clicks, error: clicksError } = await supabase
-            .from("ticker_clicks")
-            .select("id")
-            .eq("user_id", user.id)
-            .eq("month_year", monthYear);
-
-          if (clicksError) throw clicksError;
-
-          const clicksUsed = clicks?.length || 0;
-          setSubscription({ status: "FREE", clicksLeft: Math.max(10 - clicksUsed, 0) });
-        }
-      } catch (error) {
-        console.error("Error fetching subscription:", error);
-      } finally {
-        setLoading(false);
+        const clicksUsed = clicks?.length || 0;
+        setSubscription({ status: "FREE", clicksLeft: Math.max(10 - clicksUsed, 0) });
       }
-    };
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchSubscription();
+
+    if (!user) return;
+
+    const environment = getEnvironment();
+    const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
+    const channel = supabase
+      .channel("subscription-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: tableName,
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log("Real-time subscription update:", payload);
+          fetchSubscription();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
-  return { subscription, setSubscription, loading };
+  return { subscription, setSubscription, loading, fetchSubscription };
 }
 
-// ... rest of the file (useTickerData remains unchanged)
-
 export function useTickerData(user: User | null): TickerData {
-  const { subscription, setSubscription, loading: subLoading } = useSubscription(user);
+  const { subscription, setSubscription, loading: subLoading, fetchSubscription } = useSubscription(user);
   const [tickerTapeData, setTickerTapeData] = useState<TickerTapeItem[]>([]);
   const [stockLedgerData, setStockLedgerData] = useState<StockLedgerData>({
     stockName: "",
@@ -333,5 +357,6 @@ export function useTickerData(user: User | null): TickerData {
     handleTickerClick,
     errorMessage,
     subscription,
+    fetchSubscription, // Expose for manual refresh
   };
 }

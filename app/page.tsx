@@ -1,7 +1,7 @@
 // app/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth, useTickerData } from "../lib/hooks";
 import { AuthButtons } from "../components/AuthButtons";
 import { SubscriptionButton } from "../components/SubscriptionButton";
@@ -29,6 +29,7 @@ export default function Home() {
     handleTickerClick,
     errorMessage,
     subscription,
+    fetchSubscription, // Added for manual refresh
   } = useTickerData(user);
 
   const [sortConfig, setSortConfig] = useState<{
@@ -38,6 +39,17 @@ export default function Home() {
     key: null,
     direction: "asc",
   });
+
+  // Check for successful Stripe redirect and refresh subscription
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("success") === "true") {
+      console.log("Stripe payment success detected, refreshing subscription...");
+      fetchSubscription();
+      // Optionally, clear the URL params to avoid repeated triggers
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [fetchSubscription]);
 
   const handleSort = (key: keyof TickerTapeItem): void => {
     const direction =
