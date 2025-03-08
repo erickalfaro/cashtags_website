@@ -1,0 +1,19 @@
+{
+    "routes": [
+      {
+        "src": "/api/webhook",
+        "methods": ["POST"],
+        "headers": {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST",
+          "Access-Control-Allow-Headers": "Content-Type, Stripe-Signature"
+        },
+        "continue": true
+      },
+      {
+        "src": "/(.*)",
+        "dest": "/",
+        "continue": false
+      }
+    ]
+  }
