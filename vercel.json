@@ -7,7 +7,14 @@
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "POST",
           "Access-Control-Allow-Headers": "Content-Type, Stripe-Signature"
-        }
+        },
+        "dest": "/api/webhook"
       }
-    ]
+    ],
+    "functions": {
+      "api/webhook.ts": {
+        "includeFiles": false,
+        "requireAuth": false
+      }
+    }
   }
