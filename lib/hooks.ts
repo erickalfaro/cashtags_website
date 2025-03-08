@@ -6,6 +6,7 @@ import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { supabase } from "./supabase";
 import { debounce } from "./utils";
+import { getEnvironment } from "./utils"; // Import getEnvironment
 import {
   fetchTickerTapeData as apiFetchTickerTapeData,
   fetchStockLedgerData,
@@ -108,10 +109,12 @@ export function useSubscription(user: User | null): SubscriptionData {
     const fetchSubscription = async () => {
       setLoading(true);
       try {
+        const environment = getEnvironment(); // Use imported getEnvironment
         const { data, error } = await supabase
           .from("user_subscriptions")
           .select("subscription_status")
           .eq("user_id", user.id)
+          .eq("environment", environment)
           .single();
 
         if (error && error.code !== "PGRST116") throw error; // Ignore "no rows" error
