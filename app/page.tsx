@@ -128,7 +128,7 @@ export default function Home() {
         <RefreshButton onClick={fetchTickerTapeData} />
         <SubscriptionButton
           user={user}
-          disabled={isPremiumActive || isPremiumCancelling} // Greyed out for active or cancelling PREMIUM
+          disabled={isPremiumActive} // Only greyed out for active PREMIUM
           onSuccess={fetchSubscription}
         />
         <button

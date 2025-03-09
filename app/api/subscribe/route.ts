@@ -53,19 +53,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Database error" }, { status: 500 });
     }
 
+    let customerId = userSub?.stripe_customer_id;
     if (userSub?.subscription_status === "PREMIUM" && userSub.stripe_subscription_id) {
-      try {
-        const subscription = await stripe.subscriptions.retrieve(userSub.stripe_subscription_id);
-        if (subscription.status === "active" || subscription.status === "trialing") {
-          console.log("User already subscribed:", userId);
-          return NextResponse.json({ error: "You are already subscribed to PREMIUM" }, { status: 400 });
-        }
-      } catch (err) {
-        console.error("Error verifying subscription with Stripe:", err);
+      const subscription = await stripe.subscriptions.retrieve(userSub.stripe_subscription_id);
+      if (subscription.status === "active" && !subscription.cancel_at_period_end) {
+        console.log("User already subscribed with an active, non-cancelling subscription:", userId);
+        return NextResponse.json({ error: "You are already subscribed to PREMIUM" }, { status: 400 });
       }
+      // If subscription is cancelling, proceed to create a new one
     }
 
-    let customerId = userSub?.stripe_customer_id;
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: session.user.email,
