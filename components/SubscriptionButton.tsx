@@ -34,19 +34,23 @@ export const SubscriptionButton: React.FC<{
         body: JSON.stringify({ userId: user.id }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to initiate subscription");
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to initiate subscription");
+
+      if (data.sessionId) {
+        // New subscription case: redirect to Checkout
+        const stripe = await stripePromise;
+        if (!stripe) throw new Error("Stripe failed to initialize");
+
+        const { error: redirectError } = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+        if (redirectError) throw new Error(redirectError.message);
+      } else if (data.message) {
+        // Un-cancel case: no redirect needed, just refresh subscription
+        console.log("Subscription reactivated:", data.message);
+        if (onSuccess) onSuccess();
+      } else {
+        throw new Error("Unexpected response from server");
       }
-
-      const { sessionId } = await response.json();
-      const stripe = await stripePromise;
-      if (!stripe) throw new Error("Stripe failed to initialize");
-
-      const { error: redirectError } = await stripe.redirectToCheckout({ sessionId });
-      if (redirectError) throw new Error(redirectError.message);
-
-      if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Subscription error:", error);
       setError(error instanceof Error ? error.message : "An unexpected error occurred");

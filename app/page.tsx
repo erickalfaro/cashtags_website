@@ -93,7 +93,7 @@ export default function Home() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to cancel subscription");
       alert(data.message);
-      fetchSubscription();
+      fetchSubscription(); // Refresh state after cancellation
     } catch (error) {
       console.error("Error canceling subscription:", error);
       alert("Failed to cancel subscription: " + (error instanceof Error ? error.message : "Unknown error"));
@@ -128,8 +128,8 @@ export default function Home() {
         <RefreshButton onClick={fetchTickerTapeData} />
         <SubscriptionButton
           user={user}
-          disabled={isPremiumActive} // Only greyed out for active PREMIUM
-          onSuccess={fetchSubscription}
+          disabled={isPremiumActive} // Greyed out only for active PREMIUM
+          onSuccess={fetchSubscription} // Refresh state after resubscription
         />
         <button
           onClick={handleCancelSubscription}
