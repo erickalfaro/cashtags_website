@@ -54,15 +54,40 @@ export async function POST(req: Request) {
     }
 
     let customerId = userSub?.stripe_customer_id;
+
+    // Check for an existing cancellable subscription
     if (userSub?.subscription_status === "PREMIUM" && userSub.stripe_subscription_id) {
       const subscription = await stripe.subscriptions.retrieve(userSub.stripe_subscription_id);
       if (subscription.status === "active" && !subscription.cancel_at_period_end) {
         console.log("User already subscribed with an active, non-cancelling subscription:", userId);
         return NextResponse.json({ error: "You are already subscribed to PREMIUM" }, { status: 400 });
+      } else if (subscription.status === "active" && subscription.cancel_at_period_end) {
+        // Un-cancel the existing subscription
+        const updatedSubscription = await stripe.subscriptions.update(userSub.stripe_subscription_id, {
+          cancel_at_period_end: false,
+        });
+        console.log("Un-cancelled subscription:", userSub.stripe_subscription_id);
+
+        // Update database
+        const { error: updateError } = await supabase
+          .from(tableName)
+          .update({
+            cancel_at: null,
+            current_period_end: new Date(updatedSubscription.current_period_end * 1000).toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", userId);
+
+        if (updateError) {
+          console.error("Error updating subscription after un-cancelling:", updateError);
+          return NextResponse.json({ error: "Failed to update subscription" }, { status: 500 });
+        }
+
+        return NextResponse.json({ message: "Subscription reactivated successfully" });
       }
-      // If subscription is cancelling, proceed to create a new one
     }
 
+    // Create a new customer if none exists
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: session.user.email,
@@ -85,6 +110,7 @@ export async function POST(req: Request) {
       console.log("Created new customer and subscription record:", customerId);
     }
 
+    // Create a new subscription if no cancellable one exists
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ["card"],
@@ -96,7 +122,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ sessionId: checkoutSession.id });
   } catch (error) {
-    console.error("Error creating checkout session:", error);
-    return NextResponse.json({ error: "Failed to create checkout session" }, { status: 500 });
+    console.error("Error in subscription process:", error);
+    return NextResponse.json({ error: "Failed to process subscription" }, { status: 500 });
   }
 }
