@@ -22,22 +22,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized: User ID mismatch" }, { status: 401 });
     }
 
-    // Determine environment using the updated getEnvironment function
     const environment = getEnvironment();
     const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
-    const stripePriceId =
-      environment === "dev"
-        ? process.env.STRIPE_PRICE_ID_DEV
-        : process.env.STRIPE_PRICE_ID_PROD;
+    const stripePriceId = process.env.STRIPE_PRICE_ID;
 
     console.log("Subscribe endpoint:", { environment, tableName, stripePriceId });
 
     if (!stripePriceId) {
-      console.error("Stripe Price ID missing for environment:", environment);
+      console.error("STRIPE_PRICE_ID is missing");
       return NextResponse.json({ error: "Missing Stripe Price ID" }, { status: 500 });
     }
 
-    // Fetch or create subscription record
     const { data: userSub, error: subError } = await supabase
       .from(tableName)
       .select("stripe_customer_id")
@@ -71,7 +66,6 @@ export async function POST(req: Request) {
       console.log("Created new customer and subscription record:", customerId);
     }
 
-    // Create Stripe checkout session
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ["card"],
@@ -81,7 +75,6 @@ export async function POST(req: Request) {
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/?canceled=true`,
     });
 
-    // Return the session ID as originally intended
     return NextResponse.json({ sessionId: checkoutSession.id });
   } catch (error) {
     console.error("Error creating checkout session:", error);

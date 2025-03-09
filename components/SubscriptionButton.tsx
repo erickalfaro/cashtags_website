@@ -42,7 +42,6 @@ export const SubscriptionButton: React.FC<{ user: User; onSuccess?: () => void }
       const { error: redirectError } = await stripe.redirectToCheckout({ sessionId });
       if (redirectError) throw new Error(redirectError.message);
 
-      // On success (though this won't run post-redirect, kept for clarity)
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Subscription error:", error);

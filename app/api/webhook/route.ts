@@ -1,3 +1,4 @@
+// app/api/webhook/route.ts
 import { NextResponse } from "next/server";
 import { stripe } from "../../../lib/stripe";
 import { Stripe } from "stripe";
@@ -17,15 +18,12 @@ export async function POST(req: Request) {
 
   const environment = getEnvironment();
   const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
-  const webhookSecret =
-    environment === "dev"
-      ? process.env.STRIPE_WEBHOOK_SECRET_DEV
-      : process.env.STRIPE_WEBHOOK_SECRET_PROD;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   console.log("Webhook - Environment:", environment, "Table:", tableName, "Secret Defined:", !!webhookSecret);
 
   if (!webhookSecret) {
-    console.error("Webhook secret not configured for environment:", environment);
+    console.error("STRIPE_WEBHOOK_SECRET not configured");
     return NextResponse.json({ error: "Webhook secret missing" }, { status: 500 });
   }
 
