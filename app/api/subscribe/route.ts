@@ -1,6 +1,6 @@
 // app/api/subscribe/route.ts
 import { NextResponse } from "next/server";
-import { stripe } from "../../../lib/stripe";
+import { getStripe } from "../../../lib/stripe"; // Updated import
 import { supabase } from "../../../lib/supabase";
 import { getEnvironment } from "../../../lib/utils";
 
@@ -23,20 +23,28 @@ export async function POST(req: Request) {
     }
 
     const environment = getEnvironment();
-    const stripePriceId =
-      environment === "dev"
-        ? process.env.STRIPE_PRICE_ID_DEV
-        : process.env.STRIPE_PRICE_ID_PROD;
+    const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
+    const stripePriceId = process.env.STRIPE_PRICE_ID;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.VERCEL_URL}`;
+
+    console.log("Subscribe endpoint:", { environment, tableName, stripePriceId, baseUrl });
 
     if (!stripePriceId) {
+      console.error("STRIPE_PRICE_ID is missing");
       return NextResponse.json({ error: "Missing Stripe Price ID" }, { status: 500 });
     }
 
+    if (!baseUrl) {
+      console.error("NEXT_PUBLIC_BASE_URL or VERCEL_URL is missing");
+      return NextResponse.json({ error: "Missing base URL configuration" }, { status: 500 });
+    }
+
+    const stripe = getStripe(); // Use the function here
+
     const { data: userSub, error: subError } = await supabase
-      .from("user_subscriptions")
+      .from(tableName)
       .select("stripe_customer_id")
       .eq("user_id", userId)
-      .eq("environment", environment)
       .single();
 
     if (subError && subError.code !== "PGRST116") {
@@ -48,14 +56,13 @@ export async function POST(req: Request) {
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: session.user.email,
-        metadata: { supabaseUserId: userId, environment },
+        metadata: { supabaseUserId: userId },
       });
       customerId = customer.id;
 
-      const { error: upsertError } = await supabase.from("user_subscriptions").upsert({
+      const { error: upsertError } = await supabase.from(tableName).upsert({
         user_id: userId,
         stripe_customer_id: customerId,
-        environment,
         subscription_status: "FREE",
         updated_at: new Date().toISOString(),
       });
@@ -64,6 +71,7 @@ export async function POST(req: Request) {
         console.error("Error upserting subscription:", upsertError);
         return NextResponse.json({ error: "Failed to create subscription record" }, { status: 500 });
       }
+      console.log("Created new customer and subscription record:", customerId);
     }
 
     const checkoutSession = await stripe.checkout.sessions.create({
@@ -71,8 +79,8 @@ export async function POST(req: Request) {
       payment_method_types: ["card"],
       mode: "subscription",
       line_items: [{ price: stripePriceId, quantity: 1 }],
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/?canceled=true`,
+      success_url: `${baseUrl}/?success=true`,
+      cancel_url: `${baseUrl}/?canceled=true`,
     });
 
     return NextResponse.json({ sessionId: checkoutSession.id });

@@ -8,7 +8,7 @@ import { User } from "@supabase/supabase-js";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
 
-export const SubscriptionButton: React.FC<{ user: User }> = ({ user }) => {
+export const SubscriptionButton: React.FC<{ user: User; onSuccess?: () => void }> = ({ user, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,7 +16,6 @@ export const SubscriptionButton: React.FC<{ user: User }> = ({ user }) => {
     setLoading(true);
     setError(null);
     try {
-      // Refresh session to ensure a valid token
       const { data: session, error: sessionError } = await supabase.auth.refreshSession();
       if (sessionError || !session.session) throw new Error("Failed to refresh session");
       const accessToken = session.session.access_token;
@@ -37,13 +36,13 @@ export const SubscriptionButton: React.FC<{ user: User }> = ({ user }) => {
       }
 
       const { sessionId } = await response.json();
-      console.log("Checkout Session ID:", sessionId);
-
       const stripe = await stripePromise;
       if (!stripe) throw new Error("Stripe failed to initialize");
 
       const { error: redirectError } = await stripe.redirectToCheckout({ sessionId });
       if (redirectError) throw new Error(redirectError.message);
+
+      if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Subscription error:", error);
       setError(error instanceof Error ? error.message : "An unexpected error occurred");
