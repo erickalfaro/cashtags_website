@@ -43,6 +43,5 @@ if you exist in user_subscriptions DEV as premium, are you premium on PROD by de
     - refreshing data 
     - authentication
 
-# Immediate next steps: 
-- implement Bypass Automation
+# Immediate next steps:
 - Fix VERCEL_ENV

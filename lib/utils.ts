@@ -11,7 +11,24 @@ export const debounce = <T extends unknown[]>(
 };
 
 export const getEnvironment = (): "dev" | "prod" => {
-  return "dev"
+  console.log("All Environment Variables:", process.env);
+  const vercelEnv = process.env.VERCEL_ENV;
+  const vercelBranchUrl = process.env.VERCEL_BRANCH_URL;
+  const nodeEnv = process.env.NODE_ENV;
+  const isLocal = nodeEnv === "development" || (typeof window !== "undefined" && window.location.hostname === "localhost");
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "unknown";
+
+  console.log(
+    "Environment Detection:",
+    "VERCEL_ENV:", vercelEnv,
+    "VERCEL_BRANCH_URL:", vercelBranchUrl,
+    "NODE_ENV:", nodeEnv,
+    "isLocal:", isLocal,
+    "Hostname:", hostname
+  );
+
+  // Temporary hardcoded for testing
+  return "dev";
 };
 
 // export const getEnvironment = (): "dev" | "prod" => {
