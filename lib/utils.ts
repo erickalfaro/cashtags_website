@@ -11,60 +11,35 @@ export const debounce = <T extends unknown[]>(
 };
 
 export const getEnvironment = (): "dev" | "prod" => {
-  console.log("All Environment Variables:", process.env);
   const vercelEnv = process.env.VERCEL_ENV;
-  const vercelBranchUrl = process.env.VERCEL_BRANCH_URL;
   const nodeEnv = process.env.NODE_ENV;
   const isLocal = nodeEnv === "development" || (typeof window !== "undefined" && window.location.hostname === "localhost");
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "unknown";
 
   console.log(
     "Environment Detection:",
     "VERCEL_ENV:", vercelEnv,
-    "VERCEL_BRANCH_URL:", vercelBranchUrl,
     "NODE_ENV:", nodeEnv,
-    "isLocal:", isLocal,
-    "Hostname:", hostname
+    "isLocal:", isLocal
   );
 
-  // Temporary hardcoded for testing
-  return "dev";
+  // Local development environment
+  if (isLocal) {
+    console.log("Detected dev environment (local)");
+    return "dev";
+  }
+
+  // Vercel environment handling
+  switch (vercelEnv) {
+    case "production":
+      console.log("Detected prod environment (VERCEL_ENV=production)");
+      return "prod";
+    case "preview":
+    case "development":
+      console.log("Detected dev environment (VERCEL_ENV=preview or development)");
+      return "dev";
+    default:
+      // Fallback for undefined VERCEL_ENV (e.g., custom deployments)
+      console.warn("VERCEL_ENV not set, defaulting to prod");
+      return "prod";
+  }
 };
-
-// export const getEnvironment = (): "dev" | "prod" => {
-//   const vercelEnv = process.env.VERCEL_ENV;
-//   const vercelBranchUrl = process.env.VERCEL_BRANCH_URL;
-//   const nodeEnv = process.env.NODE_ENV;
-//   const isLocal = nodeEnv === "development" || (typeof window !== "undefined" && window.location.hostname === "localhost");
-//   const hostname = typeof window !== "undefined" ? window.location.hostname : "unknown";
-
-//   console.log(
-//     "Environment Detection:",
-//     "VERCEL_ENV:", vercelEnv,
-//     "VERCEL_BRANCH_URL:", vercelBranchUrl,
-//     "NODE_ENV:", nodeEnv,
-//     "isLocal:", isLocal,
-//     "Hostname:", hostname
-//   );
-
-//   // Explicitly treat preview as dev
-//   if (vercelEnv === "preview" || vercelBranchUrl || isLocal || vercelEnv === "development") {
-//     console.log("Detected dev environment (preview or local via Vercel vars)");
-//     return "dev";
-//   }
-
-//   // Heuristic: If hostname includes "dev" or "vercel.app" but isn’t production, assume preview
-//   if (hostname.includes("vercel.app") && !hostname.includes("cashtags.ai")) {
-//     console.log("Detected dev environment (preview via hostname heuristic)");
-//     return "dev";
-//   }
-
-//   if (vercelEnv === "production" || hostname === "cashtags.ai") {
-//     console.log("Detected prod environment");
-//     return "prod";
-//   }
-
-//   // Fallback: Warn and default to prod if unclear
-//   console.warn("Unclear environment, defaulting to prod");
-//   return "prod";
-// };
