@@ -1,6 +1,6 @@
 // app/api/webhook/route.ts
 import { NextResponse } from "next/server";
-import { stripe } from "../../../lib/stripe";
+import { getStripe } from "../../../lib/stripe"; // Updated import
 import { Stripe } from "stripe";
 import { supabase } from "../../../lib/supabase";
 import { getEnvironment } from "../../../lib/utils";
@@ -27,6 +27,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Webhook secret missing" }, { status: 500 });
   }
 
+  const stripe = getStripe(); // Use the function here
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
@@ -36,6 +37,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Webhook signature verification failed" }, { status: 400 });
   }
 
+  // Rest of the webhook logic remains unchanged...
   switch (event.type) {
     case "customer.subscription.created":
     case "customer.subscription.updated":

@@ -1,6 +1,6 @@
 // app/api/subscribe/route.ts
 import { NextResponse } from "next/server";
-import { stripe } from "../../../lib/stripe";
+import { getStripe } from "../../../lib/stripe"; // Updated import
 import { supabase } from "../../../lib/supabase";
 import { getEnvironment } from "../../../lib/utils";
 
@@ -25,13 +25,21 @@ export async function POST(req: Request) {
     const environment = getEnvironment();
     const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
     const stripePriceId = process.env.STRIPE_PRICE_ID;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.VERCEL_URL}`;
 
-    console.log("Subscribe endpoint:", { environment, tableName, stripePriceId });
+    console.log("Subscribe endpoint:", { environment, tableName, stripePriceId, baseUrl });
 
     if (!stripePriceId) {
       console.error("STRIPE_PRICE_ID is missing");
       return NextResponse.json({ error: "Missing Stripe Price ID" }, { status: 500 });
     }
+
+    if (!baseUrl) {
+      console.error("NEXT_PUBLIC_BASE_URL or VERCEL_URL is missing");
+      return NextResponse.json({ error: "Missing base URL configuration" }, { status: 500 });
+    }
+
+    const stripe = getStripe(); // Use the function here
 
     const { data: userSub, error: subError } = await supabase
       .from(tableName)
@@ -71,8 +79,8 @@ export async function POST(req: Request) {
       payment_method_types: ["card"],
       mode: "subscription",
       line_items: [{ price: stripePriceId, quantity: 1 }],
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/?canceled=true`,
+      success_url: `${baseUrl}/?success=true`,
+      cancel_url: `${baseUrl}/?canceled=true`,
     });
 
     return NextResponse.json({ sessionId: checkoutSession.id });
