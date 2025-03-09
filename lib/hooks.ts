@@ -163,7 +163,7 @@ export function useSubscription(user: User | null): SubscriptionData {
   });
   const [loading, setLoading] = useState<boolean>(true);
 
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
     if (!user) {
       setSubscription({ status: "FREE", clicksLeft: 10 });
       setLoading(false);
@@ -198,7 +198,7 @@ export function useSubscription(user: User | null): SubscriptionData {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]); // Dependencies: user (setSubscription and setLoading are stable)
 
   useEffect(() => {
     fetchSubscription();
@@ -227,7 +227,7 @@ export function useSubscription(user: User | null): SubscriptionData {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, fetchSubscription]); // Added fetchSubscription to dependencies
+  }, [user, fetchSubscription]); // fetchSubscription is now stable
 
   return { subscription, setSubscription, loading, fetchSubscription };
 }
