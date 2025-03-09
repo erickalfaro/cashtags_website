@@ -24,6 +24,8 @@ interface SupabaseError {
 interface SubscriptionStatus {
   status: "FREE" | "PREMIUM";
   clicksLeft: number;
+  currentPeriodEnd?: Date | null;
+  cancelAt?: Date | null;
 }
 
 interface SubscriptionData {
@@ -160,12 +162,14 @@ export function useSubscription(user: User | null): SubscriptionData {
   const [subscription, setSubscription] = useState<SubscriptionStatus>({
     status: "FREE",
     clicksLeft: 10,
+    currentPeriodEnd: null,
+    cancelAt: null,
   });
   const [loading, setLoading] = useState<boolean>(true);
 
   const fetchSubscription = useCallback(async () => {
     if (!user) {
-      setSubscription({ status: "FREE", clicksLeft: 10 });
+      setSubscription({ status: "FREE", clicksLeft: 10, currentPeriodEnd: null, cancelAt: null });
       setLoading(false);
       return;
     }
@@ -173,11 +177,10 @@ export function useSubscription(user: User | null): SubscriptionData {
     try {
       const environment = getEnvironment();
       const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
-      console.log("Fetching subscription from:", tableName);
 
       const { data, error } = await supabase
         .from(tableName)
-        .select("subscription_status, ticker_click_count")
+        .select("subscription_status, ticker_click_count, current_period_end, cancel_at")
         .eq("user_id", user.id)
         .single();
 
@@ -185,20 +188,39 @@ export function useSubscription(user: User | null): SubscriptionData {
 
       const status = data?.subscription_status || "FREE";
       const clickCount = data?.ticker_click_count || 0;
-      console.log("Subscription status fetched:", { status, clickCount });
+      const currentPeriodEnd = data?.current_period_end ? new Date(data.current_period_end) : null;
+      const cancelAt = data?.cancel_at ? new Date(data.cancel_at) : null;
 
-      if (status === "PREMIUM") {
-        setSubscription({ status: "PREMIUM", clicksLeft: Infinity });
+      // Check if cancellation date has passed
+      if (status === "PREMIUM" && cancelAt && cancelAt <= new Date()) {
+        setSubscription({
+          status: "FREE",
+          clicksLeft: Math.max(10 - clickCount, 0),
+          currentPeriodEnd: null,
+          cancelAt: null,
+        });
+      } else if (status === "PREMIUM") {
+        setSubscription({
+          status: "PREMIUM",
+          clicksLeft: Infinity,
+          currentPeriodEnd,
+          cancelAt,
+        });
       } else {
-        setSubscription({ status: "FREE", clicksLeft: Math.max(10 - clickCount, 0) });
+        setSubscription({
+          status: "FREE",
+          clicksLeft: Math.max(10 - clickCount, 0),
+          currentPeriodEnd: null,
+          cancelAt: null,
+        });
       }
     } catch (error) {
       console.error("Error fetching subscription:", error);
-      setSubscription({ status: "FREE", clicksLeft: 10 });
+      setSubscription({ status: "FREE", clicksLeft: 10, currentPeriodEnd: null, cancelAt: null });
     } finally {
       setLoading(false);
     }
-  }, [user]); // Dependencies: user (setSubscription and setLoading are stable)
+  }, [user]);
 
   useEffect(() => {
     fetchSubscription();
@@ -217,17 +239,14 @@ export function useSubscription(user: User | null): SubscriptionData {
           table: tableName,
           filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
-          console.log("Real-time subscription update:", payload);
-          fetchSubscription();
-        }
+        () => fetchSubscription()
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, fetchSubscription]); // fetchSubscription is now stable
+  }, [user, fetchSubscription]);
 
   return { subscription, setSubscription, loading, fetchSubscription };
 }

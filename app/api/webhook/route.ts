@@ -1,3 +1,4 @@
+// app/api/webhook/route.ts
 import { NextResponse } from "next/server";
 import { getStripe } from "../../../lib/stripe";
 import { Stripe } from "stripe";
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
       const customerId = session.customer as string;
       const subscriptionId = session.subscription as string;
 
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
       const { data: user, error } = await supabase
         .from(tableName)
         .select("user_id, ticker_click_count")
@@ -47,6 +49,8 @@ export async function POST(req: Request) {
           stripe_customer_id: customerId,
           stripe_subscription_id: subscriptionId,
           ticker_click_count: user.ticker_click_count || 0,
+          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          cancel_at: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
 
@@ -58,25 +62,38 @@ export async function POST(req: Request) {
       const subscription = event.data.object as Stripe.Subscription;
       const customerId = subscription.customer as string;
       const status = subscription.status === "active" ? "PREMIUM" : "FREE";
-
+      const cancelAt = subscription.cancel_at ? new Date(subscription.cancel_at * 1000) : null;
+    
       const { data: user, error } = await supabase
         .from(tableName)
         .select("user_id, ticker_click_count")
         .eq("stripe_customer_id", customerId)
         .single();
-
+    
       if (error || !user) return NextResponse.json({ error: "User not found" }, { status: 404 });
-
+    
+      const updates: any = {
+        subscription_status: status,
+        stripe_subscription_id: subscription.id,
+        ticker_click_count: user.ticker_click_count,
+        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        cancel_at: cancelAt ? cancelAt.toISOString() : null,
+        updated_at: new Date().toISOString(),
+      };
+    
+      // If cancelled and period has ended, revert to FREE
+      if (subscription.cancel_at_period_end && subscription.current_period_end * 1000 <= Date.now()) {
+        updates.subscription_status = "FREE";
+        updates.stripe_subscription_id = null;
+        updates.current_period_end = null;
+        updates.cancel_at = null;
+      }
+    
       const { error: updateError } = await supabase
         .from(tableName)
-        .update({
-          subscription_status: status,
-          stripe_subscription_id: subscription.id,
-          ticker_click_count: user.ticker_click_count,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updates)
         .eq("user_id", user.user_id);
-
+    
       if (updateError) return NextResponse.json({ error: "Failed to update subscription" }, { status: 500 });
       break;
     }
@@ -97,6 +114,8 @@ export async function POST(req: Request) {
           subscription_status: "FREE",
           stripe_subscription_id: null,
           ticker_click_count: user.ticker_click_count,
+          current_period_end: null,
+          cancel_at: null,
           updated_at: new Date().toISOString(),
         })
         .eq("stripe_subscription_id", subscription.id);
