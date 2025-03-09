@@ -1,6 +1,5 @@
-// app/api/webhook/route.ts
 import { NextResponse } from "next/server";
-import { getStripe } from "../../../lib/stripe"; // Updated import
+import { getStripe } from "../../../lib/stripe";
 import { Stripe } from "stripe";
 import { supabase } from "../../../lib/supabase";
 import { getEnvironment } from "../../../lib/utils";
@@ -9,91 +8,102 @@ export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature");
   const body = await req.text();
 
-  console.log("Webhook received - Signature:", sig);
-
-  if (!sig) {
-    console.error("No Stripe signature provided");
-    return NextResponse.json({ error: "No signature" }, { status: 400 });
-  }
+  if (!sig) return NextResponse.json({ error: "No signature" }, { status: 400 });
 
   const environment = getEnvironment();
   const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-  console.log("Webhook - Environment:", environment, "Table:", tableName, "Secret Defined:", !!webhookSecret);
+  if (!webhookSecret) return NextResponse.json({ error: "Webhook secret missing" }, { status: 500 });
 
-  if (!webhookSecret) {
-    console.error("STRIPE_WEBHOOK_SECRET not configured");
-    return NextResponse.json({ error: "Webhook secret missing" }, { status: 500 });
-  }
-
-  const stripe = getStripe(); // Use the function here
+  const stripe = getStripe();
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-    console.log("Webhook event constructed - Type:", event.type, "ID:", event.id);
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
     return NextResponse.json({ error: "Webhook signature verification failed" }, { status: 400 });
   }
 
-  // Rest of the webhook logic remains unchanged...
   switch (event.type) {
-    case "customer.subscription.created":
-    case "customer.subscription.updated":
+    case "checkout.session.completed": {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const customerId = session.customer as string;
+      const subscriptionId = session.subscription as string;
+
+      const { data: user, error } = await supabase
+        .from(tableName)
+        .select("user_id, ticker_click_count")
+        .eq("stripe_customer_id", customerId)
+        .single();
+
+      if (error || !user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+      const { error: updateError } = await supabase
+        .from(tableName)
+        .upsert({
+          user_id: user.user_id,
+          subscription_status: "PREMIUM",
+          stripe_customer_id: customerId,
+          stripe_subscription_id: subscriptionId,
+          ticker_click_count: user.ticker_click_count || 0,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+
+      if (updateError) return NextResponse.json({ error: "Failed to update subscription" }, { status: 500 });
+      break;
+    }
+
+    case "customer.subscription.updated": {
       const subscription = event.data.object as Stripe.Subscription;
       const customerId = subscription.customer as string;
       const status = subscription.status === "active" ? "PREMIUM" : "FREE";
 
-      console.log("Processing subscription - Customer:", customerId, "Status:", status);
-
-      const { data: user, error: userError } = await supabase
+      const { data: user, error } = await supabase
         .from(tableName)
-        .select("user_id")
+        .select("user_id, ticker_click_count")
         .eq("stripe_customer_id", customerId)
         .single();
 
-      if (userError) {
-        console.error("Supabase fetch error:", userError);
-        return NextResponse.json({ error: "Database error fetching user" }, { status: 500 });
-      }
-
-      if (!user) {
-        console.warn("No user found for customerId:", customerId);
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
-      }
+      if (error || !user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
       const { error: updateError } = await supabase
         .from(tableName)
         .update({
           subscription_status: status,
           stripe_subscription_id: subscription.id,
+          ticker_click_count: user.ticker_click_count,
           updated_at: new Date().toISOString(),
         })
         .eq("user_id", user.user_id);
 
-      if (updateError) {
-        console.error("Supabase update error:", updateError);
-        return NextResponse.json({ error: "Failed to update subscription" }, { status: 500 });
-      }
-      console.log("Subscription updated - User:", user.user_id, "Status:", status);
+      if (updateError) return NextResponse.json({ error: "Failed to update subscription" }, { status: 500 });
       break;
+    }
 
-    case "customer.subscription.deleted":
-      const deletedSub = event.data.object as Stripe.Subscription;
-      console.log("Deleting subscription - ID:", deletedSub.id);
-
-      const { error: deleteError } = await supabase
+    case "customer.subscription.deleted": {
+      const subscription = event.data.object as Stripe.Subscription;
+      const { data: user, error } = await supabase
         .from(tableName)
-        .update({ subscription_status: "FREE", stripe_subscription_id: null })
-        .eq("stripe_subscription_id", deletedSub.id);
+        .select("ticker_click_count")
+        .eq("stripe_subscription_id", subscription.id)
+        .single();
 
-      if (deleteError) {
-        console.error("Supabase delete error:", deleteError);
-        return NextResponse.json({ error: "Failed to delete subscription" }, { status: 500 });
-      }
-      console.log("Subscription deleted successfully");
+      if (error || !user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+      const { error: updateError } = await supabase
+        .from(tableName)
+        .update({
+          subscription_status: "FREE",
+          stripe_subscription_id: null,
+          ticker_click_count: user.ticker_click_count,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("stripe_subscription_id", subscription.id);
+
+      if (updateError) return NextResponse.json({ error: "Failed to delete subscription" }, { status: 500 });
       break;
+    }
 
     default:
       console.log("Unhandled event type:", event.type);
