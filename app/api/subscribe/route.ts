@@ -1,3 +1,4 @@
+// app/api/subscribe/route.ts
 import { NextResponse } from "next/server";
 import { stripe } from "../../../lib/stripe";
 import { supabase } from "../../../lib/supabase";
@@ -21,6 +22,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized: User ID mismatch" }, { status: 401 });
     }
 
+    // Determine environment using the updated getEnvironment function
     const environment = getEnvironment();
     const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
     const stripePriceId =
@@ -35,6 +37,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing Stripe Price ID" }, { status: 500 });
     }
 
+    // Fetch or create subscription record
     const { data: userSub, error: subError } = await supabase
       .from(tableName)
       .select("stripe_customer_id")
@@ -68,6 +71,7 @@ export async function POST(req: Request) {
       console.log("Created new customer and subscription record:", customerId);
     }
 
+    // Create Stripe checkout session
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ["card"],
@@ -77,6 +81,7 @@ export async function POST(req: Request) {
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/?canceled=true`,
     });
 
+    // Return the session ID as originally intended
     return NextResponse.json({ sessionId: checkoutSession.id });
   } catch (error) {
     console.error("Error creating checkout session:", error);
