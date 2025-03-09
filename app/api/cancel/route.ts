@@ -4,7 +4,7 @@ import { getStripe } from "../../../lib/stripe";
 import { NextResponse } from "next/server";
 import { getEnvironment } from "../../../lib/utils";
 
-export async function POST(_req: Request) { // Changed req to _req
+export async function POST() { // Removed _req
   const user = await supabase.auth.getUser();
   if (!user.data.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
