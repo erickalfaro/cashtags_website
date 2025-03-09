@@ -110,7 +110,7 @@ export default function Home() {
   }
 
   // Determine subscription state with explicit null/undefined handling
-  const isFree = subscription.status !== "PREMIUM"; // Default to FREE if status isn't PREMIUM
+  const isFree = subscription.status !== "PREMIUM";
   const hasCancelAt = subscription.cancelAt !== null && subscription.cancelAt !== undefined;
   const isPremiumActive = subscription.status === "PREMIUM" && !hasCancelAt;
   const isPremiumCancelling =
@@ -118,8 +118,7 @@ export default function Home() {
   const isPostCancellation =
     subscription.status === "PREMIUM" && hasCancelAt && subscription.cancelAt! <= new Date();
 
-  // Adjust status for post-cancellation
-  const effectiveStatus = isPostCancellation ? "FREE" : subscription.status;
+  // Adjust clicks for post-cancellation
   const effectiveClicksLeft = isPostCancellation ? subscription.clicksLeft : subscription.clicksLeft;
 
   return (
