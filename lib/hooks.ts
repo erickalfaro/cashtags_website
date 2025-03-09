@@ -194,7 +194,7 @@ export function useSubscription(user: User | null): SubscriptionData {
       }
     } catch (error) {
       console.error("Error fetching subscription:", error);
-      setSubscription({ status: "FREE", clicksLeft: 10 }); // Fallback to default
+      setSubscription({ status: "FREE", clicksLeft: 10 });
     } finally {
       setLoading(false);
     }
@@ -227,7 +227,7 @@ export function useSubscription(user: User | null): SubscriptionData {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, fetchSubscription]); // Added fetchSubscription to dependencies
 
   return { subscription, setSubscription, loading, fetchSubscription };
 }

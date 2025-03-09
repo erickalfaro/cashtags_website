@@ -1,9 +1,8 @@
-// app/api/subscribe/route.ts (Updated to merge best of both)
+// app/api/subscribe/route.ts
 import { NextResponse } from "next/server";
 import { getStripe } from "../../../lib/stripe";
 import { supabase } from "../../../lib/supabase";
 import { getEnvironment } from "../../../lib/utils";
-import { Stripe } from "stripe";
 
 export async function POST(req: Request) {
   try {
@@ -28,7 +27,7 @@ export async function POST(req: Request) {
 
     const environment = getEnvironment();
     const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
-    const stripePriceId = process.env.STRIPE_PRICE_ID; // Align with your env var
+    const stripePriceId = process.env.STRIPE_PRICE_ID;
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.VERCEL_URL}`;
 
     if (!stripePriceId) {
@@ -43,7 +42,6 @@ export async function POST(req: Request) {
 
     const stripe = getStripe();
 
-    // Check for existing subscription
     const { data: userSub, error: subError } = await supabase
       .from(tableName)
       .select("stripe_customer_id, subscription_status, stripe_subscription_id")
@@ -64,7 +62,6 @@ export async function POST(req: Request) {
         }
       } catch (err) {
         console.error("Error verifying subscription with Stripe:", err);
-        // Proceed if Stripe check fails (e.g., subscription deleted)
       }
     }
 
