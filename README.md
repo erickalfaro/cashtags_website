@@ -10,6 +10,7 @@ Website:
 - Sign up recurring vs sign up one time
 - Add a legal page for disclaimers
 - website does a full refresh when looking away 
+- add ddos protection
 
 Supabase: 
 - RLS? 
