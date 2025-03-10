@@ -1,5 +1,5 @@
 // types/components.ts
-import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "./api"; // Updated import
+import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "./api";
 
 export interface TickerTapeProps {
   data: TickerTapeItem[];
@@ -9,14 +9,13 @@ export interface TickerTapeProps {
   sortConfig: { key: keyof TickerTapeItem | null; direction: "asc" | "desc" };
 }
 
-export interface StockLedgerProps {
-  data: StockLedgerData;
-  loading: boolean;
-}
-
-export interface MarketCanvasProps {
-  data: MarketCanvasData;
+export interface StockOverviewProps {
+  data: {
+    marketCanvas: MarketCanvasData;
+    stockLedger: StockLedgerData;
+  };
   selectedStock: string | null;
+  loading: boolean;
 }
 
 export interface PostViewerProps {

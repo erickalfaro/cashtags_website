@@ -7,15 +7,13 @@ import { AuthButtons } from "../components/AuthButtons";
 import { SubscriptionButton } from "../components/SubscriptionButton";
 import { RefreshButton } from "../components/RefreshButton";
 import { TickerTape } from "../components/TickerTape";
-import { StockLedger } from "../components/StockLedger";
-import { MarketCanvas } from "../components/MarketCanvas";
+import { StockOverview } from "../components/StockOverview"; // New import
 import { PostViewer } from "../components/PostViewer";
 import { GenAISummary } from "../components/GenAISummary";
 import { TickerTapeItem } from "../types/api";
-import { supabase } from "../lib/supabase";
 
 export default function Home() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const {
     tickerTapeData,
     setTickerTapeData,
@@ -77,39 +75,15 @@ export default function Home() {
     setTickerTapeData(sortedData);
   };
 
-  const handleCancelSubscription = async () => {
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) throw new Error("No active session. Please log in again.");
-
-      const accessToken = session.access_token;
-      const response = await fetch("/api/cancel", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to cancel subscription");
-      alert(data.message);
-      fetchSubscription(); // Refresh state after cancellation
-    } catch (error) {
-      console.error("Error canceling subscription:", error);
-      alert("Failed to cancel subscription: " + (error instanceof Error ? error.message : "Unknown error"));
-    }
-  };
-
   if (!user) {
     return (
-      <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center justify-center min-h-screen text-gray-200">
         <h1 className="text-2xl font-bold mb-4">Please Log In</h1>
         <AuthButtons />
       </div>
     );
   }
 
-  // Determine subscription state with explicit null/undefined handling
   const isFree = subscription.status !== "PREMIUM";
   const hasCancelAt = subscription.cancelAt !== null && subscription.cancelAt !== undefined;
   const isPremiumActive = subscription.status === "PREMIUM" && !hasCancelAt;
@@ -118,31 +92,22 @@ export default function Home() {
   const isPostCancellation =
     subscription.status === "PREMIUM" && hasCancelAt && subscription.cancelAt! <= new Date();
 
-  // Adjust clicks for post-cancellation
   const effectiveClicksLeft = isPostCancellation ? subscription.clicksLeft : subscription.clicksLeft;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen relative">
-      <div className="header-controls">
-        <h1>Welcome, {user.email}</h1>
-        <RefreshButton onClick={fetchTickerTapeData} />
-        <SubscriptionButton
-          user={user}
-          disabled={isPremiumActive} // Greyed out only for active PREMIUM
-          onSuccess={fetchSubscription} // Refresh state after resubscription
-        />
-        <button
-          onClick={handleCancelSubscription}
-          disabled={isFree || isPremiumCancelling || isPostCancellation} // Greyed out for FREE or cancelling/post-cancellation
-          className={`px-4 py-2 bg-red-600 text-white rounded ${
-            isFree || isPremiumCancelling || isPostCancellation ? "opacity-50 cursor-not-allowed" : "hover:bg-red-700"
-          }`}
-        >
-          Unsubscribe
-        </button>
-        <button onClick={signOut} className="logout-btn">
-          Logout
-        </button>
+    <div className="text-gray-200">
+      <div className="header-controls flex flex-wrap items-center gap-4 mb-6">
+        <h1 className="text-xl font-semibold flex-grow">Welcome, {user.email}</h1>
+        <div className="flex items-center gap-4">
+          <RefreshButton onClick={fetchTickerTapeData} />
+          {(isFree || isPostCancellation) && (
+            <SubscriptionButton
+              user={user}
+              disabled={false}
+              onSuccess={fetchSubscription}
+            />
+          )}
+        </div>
       </div>
       <p className="mb-4">
         {isFree || isPostCancellation
@@ -161,8 +126,11 @@ export default function Home() {
         onSort={handleSort}
         sortConfig={sortConfig}
       />
-      <MarketCanvas data={marketCanvasData} selectedStock={selectedStock} />
-      <StockLedger data={stockLedgerData} loading={stockLedgerLoading} />
+      <StockOverview
+        data={{ marketCanvas: marketCanvasData, stockLedger: stockLedgerData }}
+        selectedStock={selectedStock}
+        loading={stockLedgerLoading}
+      />
       <GenAISummary postsData={postsData} loading={postsLoading} selectedStock={selectedStock} />
       <PostViewer data={postsData} loading={postsLoading} selectedStock={selectedStock} />
     </div>

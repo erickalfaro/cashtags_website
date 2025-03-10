@@ -47,7 +47,7 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
   return (
     <div className="mt-6 GenAISummary">
       <div className="container-header">
-        GenAI Summary {loading || summaryLoading ? "(Loading...)" : ""}
+        AI Summary {loading || summaryLoading ? "(Loading...)" : ""}
       </div>
       <div className="container-content p-4 relative">
         {summaryLoading && (

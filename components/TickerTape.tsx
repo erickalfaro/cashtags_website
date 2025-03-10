@@ -34,7 +34,7 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
   return (
     <div className="mt-6 TickerTape">
       <div className="container-header">
-        Ticker Tape {loading ? "(Updating...)" : ""}
+        Top Trending on Socials {loading ? "(Updating...)" : ""}
       </div>
       <div className="container-content">
         <table className="border-collapse w-full">
