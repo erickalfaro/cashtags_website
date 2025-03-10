@@ -23,6 +23,7 @@
   --spacing-sm: 0.3125rem; /* 5px */
   --spacing-md: 0.625rem; /* 10px */
   --spacing-lg: 0.9375rem; /* 15px */
+  --stock-overview-chart-height: 300px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -172,4 +173,44 @@ header {
 /* Utilities */
 .hover\:bg-gray-800:hover {
   @apply bg-gray-800;
+}
+
+/* app/globals.css */
+
+/* Add new variable for chart height */
+:root {
+  --stock-overview-chart-height: 300px; /* Consistent with other components */
+}
+
+@media (min-width: 768px) {
+  :root {
+    --stock-overview-chart-height: 250px; /* Matches TickerTape desktop height */
+  }
+}
+
+/* StockOverview Specific Styles */
+.StockOverview {
+  @apply container mt-5;
+}
+
+.StockOverview .chart-section {
+  @apply relative;
+}
+
+.StockOverview .chart-wrapper {
+  @apply w-full;
+}
+
+.StockOverview .table-section {
+  @apply w-full;
+}
+
+.StockOverview th,
+.StockOverview td {
+  @apply border border-[var(--border-color)] p-[6px_8px] transition-colors duration-200 ease-in;
+}
+
+/* Ensure table header matches container-header styling */
+.StockOverview thead tr {
+  @apply bg-gradient-to-r from-[var(--header-gradient-start)] to-[var(--header-gradient-end)] text-[var(--text-primary)] font-bold;
 }

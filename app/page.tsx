@@ -7,10 +7,10 @@ import { AuthButtons } from "../components/AuthButtons";
 import { SubscriptionButton } from "../components/SubscriptionButton";
 import { RefreshButton } from "../components/RefreshButton";
 import { TickerTape } from "../components/TickerTape";
-import { StockLedger } from "../components/StockLedger";
 import { MarketCanvas } from "../components/MarketCanvas";
-import { PostViewer } from "../components/PostViewer";
 import { GenAISummary } from "../components/GenAISummary";
+import { StockLedger } from "../components/StockLedger";
+import { PostViewer } from "../components/PostViewer";
 import { TickerTapeItem } from "../types/api";
 import { supabase } from "../lib/supabase";
 
@@ -77,30 +77,6 @@ export default function Home() {
     setTickerTapeData(sortedData);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleCancelSubscription = async () => {
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) throw new Error("No active session. Please log in again.");
-
-      const accessToken = session.access_token;
-      const response = await fetch("/api/cancel", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to cancel subscription");
-      alert(data.message);
-      fetchSubscription();
-    } catch (error) {
-      console.error("Error canceling subscription:", error);
-      alert("Failed to cancel subscription: " + (error instanceof Error ? error.message : "Unknown error"));
-    }
-  };
-
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-gray-200">
@@ -126,7 +102,6 @@ export default function Home() {
         <h1 className="text-xl font-semibold flex-grow">Welcome, {user.email}</h1>
         <div className="flex items-center gap-4">
           <RefreshButton onClick={fetchTickerTapeData} />
-          {/* Show Subscribe button only if user is not subscribed */}
           {(isFree || isPostCancellation) && (
             <SubscriptionButton
               user={user}
@@ -154,8 +129,8 @@ export default function Home() {
         sortConfig={sortConfig}
       />
       <MarketCanvas data={marketCanvasData} selectedStock={selectedStock} />
-      <StockLedger data={stockLedgerData} loading={stockLedgerLoading} />
       <GenAISummary postsData={postsData} loading={postsLoading} selectedStock={selectedStock} />
+      <StockLedger data={stockLedgerData} loading={stockLedgerLoading} />
       <PostViewer data={postsData} loading={postsLoading} selectedStock={selectedStock} />
     </div>
   );
