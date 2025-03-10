@@ -7,7 +7,7 @@ import { AuthButtons } from "../components/AuthButtons";
 import { SubscriptionButton } from "../components/SubscriptionButton";
 import { RefreshButton } from "../components/RefreshButton";
 import { TickerTape } from "../components/TickerTape";
-import { StockOverview } from "../components/StockOverview"; // New import
+import { StockOverview } from "../components/StockOverview";
 import { PostViewer } from "../components/PostViewer";
 import { GenAISummary } from "../components/GenAISummary";
 import { TickerTapeItem } from "../types/api";
@@ -56,7 +56,6 @@ export default function Home() {
     const sortedData = [...tickerTapeData].sort((a, b) => {
       const aValue = a[key] ?? (typeof a[key] === "number" ? 0 : a[key]);
       const bValue = b[key] ?? (typeof b[key] === "number" ? 0 : b[key]);
-
       if (typeof aValue === "number" && typeof bValue === "number") {
         return direction === "asc" ? aValue - bValue : bValue - aValue;
       }
@@ -105,6 +104,14 @@ export default function Home() {
               user={user}
               disabled={false}
               onSuccess={fetchSubscription}
+            />
+          )}
+          {isPremiumCancelling && (
+            <SubscriptionButton
+              user={user}
+              disabled={false}
+              onSuccess={fetchSubscription}
+              label="Reactivate Subscription"
             />
           )}
         </div>
