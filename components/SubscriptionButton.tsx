@@ -12,7 +12,8 @@ export const SubscriptionButton: React.FC<{
   user: User;
   disabled?: boolean;
   onSuccess?: () => void;
-}> = ({ user, disabled = false, onSuccess }) => {
+  label?: string; // New optional prop
+}> = ({ user, disabled = false, onSuccess, label }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +46,7 @@ export const SubscriptionButton: React.FC<{
         const { error: redirectError } = await stripe.redirectToCheckout({ sessionId: data.sessionId });
         if (redirectError) throw new Error(redirectError.message);
       } else if (data.message) {
-        // Un-cancel case: no redirect needed, just refresh subscription
+        // Un-cancel case: refresh subscription
         console.log("Subscription reactivated:", data.message);
         if (onSuccess) onSuccess();
       } else {
@@ -59,6 +60,8 @@ export const SubscriptionButton: React.FC<{
     }
   };
 
+  const buttonText = loading ? "Loading..." : label || "Subscribe to PREMIUM ($10/month)";
+
   return (
     <div>
       <button
@@ -68,7 +71,7 @@ export const SubscriptionButton: React.FC<{
           loading || disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"
         }`}
       >
-        {loading ? "Loading..." : "Subscribe to PREMIUM ($10/month)"}
+        {buttonText}
       </button>
       {error && <p className="text-red-500 mt-2">{error}</p>}
     </div>
