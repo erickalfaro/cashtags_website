@@ -77,6 +77,7 @@ export default function Home() {
     setTickerTapeData(sortedData);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleCancelSubscription = async () => {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -129,11 +130,10 @@ export default function Home() {
           {(isFree || isPostCancellation) && (
             <SubscriptionButton
               user={user}
-              disabled={false} // Enabled for unsubscribed users
+              disabled={false}
               onSuccess={fetchSubscription}
             />
           )}
-          {/* Unsubscribe button removed from Home page; moved to My Account */}
         </div>
       </div>
       <p className="mb-4">
