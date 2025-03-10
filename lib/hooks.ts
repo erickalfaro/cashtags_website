@@ -24,13 +24,15 @@ interface SupabaseError {
 interface SubscriptionStatus {
   status: "FREE" | "PREMIUM";
   clicksLeft: number;
+  currentPeriodEnd?: Date | null;
+  cancelAt?: Date | null;
 }
 
 interface SubscriptionData {
   subscription: SubscriptionStatus;
   setSubscription: React.Dispatch<React.SetStateAction<SubscriptionStatus>>;
   loading: boolean;
-  fetchSubscription: () => Promise<void>; // Added for manual refresh
+  fetchSubscription: () => Promise<void>;
 }
 
 export interface TickerData {
@@ -47,7 +49,7 @@ export interface TickerData {
   handleTickerClick: (ticker: string) => void;
   errorMessage: string | null;
   subscription: SubscriptionStatus;
-  fetchSubscription: () => Promise<void>; // Expose for manual refresh
+  fetchSubscription: () => Promise<void>;
 }
 
 export function useAuth() {
@@ -108,6 +110,7 @@ export function useAuth() {
             .insert({
               user_id: loggedInUser.id,
               subscription_status: "FREE",
+              ticker_click_count: 0, // Initialize with 0 clicks
             });
 
           if (insertError) {
@@ -159,11 +162,14 @@ export function useSubscription(user: User | null): SubscriptionData {
   const [subscription, setSubscription] = useState<SubscriptionStatus>({
     status: "FREE",
     clicksLeft: 10,
+    currentPeriodEnd: null,
+    cancelAt: null,
   });
   const [loading, setLoading] = useState<boolean>(true);
 
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
     if (!user) {
+      setSubscription({ status: "FREE", clicksLeft: 10, currentPeriodEnd: null, cancelAt: null });
       setLoading(false);
       return;
     }
@@ -171,41 +177,50 @@ export function useSubscription(user: User | null): SubscriptionData {
     try {
       const environment = getEnvironment();
       const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
-      console.log("Fetching subscription from:", tableName);
 
       const { data, error } = await supabase
         .from(tableName)
-        .select("subscription_status")
+        .select("subscription_status, ticker_click_count, current_period_end, cancel_at")
         .eq("user_id", user.id)
         .single();
 
       if (error && error.code !== "PGRST116") throw error;
 
       const status = data?.subscription_status || "FREE";
-      console.log("Subscription status fetched:", status);
+      const clickCount = data?.ticker_click_count || 0;
+      const currentPeriodEnd = data?.current_period_end ? new Date(data.current_period_end) : null;
+      const cancelAt = data?.cancel_at ? new Date(data.cancel_at) : null;
 
-      if (status === "PREMIUM") {
-        setSubscription({ status: "PREMIUM", clicksLeft: Infinity });
+      // Check if cancellation date has passed
+      if (status === "PREMIUM" && cancelAt && cancelAt <= new Date()) {
+        setSubscription({
+          status: "FREE",
+          clicksLeft: Math.max(10 - clickCount, 0),
+          currentPeriodEnd: null,
+          cancelAt: null,
+        });
+      } else if (status === "PREMIUM") {
+        setSubscription({
+          status: "PREMIUM",
+          clicksLeft: Infinity,
+          currentPeriodEnd,
+          cancelAt,
+        });
       } else {
-        const now = new Date();
-        const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-        const { data: clicks, error: clicksError } = await supabase
-          .from("ticker_clicks")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("month_year", monthYear);
-
-        if (clicksError) throw clicksError;
-
-        const clicksUsed = clicks?.length || 0;
-        setSubscription({ status: "FREE", clicksLeft: Math.max(10 - clicksUsed, 0) });
+        setSubscription({
+          status: "FREE",
+          clicksLeft: Math.max(10 - clickCount, 0),
+          currentPeriodEnd: null,
+          cancelAt: null,
+        });
       }
     } catch (error) {
       console.error("Error fetching subscription:", error);
+      setSubscription({ status: "FREE", clicksLeft: 10, currentPeriodEnd: null, cancelAt: null });
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchSubscription();
@@ -224,17 +239,14 @@ export function useSubscription(user: User | null): SubscriptionData {
           table: tableName,
           filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
-          console.log("Real-time subscription update:", payload);
-          fetchSubscription();
-        }
+        () => fetchSubscription()
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, fetchSubscription]);
 
   return { subscription, setSubscription, loading, fetchSubscription };
 }
@@ -281,16 +293,34 @@ export function useTickerData(user: User | null): TickerData {
       if (!user || subLoading) return;
 
       if (subscription.status === "FREE" && subscription.clicksLeft <= 0) {
-        setErrorMessage("Free limit reached (10 tickers/month). Upgrade to PREMIUM for unlimited access.");
+        setErrorMessage("Free limit reached (10 tickers). Upgrade to PREMIUM for unlimited access.");
         return;
       }
 
-      const { error: clickError } = await supabase
-        .from("ticker_clicks")
-        .insert({ user_id: user.id, ticker });
+      const environment = getEnvironment();
+      const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
 
-      if (clickError) {
-        console.error("Error recording ticker click:", clickError);
+      // Increment ticker_click_count
+      const { data, error: clickError } = await supabase
+        .from(tableName)
+        .select("ticker_click_count")
+        .eq("user_id", user.id)
+        .single();
+
+      if (clickError && clickError.code !== "PGRST116") {
+        console.error("Error fetching ticker click count:", clickError);
+        setErrorMessage("Failed to record ticker click.");
+        return;
+      }
+
+      const currentCount = data?.ticker_click_count || 0;
+      const { error: updateError } = await supabase
+        .from(tableName)
+        .update({ ticker_click_count: currentCount + 1, updated_at: new Date().toISOString() })
+        .eq("user_id", user.id);
+
+      if (updateError) {
+        console.error("Error updating ticker click count:", updateError);
         setErrorMessage("Failed to record ticker click.");
         return;
       }
@@ -357,6 +387,6 @@ export function useTickerData(user: User | null): TickerData {
     handleTickerClick,
     errorMessage,
     subscription,
-    fetchSubscription, // Expose for manual refresh
+    fetchSubscription,
   };
 }

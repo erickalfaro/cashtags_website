@@ -12,6 +12,7 @@ import { MarketCanvas } from "../components/MarketCanvas";
 import { PostViewer } from "../components/PostViewer";
 import { GenAISummary } from "../components/GenAISummary";
 import { TickerTapeItem } from "../types/api";
+import { supabase } from "../lib/supabase";
 
 export default function Home() {
   const { user, signOut } = useAuth();
@@ -29,7 +30,7 @@ export default function Home() {
     handleTickerClick,
     errorMessage,
     subscription,
-    fetchSubscription, // Added for manual refresh
+    fetchSubscription,
   } = useTickerData(user);
 
   const [sortConfig, setSortConfig] = useState<{
@@ -40,13 +41,11 @@ export default function Home() {
     direction: "asc",
   });
 
-  // Check for successful Stripe redirect and refresh subscription
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("success") === "true") {
       console.log("Stripe payment success detected, refreshing subscription...");
       fetchSubscription();
-      // Optionally, clear the URL params to avoid repeated triggers
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [fetchSubscription]);
@@ -57,14 +56,48 @@ export default function Home() {
     setSortConfig({ key, direction });
 
     const sortedData = [...tickerTapeData].sort((a, b) => {
-      const aValue = a[key] ?? 0; // Fallback for null/undefined
-      const bValue = b[key] ?? 0;
-      if (direction === "asc") {
-        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+      const aValue = a[key] ?? (typeof a[key] === "number" ? 0 : a[key]);
+      const bValue = b[key] ?? (typeof b[key] === "number" ? 0 : b[key]);
+
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return direction === "asc" ? aValue - bValue : bValue - aValue;
       }
-      return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return direction === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+      if (Array.isArray(aValue) && Array.isArray(bValue)) {
+        const aLength = aValue.length;
+        const bLength = bValue.length;
+        return direction === "asc" ? aLength - bLength : bLength - aLength;
+      }
+      return 0;
     });
-    setTickerTapeData(sortedData); // Persist the sorted data
+    setTickerTapeData(sortedData);
+  };
+
+  const handleCancelSubscription = async () => {
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) throw new Error("No active session. Please log in again.");
+
+      const accessToken = session.access_token;
+      const response = await fetch("/api/cancel", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to cancel subscription");
+      alert(data.message);
+      fetchSubscription(); // Refresh state after cancellation
+    } catch (error) {
+      console.error("Error canceling subscription:", error);
+      alert("Failed to cancel subscription: " + (error instanceof Error ? error.message : "Unknown error"));
+    }
   };
 
   if (!user) {
@@ -76,19 +109,49 @@ export default function Home() {
     );
   }
 
+  // Determine subscription state with explicit null/undefined handling
+  const isFree = subscription.status !== "PREMIUM";
+  const hasCancelAt = subscription.cancelAt !== null && subscription.cancelAt !== undefined;
+  const isPremiumActive = subscription.status === "PREMIUM" && !hasCancelAt;
+  const isPremiumCancelling =
+    subscription.status === "PREMIUM" && hasCancelAt && subscription.cancelAt! > new Date();
+  const isPostCancellation =
+    subscription.status === "PREMIUM" && hasCancelAt && subscription.cancelAt! <= new Date();
+
+  // Adjust clicks for post-cancellation
+  const effectiveClicksLeft = isPostCancellation ? subscription.clicksLeft : subscription.clicksLeft;
+
   return (
     <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen relative">
       <div className="header-controls">
         <h1>Welcome, {user.email}</h1>
         <RefreshButton onClick={fetchTickerTapeData} />
-        {subscription.status === "FREE" && <SubscriptionButton user={user} />}
+        <SubscriptionButton
+          user={user}
+          disabled={isPremiumActive} // Greyed out only for active PREMIUM
+          onSuccess={fetchSubscription} // Refresh state after resubscription
+        />
+        <button
+          onClick={handleCancelSubscription}
+          disabled={isFree || isPremiumCancelling || isPostCancellation} // Greyed out for FREE or cancelling/post-cancellation
+          className={`px-4 py-2 bg-red-600 text-white rounded ${
+            isFree || isPremiumCancelling || isPostCancellation ? "opacity-50 cursor-not-allowed" : "hover:bg-red-700"
+          }`}
+        >
+          Unsubscribe
+        </button>
         <button onClick={signOut} className="logout-btn">
           Logout
         </button>
       </div>
       <p className="mb-4">
-        Subscription: {subscription.status}{" "}
-        {subscription.status === "FREE" ? `(${subscription.clicksLeft} clicks left)` : ""}
+        {isFree || isPostCancellation
+          ? `FREE Tier (${effectiveClicksLeft} clicks left)`
+          : isPremiumActive
+          ? `PREMIUM Tier - Active${subscription.currentPeriodEnd ? ` - Renews on ${subscription.currentPeriodEnd.toLocaleDateString()}` : ""}`
+          : isPremiumCancelling
+          ? `PREMIUM Tier - Cancelling on ${subscription.cancelAt!.toLocaleDateString()}`
+          : ""}
       </p>
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
       <TickerTape
