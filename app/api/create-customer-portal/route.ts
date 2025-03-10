@@ -1,39 +1,41 @@
-// app/api/stripe-customer-portal/route.ts
+// app/api/create-customer-portal/route.ts
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { supabase } from "@/lib/supabase";
+import { getEnvironment } from "@/lib/utils";
 
 export async function POST(req: Request) {
-  console.log("POST request to /api/stripe-customer-portal received");
-
   const authHeader = req.headers.get("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    console.error("Missing or invalid Authorization header");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const accessToken = authHeader.split(" ")[1];
   const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
   if (authError || !user) {
-    console.error("Supabase auth error:", authError?.message);
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { customerId } = await req.json();
-  if (!customerId) {
-    console.error("Missing customerId in request body");
-    return NextResponse.json({ error: "Missing customer ID" }, { status: 400 });
-  }
+  const environment = getEnvironment();
+  const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
 
-  console.log("Processing Stripe portal session for customerId:", customerId);
+  const { data: subData, error: subError } = await supabase
+    .from(tableName)
+    .select("stripe_customer_id")
+    .eq("user_id", user.id)
+    .single();
+
+  if (subError || !subData?.stripe_customer_id) {
+    console.error("Supabase query error:", subError?.message);
+    return NextResponse.json({ error: "No Stripe customer ID found" }, { status: 400 });
+  }
 
   const stripe = getStripe();
   try {
     const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customerId,
+      customer: subData.stripe_customer_id,
       return_url: `${process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.VERCEL_URL}`}/billing`,
     });
-    console.log("Stripe portal session created:", portalSession.url);
     return NextResponse.json({ url: portalSession.url });
   } catch (error) {
     console.error("Stripe error:", error instanceof Error ? error.message : error);

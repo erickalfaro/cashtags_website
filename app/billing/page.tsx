@@ -1,11 +1,10 @@
 // app/billing/page.tsx
 "use client";
 
-import { useState } from "react"; // Removed useEffect
+import { useState } from "react";
 import { useAuth } from "@/lib/hooks";
 import { AuthButtons } from "@/components/AuthButtons";
 import { supabase } from "@/lib/supabase";
-import { getEnvironment } from "@/lib/utils";
 
 export default function Billing() {
   const { user } = useAuth();
@@ -23,29 +22,23 @@ export default function Billing() {
       if (sessionError || !session) throw new Error("No active session.");
 
       const accessToken = session.access_token;
-      const environment = getEnvironment();
-      const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
 
-      const { data: subData, error: subError } = await supabase
-        .from(tableName)
-        .select("stripe_customer_id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (subError || !subData?.stripe_customer_id) throw new Error("No Stripe customer ID found.");
-
-      const response = await fetch("/api/stripe-customer-portal", {
+      const response = await fetch("/api/create-customer-portal", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ customerId: subData.stripe_customer_id }),
       });
 
-      const { url } = await response.json();
-      if (!response.ok) throw new Error("Failed to generate portal link.");
-      window.location.href = url;
+      const responseData = await response.json();
+      console.log("API Response:", responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData.error || "Failed to generate portal link.");
+      }
+
+      window.location.href = responseData.url;
     } catch (err) {
       console.error("Error accessing customer portal:", err);
       setError(err instanceof Error ? err.message : "An unexpected error occurred.");
