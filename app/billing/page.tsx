@@ -1,7 +1,7 @@
 // app/billing/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react"; // Removed useEffect
 import { useAuth } from "@/lib/hooks";
 import { AuthButtons } from "@/components/AuthButtons";
 import { supabase } from "@/lib/supabase";
@@ -56,7 +56,7 @@ export default function Billing() {
 
   if (!user) {
     return (
-      <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center justify-center min-h-screen text-gray-200">
         <h1 className="text-2xl font-bold mb-4">Please Log In</h1>
         <AuthButtons />
       </div>
@@ -64,7 +64,7 @@ export default function Billing() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen">
+    <div className="text-gray-200">
       <h1 className="text-2xl font-bold mb-4">Billing</h1>
       <p className="mb-4">Manage your subscription and billing details through the Stripe Customer Portal.</p>
       <button
