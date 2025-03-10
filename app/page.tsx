@@ -12,7 +12,6 @@ import { GenAISummary } from "../components/GenAISummary";
 import { StockLedger } from "../components/StockLedger";
 import { PostViewer } from "../components/PostViewer";
 import { TickerTapeItem } from "../types/api";
-import { supabase } from "../lib/supabase";
 
 export default function Home() {
   const { user } = useAuth();
