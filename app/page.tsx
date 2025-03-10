@@ -7,10 +7,9 @@ import { AuthButtons } from "../components/AuthButtons";
 import { SubscriptionButton } from "../components/SubscriptionButton";
 import { RefreshButton } from "../components/RefreshButton";
 import { TickerTape } from "../components/TickerTape";
-import { MarketCanvas } from "../components/MarketCanvas";
-import { GenAISummary } from "../components/GenAISummary";
-import { StockLedger } from "../components/StockLedger";
+import { StockOverview } from "../components/StockOverview"; // New import
 import { PostViewer } from "../components/PostViewer";
+import { GenAISummary } from "../components/GenAISummary";
 import { TickerTapeItem } from "../types/api";
 
 export default function Home() {
@@ -127,9 +126,12 @@ export default function Home() {
         onSort={handleSort}
         sortConfig={sortConfig}
       />
-      <MarketCanvas data={marketCanvasData} selectedStock={selectedStock} />
+      <StockOverview
+        data={{ marketCanvas: marketCanvasData, stockLedger: stockLedgerData }}
+        selectedStock={selectedStock}
+        loading={stockLedgerLoading}
+      />
       <GenAISummary postsData={postsData} loading={postsLoading} selectedStock={selectedStock} />
-      <StockLedger data={stockLedgerData} loading={stockLedgerLoading} />
       <PostViewer data={postsData} loading={postsLoading} selectedStock={selectedStock} />
     </div>
   );
