@@ -22,7 +22,7 @@ export const PostViewer: React.FC<PostViewerProps> = ({ data, loading, selectedS
   return (
     <div className="mt-6 PostViewer" key={selectedStock || "no-stock"}>
       <div className="container-header">
-        Post Viewer {loading ? "(Loading...)" : ""}
+        Most Recent Posts {loading ? "(Loading...)" : ""}
       </div>
       <div className="container-content">
         <table className="w-full border-collapse">

@@ -15,7 +15,7 @@ export const StockLedger: React.FC<StockLedgerProps> = ({ data, loading }) => {
   return (
     <div className="mt-6 StockLedger">
       <div className="container-header">
-        Stock Ledger {loading ? "(Loading...)" : ""}
+        Stock Overview Continued {loading ? "(Loading...)" : ""}
       </div>
       <div className="container-content">
         <table className="w-full border-collapse">
