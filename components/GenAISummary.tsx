@@ -13,16 +13,30 @@ interface GenAISummaryProps {
 
 export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selectedStock }) => {
   const [summary, setSummary] = useState<string>(""); // Initial state is empty
-  const isStreamingRef = useRef<boolean>(false); // Track streaming state without re-renders
+  const isStreamingRef = useRef<boolean>(false); // Track streaming state
+  const abortControllerRef = useRef<AbortController | null>(null); // Track active fetch request
+  const latestStockRef = useRef<string | null>(null); // Track the latest selected stock
 
   const fetchSummaryStream = useCallback(async () => {
-    if (isStreamingRef.current) {
-      console.log("Streaming already in progress, skipping new fetch");
+    // Cancel any ongoing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      isStreamingRef.current = false;
+      setSummary(""); // Clear previous content immediately
+    }
+
+    if (!selectedStock || postsData.length === 0) {
+      setSummary("");
+      isStreamingRef.current = false;
       return;
     }
 
-    isStreamingRef.current = true; // Set streaming flag
-    setSummary(""); // Clear previous content
+    // Create a new AbortController for this request
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+    isStreamingRef.current = true;
+    latestStockRef.current = selectedStock; // Track the current stock
+
     console.log(`Starting stream for ${selectedStock}, posts: ${postsData.length}`);
 
     try {
@@ -30,6 +44,7 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ posts: postsData, ticker: selectedStock }),
+        signal, // Pass the abort signal
       });
 
       if (!response.ok) {
@@ -47,44 +62,71 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
-          console.log(`Stream completed, total chunks: ${chunkCount}`);
-          // Remove trailing "..." from final result
+          console.log(`Stream completed for ${selectedStock}, total chunks: ${chunkCount}`);
           accumulatedSummary = accumulatedSummary.replace(/\.\.\.$/, "");
-          setSummary(accumulatedSummary);
-          isStreamingRef.current = false; // Reset streaming flag
+          if (latestStockRef.current === selectedStock) {
+            setSummary(accumulatedSummary); // Final update only for latest stock
+          }
+          isStreamingRef.current = false;
+          break;
+        }
+        if (signal.aborted) {
+          console.log(`Stream for ${selectedStock} aborted`);
+          isStreamingRef.current = false;
+          break;
+        }
+        if (latestStockRef.current !== selectedStock) {
+          console.log(`Discarding stream for ${selectedStock} as a newer request started`);
+          isStreamingRef.current = false;
           break;
         }
 
         const chunk = decoder.decode(value, { stream: true });
         chunkCount++;
-        console.log(`Received chunk ${chunkCount}:`, chunk);
+        console.log(`Received chunk ${chunkCount} for ${selectedStock}:`, chunk);
         accumulatedSummary += chunk;
-        setSummary(accumulatedSummary); // Update state incrementally for Markdown rendering
+        if (latestStockRef.current === selectedStock) {
+          setSummary(accumulatedSummary); // Update UI only for latest stock
+        }
       }
     } catch (error) {
-      console.error("Error streaming summary:", error);
-      setSummary("Failed to generate summary due to an error.");
+      if (signal.aborted) {
+        console.log(`Request for ${selectedStock} was canceled`);
+      } else {
+        console.error("Error streaming summary:", error);
+        if (latestStockRef.current === selectedStock) {
+          setSummary("Failed to generate summary due to an error.");
+        }
+      }
       isStreamingRef.current = false;
     }
   }, [postsData, selectedStock]);
 
   useEffect(() => {
     if (!selectedStock || postsData.length === 0) {
-      setSummary(""); // Reset to empty string to trigger placeholder
+      setSummary(""); // Reset to empty string
       isStreamingRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
       return;
     }
 
     fetchSummaryStream();
-  }, [fetchSummaryStream, selectedStock, postsData]); // Dependencies unchanged
+
+    // Cleanup on unmount or dependency change
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [fetchSummaryStream, selectedStock, postsData]);
 
   return (
     <div className="GenAISummary container" key={selectedStock || "no-stock"}>
       <div className="container-header">
         ${selectedStock ? `${selectedStock} ` : ""} -
         <span style={{ color: "rgba(0, 230, 118)" }}> AI Summary</span>
-        {/* Adjusted opacity to 0.3 to match previous requests */}
-        {/* {loading ? " (Loading...)" : ""} */}
       </div>
       <div className="container-content relative">
         {loading && (
