@@ -1,3 +1,11 @@
+https://gitingest.com/
+https://vercel.com/cashtags/cashtags-website/deployments
+https://cashtags-dev.vercel.app/
+https://cashtags.ai
+
+https://dashboard.stripe.com/test/customers/
+https://dashboard.stripe.com/test/webhooks/
+https://console.cloud.google.com/apis/api/identitytoolkit.googleapis.com/credentials
 
 # Todo: 
 
