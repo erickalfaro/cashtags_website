@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/hooks";
 
 export const Navigation: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user } = useAuth(); // Removed 'signOut' from destructuring
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -58,7 +58,6 @@ export const Navigation: React.FC = () => {
             </>
           )}
           <Link href="/legal" onClick={toggleMenu} className="text-lg hover:text-blue-400">Legal</Link>
-          {/* Logout button removed */}
         </div>
       </nav>
 
