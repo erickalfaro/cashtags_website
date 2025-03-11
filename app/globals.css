@@ -1,9 +1,13 @@
+/* app/globals.css */
+
+/* Tailwind Directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* CSS Variables */
 :root {
+  /* Colors */
   --background: #ffffff;
   --foreground: #171717;
   --container-bg: #161b22;
@@ -12,20 +16,26 @@
   --header-gradient-end: #2d3748;
   --text-primary: #c9d1d9;
   --link-color: #58a6ff;
+
+  /* Shadows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  /* Heights */
   --ticker-height: 300px;
   --market-height: 300px;
   --ledger-height: 180px;
   --summary-height: 240px;
-  --post-height: 300px;
-  /* Replace hardcoded units with variables */
+  --post-height: 1000px;
+  --stock-overview-chart-height: 300px;
+
+  /* Spacing */
   --spacing-sm: 0.3125rem; /* 5px */
   --spacing-md: 0.625rem; /* 10px */
   --spacing-lg: 0.9375rem; /* 15px */
-  --stock-overview-chart-height: 300px;
 }
 
+/* Dark Mode Adjustments */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -33,9 +43,11 @@
   }
 }
 
+/* Responsive Adjustments */
 @media (min-width: 768px) {
   :root {
     --ticker-height: 360px; /* 20% larger for desktop */
+    --stock-overview-chart-height: 250px;
   }
 }
 
@@ -63,7 +75,7 @@ header {
   @apply border-b border-[var(--border-color)] mb-[var(--spacing-lg)];
 }
 
-/* Component Styles */
+/* General Component Styles */
 .container {
   @apply bg-[var(--container-bg)] border border-[var(--border-color)] rounded-md overflow-hidden relative transition-shadow duration-200 ease-in-out;
   box-shadow: var(--shadow-sm);
@@ -81,30 +93,79 @@ header {
   @apply max-h-[calc(100%-34px)] overflow-y-auto rounded-b-md;
 }
 
-/* Specific Component Overrides */
 .TickerTape {
   @apply container;
-  height: var(--ticker-height);
+  height: var(--ticker-height); /* 300px */
 }
 
 .TickerTape table {
   @apply w-full border-collapse bg-[var(--container-bg)] text-[11px] table-fixed;
 }
 
+.TickerTape thead {
+  position: sticky;
+  top: -1px; /* Nudge up 1px to close the gap */
+  background: linear-gradient(to right, var(--header-gradient-start), var(--header-gradient-end));
+  z-index: 10;
+  margin-top: 0;
+  padding-top: 0;
+}
+
 .TickerTape th,
 .TickerTape td {
-  @apply border border-[var(--border-color)] p-[6px_8px] text-left truncate transition-colors duration-200 ease-in;
+  @apply border border-[var(--border-color)] p-[6px_8px] text-center truncate transition-colors duration-200 ease-in;
 }
 
-.MarketCanvas {
-  @apply container mt-5;
-  height: var(--market-height);
+.TickerTape th {
+  @apply text-center font-bold text-gray-200;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  margin: 0;
 }
 
-@media (max-width: 767px) {
-  .MarketCanvas {
-    height: 150px;
+/* New class for cashtag cells */
+.TickerTape .cashtag-cell {
+  @apply cursor-pointer text-[rgba(0,230,118,1)] font-semibold;
+  transition: all 0.2s ease-in-out; /* Smooth hover transition */
+}
+
+.TickerTape .cashtag-cell:hover {
+  @apply underline text-[rgba(0,255,130,1)];
+  transform: scale(1.05); /* Slight scale-up for interactivity */
+}
+
+.TickerTape .container-content {
+  @apply max-h-[calc(100%-34px)] overflow-y-auto rounded-b-md;
+  padding-top: 0; /* Ensure no top padding */
+  margin-top: 0; /* Remove any top margin */
+  border-top: none; /* Prevent double borders */
+}
+
+/* Scrollbar styles */
+.TickerTape .container-content {
+  &::-webkit-scrollbar {
+    width: 10px;
   }
+  &::-webkit-scrollbar-track {
+    background: var(--container-bg);
+    border-left: 1px solid var(--border-color);
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #4a5568;
+    border-radius: 5px;
+    border: 2px solid var(--container-bg);
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: #718096;
+  }
+  scrollbar-width: thin;
+  scrollbar-color: #4a5568 var(--container-bg);
+}
+
+/* Ensure container-header has no bottom spacing issues */
+.TickerTape .container-header {
+  @apply bg-gradient-to-r from-[var(--header-gradient-start)] to-[var(--header-gradient-end)] px-3 py-2 border-b border-[var(--border-color)] rounded-t-md text-center text-gray-200 font-bold text-base;
+  margin-bottom: 0; /* Fixed typo from 'margi' to 'margin-bottom' */
 }
 
 .StockLedger {
@@ -123,11 +184,20 @@ header {
 
 .PostViewer {
   @apply container mt-5;
-  height: var(--post-height);
+  height: var(--post-height); /* 300px */
 }
 
 .PostViewer table {
   @apply w-full border-collapse bg-[var(--container-bg)] text-[11px];
+}
+
+.PostViewer thead {
+  position: sticky;
+  top: -1px; /* Nudge up 1px to close any gap, matching TickerTape fix */
+  background: linear-gradient(to right, var(--header-gradient-start), var(--header-gradient-end)); /* Match container-header */
+  z-index: 10; /* Stay above tbody */
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .PostViewer th,
@@ -135,13 +205,105 @@ header {
   @apply border border-[var(--border-color)] p-[6px_8px] text-left transition-colors duration-200 ease-in;
 }
 
-.GenAISummary {
-  @apply container mt-5;
-  height: var(--summary-height);
+.PostViewer th {
+  @apply text-center font-bold text-gray-200; /* Enhance visibility */
+  padding-top: 6px;
+  padding-bottom: 6px;
+  margin: 0;
 }
 
-.GenAISummary > div:nth-child(2) {
-  @apply h-[calc(100%-34px)];
+.PostViewer .container-content {
+  @apply max-h-[calc(100%-34px)] overflow-y-auto rounded-b-md; /* Match TickerTape height calc */
+  padding-top: 0; /* No top padding */
+  margin-top: 0; /* No top margin */
+  border-top: none; /* Prevent double borders */
+}
+
+/* Scrollbar styles */
+.PostViewer .container-content {
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    background: var(--container-bg);
+    border-left: 1px solid var(--border-color);
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #4a5568;
+    border-radius: 5px;
+    border: 2px solid var(--container-bg);
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: #718096;
+  }
+  scrollbar-width: thin;
+  scrollbar-color: #4a5568 var(--container-bg);
+}
+
+/* Ensure container-header has no bottom spacing */
+.PostViewer .container-header {
+  @apply bg-gradient-to-r from-[var(--header-gradient-start)] to-[var(--header-gradient-end)] px-3 py-2 border-b border-[var(--border-color)] rounded-t-md text-center text-gray-200 font-bold text-base;
+  margin-bottom: 0;
+}
+
+.GenAISummary {
+  @apply container mt-5;
+  height: var(--summary-height); /* 240px */
+}
+
+.GenAISummary .container-content {
+  @apply rounded-b-md; /* Keep existing styles */
+  height: calc(100% - 34px); /* Ensure it matches the original intent */
+  overflow-y: auto; /* Explicitly enable vertical scrolling */
+  padding-bottom: 10px; /* Add padding to prevent cutoff */
+}
+
+/* Scrollbar styles remain the same but ensure they don’t overlap content */
+.GenAISummary .container-content {
+  /* Webkit (Chrome, Safari, Edge) */
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    background: var(--container-bg);
+    border-left: 1px solid var(--border-color);
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #4a5568;
+    border-radius: 5px;
+    border: 2px solid var(--container-bg);
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: #718096;
+  }
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #4a5568 var(--container-bg);
+}
+
+.StockOverview {
+  @apply container mt-5;
+}
+
+.StockOverview .chart-section {
+  @apply relative;
+}
+
+.StockOverview .chart-wrapper {
+  @apply w-full;
+}
+
+.StockOverview .table-section {
+  @apply w-full;
+}
+
+.StockOverview th,
+.StockOverview td {
+  @apply border border-[var(--border-color)] p-[6px_8px] transition-colors duration-200 ease-in;
+}
+
+.StockOverview thead tr {
+  @apply bg-gradient-to-r from-[var(--header-gradient-start)] to-[var(--header-gradient-end)] text-[var(--text-primary)] font-bold;
 }
 
 /* Header Controls */
@@ -175,42 +337,43 @@ header {
   @apply bg-gray-800;
 }
 
-/* app/globals.css */
-
-/* Add new variable for chart height */
-:root {
-  --stock-overview-chart-height: 300px; /* Consistent with other components */
+/* Animated Placeholder */
+.animated-placeholder {
+  @apply text-center text-[var(--text-primary)] font-semibold;
+  color: rgba(0, 230, 118, 1); /* Matching the green from your previous request */
 }
 
-@media (min-width: 768px) {
-  :root {
-    --stock-overview-chart-height: 250px; /* Matches TickerTape desktop height */
+.animated-placeholder span {
+  display: inline-block;
+  animation: pulse 2s infinite ease-in-out, bounce 0.5s infinite alternate;
+}
+
+/* Pulse Animation (Opacity Fade) */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
   }
 }
 
-/* StockOverview Specific Styles */
-.StockOverview {
-  @apply container mt-5;
+/* Bounce Animation (Subtle Up/Down Movement) */
+@keyframes bounce {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-5px);
+  }
 }
 
-.StockOverview .chart-section {
-  @apply relative;
+/* Ensure the placeholder is visible over the container background */
+.GenAISummary-content {
+  position: relative;
 }
 
-.StockOverview .chart-wrapper {
-  @apply w-full;
-}
-
-.StockOverview .table-section {
-  @apply w-full;
-}
-
-.StockOverview th,
-.StockOverview td {
-  @apply border border-[var(--border-color)] p-[6px_8px] transition-colors duration-200 ease-in;
-}
-
-/* Ensure table header matches container-header styling */
-.StockOverview thead tr {
-  @apply bg-gradient-to-r from-[var(--header-gradient-start)] to-[var(--header-gradient-end)] text-[var(--text-primary)] font-bold;
+/* Optional: Add a faint glow effect for extra coolness */
+.animated-placeholder span {
+  text-shadow: 0 0 8px rgba(0, 230, 118, 0.5);
 }

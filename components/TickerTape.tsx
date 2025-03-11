@@ -38,43 +38,26 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
       </div>
       <div className="container-content">
         <table className="border-collapse w-full">
-          <thead>
+        <thead>
             <tr className="bg-gray-800 text-center">
-              <th
-                className="border border-gray-700 p-1 text-center w-12 cursor-pointer"
-                onClick={() => onSort("id")}
-              >
-                ID {sortConfig.key === "id" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
+              <th className="border border-gray-700 p-1 text-center w-12 cursor-pointer" onClick={() => onSort("id")}>
+                Sort {sortConfig.key === "id" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
               </th>
-              <th
-                className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
-                onClick={() => onSort("cashtag")}
-              >
-                Stock {sortConfig.key === "cashtag" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
+              <th className="border border-gray-700 p-1 text-center w-20 cursor-pointer" onClick={() => onSort("cashtag")}>
+                <span style={{ color: "rgba(0, 230, 118, 1)" }}>$</span>{" "}CASHTAG
+                {sortConfig.key === "cashtag" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
               </th>
-              <th className="border border-gray-700 p-1 text-center w-32">Trend</th>
-              <th
-                className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
-                onClick={() => onSort("chng")}
-              >
-                Change {sortConfig.key === "chng" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
+              <th className="border border-gray-700 p-1 text-center w-32">Mentions</th>
+              <th className="border border-gray-700 p-1 text-center w-20 cursor-pointer" onClick={() => onSort("chng")}>
+                % Change {sortConfig.key === "chng" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
               </th>
-              <th
-                className="border border-gray-700 p-1 text-center w-24 cursor-pointer"
-                onClick={() => onSort("latest_price")}
-              >
+              <th className="border border-gray-700 p-1 text-center w-24 cursor-pointer" onClick={() => onSort("latest_price")}>
                 Latest Price {sortConfig.key === "latest_price" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
               </th>
-              <th
-                className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
-                onClick={() => onSort("prev_eod")}
-              >
+              <th className="border border-gray-700 p-1 text-center w-20 cursor-pointer" onClick={() => onSort("prev_eod")}>
                 Prev EOD {sortConfig.key === "prev_eod" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
               </th>
-              <th
-                className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
-                onClick={() => onSort("prev_open")}
-              >
+              <th className="border border-gray-700 p-1 text-center w-20 cursor-pointer" onClick={() => onSort("prev_open")}>
                 Prev Open {sortConfig.key === "prev_open" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
               </th>
             </tr>
@@ -85,20 +68,20 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
                 <tr key={item.id} className="hover:bg-gray-800 text-center">
                   <td className="border border-gray-700 p-1 text-center w-12">{item.id}</td>
                   <td
-                    className="border border-gray-700 p-1 cursor-pointer text-blue-400 hover:underline text-center w-20"
+                    className="cashtag-cell border border-gray-700 p-1 text-center w-20"
                     onClick={() => onTickerClick(item.cashtag)}
                   >
-                    {item.cashtag}
+                    ${item.cashtag}
                   </td>
                   <td className="border border-gray-700 p-0 text-center w-32">
                     <div className="w-full h-full overflow-hidden">
                       <Sparklines data={item.trend}>
-                        <SparklinesLine color="white" style={{ strokeWidth: 1 }} />
+                        <SparklinesLine color="rgb(255, 255, 255)" style={{ strokeWidth: 1 }} />
                       </Sparklines>
                     </div>
                   </td>
                   <td className={`border border-gray-700 p-1 text-center w-20 ${getChangeColor(item.chng)}`}>
-                    {item.chng !== null && item.chng !== undefined ? item.chng : "-"}
+                    {item.chng !== null && item.chng !== undefined ? `${item.chng}%` : "-"}
                   </td>
                   <td className="border border-gray-700 p-1 text-center w-24">
                     {item.latest_price !== null && item.latest_price !== undefined
