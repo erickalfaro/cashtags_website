@@ -126,7 +126,6 @@ export default function Home() {
           : ""}
       </p>
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
-      {/* Move GenAISummary to the top */}
       <GenAISummary postsData={postsData} loading={postsLoading} selectedStock={selectedStock} />
       <TickerTape
         data={tickerTapeData}
@@ -140,7 +139,12 @@ export default function Home() {
         selectedStock={selectedStock}
         loading={stockLedgerLoading}
       />
-      <PostViewer data={postsData} loading={postsLoading} selectedStock={selectedStock} />
+      <PostViewer 
+        data={postsData} 
+        loading={postsLoading} 
+        selectedStock={selectedStock} 
+        user={user} // Pass user prop
+      />
     </div>
   );
 }

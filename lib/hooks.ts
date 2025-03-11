@@ -293,7 +293,7 @@ export function useTickerData(user: User | null): TickerData {
       if (!user || subLoading) return;
 
       if (subscription.status === "FREE" && subscription.clicksLeft <= 0) {
-        setErrorMessage("Free limit reached (10 tickers). Upgrade to PREMIUM for unlimited access.");
+        setErrorMessage("Free limit reached (10 tickers). Upgrade to PREMIUM for unlimited access and summaries.");
         return;
       }
 
@@ -338,7 +338,9 @@ export function useTickerData(user: User | null): TickerData {
         setPostsData([]);
         setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
         setStockLedgerData({ stockName: cleanTicker, description: "", marketCap: "" });
+
         try {
+          // Fetch all data, including posts, for both tiers
           const [ledgerResponse, canvasResponse, postsResponse] = await Promise.all([
             fetchStockLedgerData(cleanTicker),
             fetchMarketCanvasData(cleanTicker),
@@ -352,7 +354,7 @@ export function useTickerData(user: User | null): TickerData {
           } else {
             setMarketCanvasData(canvasResponse);
           }
-          setPostsData(postsResponse);
+          setPostsData(postsResponse); // Set posts data regardless of tier
         } catch (error) {
           console.error("Error fetching data:", error);
           setStockLedgerData({
