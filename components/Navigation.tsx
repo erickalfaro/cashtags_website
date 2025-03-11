@@ -1,9 +1,9 @@
-// app/components/Navigation.tsx
+// components/Navigation.tsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/lib/hooks"; // Adjust path based on your structure
+import { useAuth } from "@/lib/hooks";
 
 export const Navigation: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,7 +15,7 @@ export const Navigation: React.FC = () => {
     <>
       {/* Hamburger on the Left */}
       <button
-        className="fixed top-6 left-6 z-50 focus:outline-none"
+        className="fixed top-4 left-6 z-50 focus:outline-none"
         onClick={toggleMenu}
         aria-label="Toggle navigation menu"
       >
@@ -36,7 +36,10 @@ export const Navigation: React.FC = () => {
       </button>
 
       {/* Cashtags on the Right */}
-      <Link href="/" className="fixed top-6 right-6 z-50 text-xl font-bold text-gray-200">
+      <Link
+        href="/"
+        className="fixed top-6 right-6 z-50 text-xl font-bold text-[rgba(0,230,118,1)] hover:text-[rgba(0,255,130,1)]"
+      >
         Cashtags
       </Link>
 
@@ -55,14 +58,7 @@ export const Navigation: React.FC = () => {
             </>
           )}
           <Link href="/legal" onClick={toggleMenu} className="text-lg hover:text-blue-400">Legal</Link>
-          {user && (
-            <button
-              onClick={() => { signOut(); toggleMenu(); }}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-left"
-            >
-              Logout
-            </button>
-          )}
+          {/* Logout button removed */}
         </div>
       </nav>
 
