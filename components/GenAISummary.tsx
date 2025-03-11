@@ -1,7 +1,7 @@
 // components/GenAISummary.tsx
 "use client";
 
-import React, { useEffect, useState, useCallback, useRef } from "react"; // Added useRef
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { PostData } from "../types/api";
 
@@ -13,7 +13,7 @@ interface GenAISummaryProps {
 
 export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selectedStock }) => {
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
-  const [summary, setSummary] = useState<string>("");
+  const [summary, setSummary] = useState<string>(""); // Initial state is empty
   const isStreamingRef = useRef<boolean>(false); // Track streaming state without re-renders
 
   const fetchSummaryStream = useCallback(async () => {
@@ -50,6 +50,9 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
         const { done, value } = await reader.read();
         if (done) {
           console.log(`Stream completed, total chunks: ${chunkCount}`);
+          // Remove trailing "..." from final result (from previous streaming tweak)
+          accumulatedSummary = accumulatedSummary.replace(/\.\.\.$/, "");
+          setSummary(accumulatedSummary);
           setIsStreaming(false);
           isStreamingRef.current = false;
           break;
@@ -71,20 +74,21 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
 
   useEffect(() => {
     if (!selectedStock || postsData.length === 0) {
-      setSummary("No summary available. Select a stock and ensure posts are loaded.");
+      setSummary(""); // Changed to empty string to trigger placeholder
       setIsStreaming(false);
       isStreamingRef.current = false;
       return;
     }
 
     fetchSummaryStream();
-  }, [fetchSummaryStream]);
+  }, [fetchSummaryStream, selectedStock, postsData]); // Added dependencies
 
   return (
     <div className="GenAISummary container" key={selectedStock || "no-stock"}>
       <div className="container-header">
-        AI Summary for {selectedStock ? `$${selectedStock}` : "Selected Stock"}{" "}
-        {loading ? "(Loading Posts...)" : isStreaming ? "(Generating Summary...)" : ""}
+        ${selectedStock ? `${selectedStock} ` : ""} -
+        <span style={{ color: "rgba(0, 230, 118)" }}> AI Summary</span>{/* Adjusted opacity from 1 to 0.3 per previous request */}
+        {/* {loading ? " (Loading...)" : ""} */}
       </div>
       <div className="container-content relative">
         {loading && (
@@ -92,8 +96,14 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
             <div className="spinner"></div>
           </div>
         )}
-        <div className="w-full h-full overflow-auto text-sm GenAISummary-content">
-          <ReactMarkdown>{summary}</ReactMarkdown>
+        <div className="w-full h-full overflow-auto text-sm GenAISummary-content relative">
+          {summary ? (
+            <ReactMarkdown>{summary}</ReactMarkdown>
+          ) : (
+            <div className="animated-placeholder absolute inset-0 flex items-center justify-center">
+              <span>Click a $CASHTAG</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
