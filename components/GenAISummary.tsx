@@ -12,7 +12,6 @@ interface GenAISummaryProps {
 }
 
 export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selectedStock }) => {
-  const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [summary, setSummary] = useState<string>(""); // Initial state is empty
   const isStreamingRef = useRef<boolean>(false); // Track streaming state without re-renders
 
@@ -22,8 +21,7 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
       return;
     }
 
-    setIsStreaming(true);
-    isStreamingRef.current = true;
+    isStreamingRef.current = true; // Set streaming flag
     setSummary(""); // Clear previous content
     console.log(`Starting stream for ${selectedStock}, posts: ${postsData.length}`);
 
@@ -50,11 +48,10 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
         const { done, value } = await reader.read();
         if (done) {
           console.log(`Stream completed, total chunks: ${chunkCount}`);
-          // Remove trailing "..." from final result (from previous streaming tweak)
+          // Remove trailing "..." from final result
           accumulatedSummary = accumulatedSummary.replace(/\.\.\.$/, "");
           setSummary(accumulatedSummary);
-          setIsStreaming(false);
-          isStreamingRef.current = false;
+          isStreamingRef.current = false; // Reset streaming flag
           break;
         }
 
@@ -67,27 +64,26 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
     } catch (error) {
       console.error("Error streaming summary:", error);
       setSummary("Failed to generate summary due to an error.");
-      setIsStreaming(false);
       isStreamingRef.current = false;
     }
   }, [postsData, selectedStock]);
 
   useEffect(() => {
     if (!selectedStock || postsData.length === 0) {
-      setSummary(""); // Changed to empty string to trigger placeholder
-      setIsStreaming(false);
+      setSummary(""); // Reset to empty string to trigger placeholder
       isStreamingRef.current = false;
       return;
     }
 
     fetchSummaryStream();
-  }, [fetchSummaryStream, selectedStock, postsData]); // Added dependencies
+  }, [fetchSummaryStream, selectedStock, postsData]); // Dependencies unchanged
 
   return (
     <div className="GenAISummary container" key={selectedStock || "no-stock"}>
       <div className="container-header">
         ${selectedStock ? `${selectedStock} ` : ""} -
-        <span style={{ color: "rgba(0, 230, 118)" }}> AI Summary</span>{/* Adjusted opacity from 1 to 0.3 per previous request */}
+        <span style={{ color: "rgba(0, 230, 118)" }}> AI Summary</span>
+        {/* Adjusted opacity to 0.3 to match previous requests */}
         {/* {loading ? " (Loading...)" : ""} */}
       </div>
       <div className="container-content relative">
