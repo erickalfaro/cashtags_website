@@ -7,13 +7,13 @@ export default function Legal() {
         <strong>Last Updated:</strong> March 10, 2025
       </p>
       <p className="mb-6">
-        Welcome to Cashtags.ai ("Website"), operated by Cashtags LLC., a limited liability company organized under the laws of Florida. This Legal page outlines important information regarding your use of our Website, including our terms of service, disclaimers, privacy practices, and the legal structure under which we operate. By accessing or using this Website, you agree to be bound by these terms and conditions.
+        Welcome to [Your Website Name] (\"Website\"), operated by [Your LLC Name], a limited liability company organized under the laws of [Your State]. This Legal page outlines important information regarding your use of our Website, including our terms of service, disclaimers, privacy practices, and the legal structure under which we operate. By accessing or using this Website, you agree to be bound by these terms and conditions.
       </p>
 
       {/* Section 1: Purpose and Structure */}
-      <h2 className="text-2xl font-semibold mt-6 mb-4">1. Purpose and Structure of Cashtags LLC.</h2>
+      <h2 className="text-2xl font-semibold mt-6 mb-4">1. Purpose and Structure of [Your LLC Name]</h2>
       <p className="mb-4">
-        Cashtags LLC. is a limited liability company (LLC) established to operate this Website, which aggregates and provides social media posts as informational signals ("Service"). The LLC structure was chosen for the following reasons:
+        [Your LLC Name] is a limited liability company (LLC) established to operate this Website, which aggregates and provides social media posts as informational signals (\"Service\"). The LLC structure was chosen for the following reasons:
       </p>
       <ul className="list-disc pl-6 mb-4">
         <li>
@@ -30,13 +30,13 @@ export default function Legal() {
         </li>
       </ul>
       <p className="mb-4">
-        The formation of Cashtags LLC. was completed by filing Articles of Organization with the Florida Secretary of State, appointing a registered agent, obtaining an Employer Identification Number (EIN) from the Internal Revenue Service (IRS), and drafting an Operating Agreement to govern internal procedures. This process is straightforward and accessible online in most jurisdictions, typically requiring a filing fee of $50–$500, depending on the state.
+        The formation of [Your LLC Name] was completed by filing Articles of Organization with the [Your State] Secretary of State, appointing a registered agent, obtaining an Employer Identification Number (EIN) from the Internal Revenue Service (IRS), and drafting an Operating Agreement to govern internal procedures. This process is straightforward and accessible online in most jurisdictions, typically requiring a filing fee of $50–$500, depending on the state.
       </p>
 
       {/* Section 2: Terms of Service */}
       <h2 className="text-2xl font-semibold mt-6 mb-4">2. Terms of Service</h2>
       <p className="mb-4">
-        <strong>Acceptance of Terms</strong>: By accessing or using the Website, you agree to these Terms of Service ("Terms"). If you do not agree, you must discontinue use of the Website immediately.
+        <strong>Acceptance of Terms</strong>: By accessing or using the Website, you agree to these Terms of Service (\"Terms\"). If you do not agree, you must discontinue use of the Website immediately.
       </p>
       <p className="mb-4">
         <strong>Use of Service</strong>: The Service provides aggregated social media posts as signals for informational and entertainment purposes only. You may not:
@@ -44,31 +44,31 @@ export default function Legal() {
       <ul className="list-disc pl-6 mb-4">
         <li>Use the Service for any unlawful purpose or in violation of these Terms.</li>
         <li>Rely on the Service as personalized financial or investment advice (see Disclaimer below).</li>
-        <li>Reproduce, distribute, or modify the content without prior written consent from Cashtags LLC..</li>
+        <li>Reproduce, distribute, or modify the content without prior written consent from [Your LLC Name].</li>
       </ul>
       <p className="mb-4">
-        <strong>Account Termination</strong>: Cashtags LLC. reserves the right to suspend or terminate your access to the Service at its sole discretion, with or without notice, for misuse or violation of these Terms.
+        <strong>Account Termination</strong>: [Your LLC Name] reserves the right to suspend or terminate your access to the Service at its sole discretion, with or without notice, for misuse or violation of these Terms.
       </p>
       <p className="mb-4">
-        <strong>Limitation of Liability</strong>: To the fullest extent permitted by law, Cashtags LLC., its members, officers, and affiliates shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from your use of the Website or reliance on the Service, including but not limited to financial losses.
+        <strong>Limitation of Liability</strong>: To the fullest extent permitted by law, [Your LLC Name], its members, officers, and affiliates shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from your use of the Website or reliance on the Service, including but not limited to financial losses.
       </p>
 
       {/* Section 3: Disclaimer */}
       <h2 className="text-2xl font-semibold mt-6 mb-4">3. Disclaimer</h2>
       <p className="mb-4">
-        <strong>No Financial Advice</strong>: The signals provided by this Website are derived from aggregated social media posts and are intended for informational and entertainment purposes only. They do not constitute financial advice, investment recommendations, or an offer to buy or sell securities. Cashtags LLC. is not registered as an investment adviser under the Investment Advisers Act of 1940 or any state securities laws. Users are solely responsible for their financial decisions and should consult a qualified financial professional before making investment choices.
+        <strong>No Financial Advice</strong>: The signals provided by this Website are derived from aggregated social media posts and are intended for informational and entertainment purposes only. They do not constitute financial advice, investment recommendations, or an offer to buy or sell securities. [Your LLC Name] is not registered as an investment adviser under the Investment Advisers Act of 1940 or any state securities laws. Users are solely responsible for their financial decisions and should consult a qualified financial professional before making investment choices.
       </p>
       <p className="mb-4">
-        <strong>Accuracy and Availability</strong>: The information provided through the Service is presented "as is" without warranties of accuracy, completeness, or timeliness. Cashtags LLC. does not guarantee the reliability of the aggregated data and is not liable for errors, omissions, or interruptions in service.
+        <strong>Accuracy and Availability</strong>: The information provided through the Service is presented \"as is\" without warranties of accuracy, completeness, or timeliness. [Your LLC Name] does not guarantee the reliability of the aggregated data and is not liable for errors, omissions, or interruptions in service.
       </p>
       <p className="mb-4">
-        <strong>No Guarantees</strong>: Cashtags LLC. makes no representations or warranties regarding the profitability, effectiveness, or suitability of the signals for any purpose. Past performance, if referenced, is not indicative of future results.
+        <strong>No Guarantees</strong>: [Your LLC Name] makes no representations or warranties regarding the profitability, effectiveness, or suitability of the signals for any purpose. Past performance, if referenced, is not indicative of future results.
       </p>
 
       {/* Section 4: Intellectual Property */}
       <h2 className="text-2xl font-semibold mt-6 mb-4">4. Intellectual Property</h2>
       <p className="mb-4">
-        <strong>Ownership</strong>: All content on the Website, including aggregated signals, text, graphics, and code, is the property of Cashtags LLC. or its licensors and is protected by U.S. copyright and intellectual property laws.
+        <strong>Ownership</strong>: All content on the Website, including aggregated signals, text, graphics, and code, is the property of [Your LLC Name] or its licensors and is protected by U.S. copyright and intellectual property laws.
       </p>
       <p className="mb-4">
         <strong>Social Media Content</strong>: The Service aggregates publicly available social media posts. To mitigate copyright risks:
@@ -85,7 +85,7 @@ export default function Legal() {
       {/* Section 5: Privacy Policy */}
       <h2 className="text-2xl font-semibold mt-6 mb-4">5. Privacy Policy</h2>
       <p className="mb-4">
-        <strong>Data Collection</strong>: Cashtags LLC. may collect certain information from users, such as email addresses, subscription details, and usage data, to provide and improve the Service. We do not store or process personally identifiable information (PII) from social media posts beyond what is necessary for aggregation.
+        <strong>Data Collection</strong>: [Your LLC Name] may collect certain information from users, such as email addresses, subscription details, and usage data, to provide and improve the Service. We do not store or process personally identifiable information (PII) from social media posts beyond what is necessary for aggregation.
       </p>
       <p className="mb-4">
         <strong>Compliance</strong>: We comply with applicable privacy laws, including the California Consumer Privacy Act (CCPA) and, where relevant, the General Data Protection Regulation (GDPR). Our practices include:
@@ -111,16 +111,16 @@ export default function Legal() {
         <strong>Cancellation</strong>: Premium subscribers may cancel at any time via the billing portal, with access continuing until the end of the current billing period. No refunds are provided for partial periods.
       </p>
       <p className="mb-4">
-        <strong>Consumer Protection</strong>: Cashtags LLC. adheres to fair billing practices, avoids misleading claims, and ensures transparency in subscription terms. Questions or disputes should be directed to [Your Contact Email].
+        <strong>Consumer Protection</strong>: [Your LLC Name] adheres to fair billing practices, avoids misleading claims, and ensures transparency in subscription terms. Questions or disputes should be directed to [Your Contact Email].
       </p>
 
       {/* Section 7: Governing Law and Dispute Resolution */}
       <h2 className="text-2xl font-semibold mt-6 mb-4">7. Governing Law and Dispute Resolution</h2>
       <p className="mb-4">
-        <strong>Jurisdiction</strong>: These Terms are governed by the laws of Florida, without regard to conflict of law principles. Any legal action arising from the use of the Website shall be filed in the state or federal courts of Unite States, Florida.
+        <strong>Jurisdiction</strong>: These Terms are governed by the laws of [Your State], without regard to conflict of law principles. Any legal action arising from the use of the Website shall be filed in the state or federal courts of [Your County/State].
       </p>
       <p className="mb-4">
-        <strong>Dispute Resolution</strong>: In the event of a dispute, parties agree to attempt informal resolution via email communication before pursuing legal action. If unresolved, disputes may proceed to binding arbitration under the rules of the American Arbitration Association, at the discretion of Cashtags LLC..
+        <strong>Dispute Resolution</strong>: In the event of a dispute, parties agree to attempt informal resolution via email communication before pursuing legal action. If unresolved, disputes may proceed to binding arbitration under the rules of the American Arbitration Association, at the discretion of [Your LLC Name].
       </p>
 
       {/* Section 8: Contact Information */}
@@ -128,7 +128,9 @@ export default function Legal() {
       <p className="mb-4">
         For questions, concerns, or legal notices, please contact:
       </p>
-      <p className="mb-2">Cashtags LLC.</p>
+      <p className="mb-2">[Your LLC Name]</p>
+      <p className="mb-2">[Your Mailing Address, if applicable]</p>
+      <p className="mb-4">Email: [Your Contact Email]</p>
     </div>
   );
 }
