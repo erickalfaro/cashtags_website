@@ -33,7 +33,7 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-900 min-h-screen`}>
         <Navigation />
-        <main className="container mx-auto px-6 pt-16 pb-6 max-w-4xl text-gray-200"> {/* Changed py-6 to pt-16 pb-6 */}
+        <main className="container mx-auto px-6 pt-20 pb-6 max-w-4xl text-gray-200"> {/* Changed pt-16 to pt-20 */}
           {children}
         </main>
       </body>
