@@ -27,7 +27,7 @@
   --ledger-height: 180px;
   --summary-height: 240px;
   --post-height: 1000px;
-  --stock-overview-chart-height: 300px;
+  --stock-overview-chart-height: 240px;
 
   /* Spacing */
   --spacing-sm: 0.3125rem; /* 5px */
@@ -411,4 +411,29 @@ header {
 /* Ensure container-header supports absolute positioning */
 .container-header {
   position: relative;
+}
+
+
+/* app/globals.css (append at the end) */
+
+/* Scale-in Animation for Badges */
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+/* Ensure text gradient works across browsers */
+.bg-clip-text {
+  -webkit-background-clip: text;
+  background-clip: text;
 }

@@ -32,7 +32,3 @@ export interface GenAISummaryProps {
   loading: boolean;
   selectedStock: string | null;
 }
-
-export interface RefreshButtonProps {
-  onClick: () => void;
-}

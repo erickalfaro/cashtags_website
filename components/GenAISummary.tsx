@@ -125,8 +125,8 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
   return (
     <div className="GenAISummary container" key={selectedStock || "no-stock"}>
       <div className="container-header">
-        ${selectedStock ? `${selectedStock} ` : ""} -
-        <span style={{ color: "rgba(0, 230, 118)" }}> AI Summary</span>
+        {selectedStock ? `$${selectedStock} - ` : ""}
+        <span style={{ color: "rgba(0, 230, 118)" }}>AI Summary</span>
       </div>
       <div className="container-content relative">
         {loading && (

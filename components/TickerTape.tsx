@@ -35,19 +35,15 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
 
   return (
     <div className="mt-6 TickerTape relative">
-      <div className="container-header relative flex justify-center items-center">
-        <div className="flex items-center">
-          <span>Top Trending on Socials {loading ? "(Updating...)" : ""}</span>
+      <div className="container-header relative flex justify-center items-center px-3 py-2">
+        <span className="text-center">Top Trending on Socials {loading ? "(Updating...)" : ""}</span>
+        <span className="absolute right-3 text-sm">
           {subscription.status === "PREMIUM" ? (
-            <span className="text-lg font-bold text-red-500 animate-pulse-live ml-2">
-              LIVE
-            </span>
+            <span className="text-lg font-bold text-red-500 animate-pulse-live">LIVE</span>
           ) : (
-            <span className="text-sm text-gray-500 ml-2">
-              (Subscribe for real-time updates)
-            </span>
+            <span className="text-gray-500">(Subscribe for real-time updates)</span>
           )}
-        </div>
+        </span>
       </div>
       <div className="container-content">
         <table className="border-collapse w-full">

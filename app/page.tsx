@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useAuth, useTickerData } from "../lib/hooks";
 import { AuthButtons } from "../components/AuthButtons";
 import { SubscriptionButton } from "../components/SubscriptionButton";
-import { RefreshButton } from "../components/RefreshButton";
+// Remove: import { RefreshButton } from "../components/RefreshButton";
 import { TickerTape } from "../components/TickerTape";
 import { StockOverview } from "../components/StockOverview";
 import { PostViewer } from "../components/PostViewer";
@@ -97,7 +97,7 @@ export default function Home() {
       <div className="header-controls flex flex-wrap items-center gap-4 mb-6">
         <h1 className="text-xl font-semibold flex-grow">Welcome, {user.email}</h1>
         <div className="flex items-center gap-4">
-          <RefreshButton onClick={fetchTickerTapeData} />
+          {/* Remove: <RefreshButton onClick={fetchTickerTapeData} /> */}
           {(isFree || isPostCancellation) && (
             <SubscriptionButton
               user={user}
