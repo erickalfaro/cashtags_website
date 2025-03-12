@@ -93,17 +93,48 @@ export default function Home() {
 
   return (
     <div className="text-gray-200">
-      <div className="mb-6 bg-[#1e2529] rounded-sm shadow-xs p-3 transition-all duration-150 hover:bg-[#222a30]">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
-          <h1 className="text-lg font-medium text-[#f5f5f5]">
-            Welcome, {user.email}
-          </h1>
+      <div className="header-container">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+          <div>
+            <h1 className="header-welcome">Welcome, {user.email}</h1>
+            <p className="subscription-info">
+              <span
+                className={`tier-badge ${
+                  isFree || isPostCancellation
+                    ? "free"
+                    : isPremiumActive
+                    ? "premium"
+                    : isPremiumCancelling
+                    ? "cancelling"
+                    : ""
+                }`}
+              >
+                {isFree || isPostCancellation
+                  ? "Free Tier"
+                  : isPremiumActive
+                  ? "Premium - Active"
+                  : isPremiumCancelling
+                  ? "Premium - Cancelling"
+                  : ""}
+              </span>
+              {(isFree || isPostCancellation) && (
+                <span>({effectiveClicksLeft} clicks left)</span>
+              )}
+              {isPremiumActive && subscription.currentPeriodEnd && (
+                <span>Renews on {subscription.currentPeriodEnd.toLocaleDateString()}</span>
+              )}
+              {isPremiumCancelling && subscription.cancelAt && (
+                <span>Ends on {subscription.cancelAt.toLocaleDateString()}</span>
+              )}
+            </p>
+          </div>
           <div className="flex items-center gap-2">
             {(isFree || isPostCancellation) && (
               <SubscriptionButton
                 user={user}
                 disabled={false}
                 onSuccess={fetchSubscription}
+                label="Upgrade to Premium"
               />
             )}
             {isPremiumCancelling && (
@@ -111,39 +142,11 @@ export default function Home() {
                 user={user}
                 disabled={false}
                 onSuccess={fetchSubscription}
-                label="Reactivate Subscription"
+                label="Reactivate"
               />
             )}
           </div>
         </div>
-        <p className="mt-1 text-sm font-regular text-[#b0bec5]">
-          {isFree || isPostCancellation ? (
-            <span>
-              <span className="text-[#b0bec5]">Free Tier</span>
-              <span className="text-[#b0bec5] ml-1">({effectiveClicksLeft} clicks left)</span>
-            </span>
-          ) : isPremiumActive ? (
-            <span>
-              <span className="italic text-[rgba(0,230,118,0.85)]">Premium</span>
-              <span className="text-[#b0bec5] mx-1">Tier -</span>
-              <span className="italic text-[rgba(0,230,118,0.85)]">Active</span>
-              {subscription.currentPeriodEnd && (
-                <span className="text-[#b0bec5] ml-1">
-                  - Renews on {subscription.currentPeriodEnd.toLocaleDateString()}
-                </span>
-              )}
-            </span>
-          ) : isPremiumCancelling ? (
-            <span>
-              <span className="italic text-[rgba(0,230,118,0.85)]">Premium</span>
-              <span className="text-[#b0bec5] mx-1">Tier -</span>
-              <span className="italic text-[#ffca28]/80">Cancelling</span>
-              <span className="text-[#b0bec5] ml-1">
-                - on {subscription.cancelAt!.toLocaleDateString()}
-              </span>
-            </span>
-          ) : null}
-        </p>
       </div>
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
       <GenAISummary postsData={postsData} loading={postsLoading} selectedStock={selectedStock} />
