@@ -27,7 +27,7 @@
   --ledger-height: 180px;
   --summary-height: 240px;
   --post-height: 1000px;
-  --stock-overview-chart-height: 300px;
+  --stock-overview-chart-height: 240px;
 
   /* Spacing */
   --spacing-sm: 0.3125rem; /* 5px */
@@ -373,7 +373,67 @@ header {
   position: relative;
 }
 
+/* Row update animation */
 /* Optional: Add a faint glow effect for extra coolness */
-.animated-placeholder span {
-  text-shadow: 0 0 8px rgba(0, 230, 118, 0.5);
+@keyframes rowHighlightPulse {
+  0% {
+    background-color: rgba(0, 230, 118, 0); /* Starting transparent */
+  }
+  50% {
+    background-color: rgba(0, 230, 118, 0.3); /* Peak green glow */
+  }
+  100% {
+    background-color: rgba(0, 230, 118, 0); /* Fade back to transparent */
+  }
+}
+
+.animate-row-update {
+  animation: rowHighlightPulse 1s ease-in-out forwards;
+}
+
+/* Slow pulsing "LIVE" animation (unchanged) */
+@keyframes pulseLive {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+.animate-pulse-live {
+  animation: pulseLive 2s infinite ease-in-out;
+}
+
+/* Ensure container-header supports absolute positioning */
+.container-header {
+  position: relative;
+}
+
+
+/* app/globals.css (append at the end) */
+
+/* Scale-in Animation for Badges */
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+/* Ensure text gradient works across browsers */
+.bg-clip-text {
+  -webkit-background-clip: text;
+  background-clip: text;
 }

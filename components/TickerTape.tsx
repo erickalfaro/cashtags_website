@@ -1,25 +1,10 @@
+// components/TickerTape.tsx
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Sparklines, SparklinesLine } from "react-sparklines";
-
-interface TickerTapeItem {
-  id: number;
-  cashtag: string;
-  prev_open: number | null;
-  prev_eod: number | null;
-  latest_price: number | null;
-  chng: number | null;
-  trend: number[];
-}
-
-interface TickerTapeProps {
-  data: TickerTapeItem[];
-  loading: boolean;
-  onTickerClick: (ticker: string) => void;
-  onSort: (key: keyof TickerTapeItem) => void;
-  sortConfig: { key: keyof TickerTapeItem | null; direction: "asc" | "desc" };
-}
+import { useSubscription } from "../lib/hooks";
+import { TickerTapeProps } from "../types/components";
 
 export const TickerTape: React.FC<TickerTapeProps> = ({
   data,
@@ -27,24 +12,48 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
   onTickerClick,
   onSort,
   sortConfig,
+  user,
 }) => {
+  const { subscription } = useSubscription(user);
+  const [updatedKeys, setUpdatedKeys] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!loading && data.length > 0) {
+      const newUpdatedKeys = new Set<string>();
+      data.forEach((item) => {
+        newUpdatedKeys.add(item.key!);
+      });
+
+      setUpdatedKeys(newUpdatedKeys);
+      const timer = setTimeout(() => setUpdatedKeys(new Set()), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [data, loading]);
+
   const getChangeColor = (change: number | null) =>
     change === null || change === undefined ? "" : change < 0 ? "text-red-500" : "text-green-500";
 
   return (
-    <div className="mt-6 TickerTape">
-      <div className="container-header">
-        Top Trending on Socials {loading ? "(Updating...)" : ""}
+    <div className="mt-6 TickerTape relative">
+      <div className="container-header relative flex justify-center items-center px-3 py-2">
+        <span className="text-center">Top Trending on Socials {loading ? "(Updating...)" : ""}</span>
+        <span className="absolute right-3 text-sm">
+          {subscription.status === "PREMIUM" ? (
+            <span className="text-lg font-bold text-red-500 animate-pulse-live">LIVE</span>
+          ) : (
+            <span className="text-gray-500">(Subscribe for real-time updates)</span>
+          )}
+        </span>
       </div>
       <div className="container-content">
         <table className="border-collapse w-full">
-        <thead>
+          <thead>
             <tr className="bg-gray-800 text-center">
               <th className="border border-gray-700 p-1 text-center w-12 cursor-pointer" onClick={() => onSort("id")}>
                 Sort {sortConfig.key === "id" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
               </th>
               <th className="border border-gray-700 p-1 text-center w-20 cursor-pointer" onClick={() => onSort("cashtag")}>
-                <span style={{ color: "rgba(0, 230, 118, 1)" }}>$</span>{" "}CASHTAG
+                <span style={{ color: "rgba(0, 230, 118, 1)" }}>$</span> CASHTAG
                 {sortConfig.key === "cashtag" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
               </th>
               <th className="border border-gray-700 p-1 text-center w-32">Mentions</th>
@@ -65,7 +74,12 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
           <tbody>
             {data.length > 0 ? (
               data.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-800 text-center">
+                <tr
+                  key={item.key}
+                  className={`hover:bg-gray-800 text-center ${
+                    updatedKeys.has(item.key!) ? "animate-row-update" : ""
+                  }`}
+                >
                   <td className="border border-gray-700 p-1 text-center w-12">{item.id}</td>
                   <td
                     className="cashtag-cell border border-gray-700 p-1 text-center w-20"
@@ -73,7 +87,7 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
                   >
                     ${item.cashtag}
                   </td>
-                  <td className="border border-gray-700 p-0 text-center w-32">
+                  <td className="border border-gray-700 p-1 text-center w-32">
                     <div className="w-full h-full overflow-hidden">
                       <Sparklines data={item.trend}>
                         <SparklinesLine color="rgb(255, 255, 255)" style={{ strokeWidth: 1 }} />

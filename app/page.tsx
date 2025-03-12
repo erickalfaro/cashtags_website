@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { useAuth, useTickerData } from "../lib/hooks";
 import { AuthButtons } from "../components/AuthButtons";
 import { SubscriptionButton } from "../components/SubscriptionButton";
-import { RefreshButton } from "../components/RefreshButton";
 import { TickerTape } from "../components/TickerTape";
 import { StockOverview } from "../components/StockOverview";
 import { PostViewer } from "../components/PostViewer";
@@ -18,7 +17,7 @@ export default function Home() {
     tickerTapeData,
     setTickerTapeData,
     loading,
-    fetchTickerTapeData,
+    // Remove fetchTickerTapeData from destructuring if not used here
     stockLedgerData,
     marketCanvasData,
     postsData,
@@ -52,7 +51,6 @@ export default function Home() {
     const direction =
       sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
     setSortConfig({ key, direction });
-
     const sortedData = [...tickerTapeData].sort((a, b) => {
       const aValue = a[key] ?? (typeof a[key] === "number" ? 0 : a[key]);
       const bValue = b[key] ?? (typeof b[key] === "number" ? 0 : b[key]);
@@ -95,36 +93,58 @@ export default function Home() {
 
   return (
     <div className="text-gray-200">
-      <div className="header-controls flex flex-wrap items-center gap-4 mb-6">
-        <h1 className="text-xl font-semibold flex-grow">Welcome, {user.email}</h1>
-        <div className="flex items-center gap-4">
-          <RefreshButton onClick={fetchTickerTapeData} />
-          {(isFree || isPostCancellation) && (
-            <SubscriptionButton
-              user={user}
-              disabled={false}
-              onSuccess={fetchSubscription}
-            />
-          )}
-          {isPremiumCancelling && (
-            <SubscriptionButton
-              user={user}
-              disabled={false}
-              onSuccess={fetchSubscription}
-              label="Reactivate Subscription"
-            />
-          )}
+      <div className="mb-6 bg-[#1e2529] rounded-sm shadow-xs p-3 transition-all duration-150 hover:bg-[#222a30]">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
+          <h1 className="text-lg font-medium text-[#f5f5f5]">
+            Welcome, {user.email}
+          </h1>
+          <div className="flex items-center gap-2">
+            {(isFree || isPostCancellation) && (
+              <SubscriptionButton
+                user={user}
+                disabled={false}
+                onSuccess={fetchSubscription}
+              />
+            )}
+            {isPremiumCancelling && (
+              <SubscriptionButton
+                user={user}
+                disabled={false}
+                onSuccess={fetchSubscription}
+                label="Reactivate Subscription"
+              />
+            )}
+          </div>
         </div>
+        <p className="mt-1 text-sm font-regular text-[#b0bec5]">
+          {isFree || isPostCancellation ? (
+            <span>
+              <span className="text-[#b0bec5]">Free Tier</span>
+              <span className="text-[#b0bec5] ml-1">({effectiveClicksLeft} clicks left)</span>
+            </span>
+          ) : isPremiumActive ? (
+            <span>
+              <span className="italic text-[rgba(0,230,118,0.85)]">Premium</span>
+              <span className="text-[#b0bec5] mx-1">Tier -</span>
+              <span className="italic text-[rgba(0,230,118,0.85)]">Active</span>
+              {subscription.currentPeriodEnd && (
+                <span className="text-[#b0bec5] ml-1">
+                  - Renews on {subscription.currentPeriodEnd.toLocaleDateString()}
+                </span>
+              )}
+            </span>
+          ) : isPremiumCancelling ? (
+            <span>
+              <span className="italic text-[rgba(0,230,118,0.85)]">Premium</span>
+              <span className="text-[#b0bec5] mx-1">Tier -</span>
+              <span className="italic text-[#ffca28]/80">Cancelling</span>
+              <span className="text-[#b0bec5] ml-1">
+                - on {subscription.cancelAt!.toLocaleDateString()}
+              </span>
+            </span>
+          ) : null}
+        </p>
       </div>
-      <p className="mb-4">
-        {isFree || isPostCancellation
-          ? `FREE Tier (${effectiveClicksLeft} clicks left)`
-          : isPremiumActive
-          ? `PREMIUM Tier - Active${subscription.currentPeriodEnd ? ` - Renews on ${subscription.currentPeriodEnd.toLocaleDateString()}` : ""}`
-          : isPremiumCancelling
-          ? `PREMIUM Tier - Cancelling on ${subscription.cancelAt!.toLocaleDateString()}`
-          : ""}
-      </p>
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
       <GenAISummary postsData={postsData} loading={postsLoading} selectedStock={selectedStock} />
       <TickerTape
@@ -133,17 +153,18 @@ export default function Home() {
         onTickerClick={handleTickerClick}
         onSort={handleSort}
         sortConfig={sortConfig}
+        user={user}
       />
       <StockOverview
         data={{ marketCanvas: marketCanvasData, stockLedger: stockLedgerData }}
         selectedStock={selectedStock}
         loading={stockLedgerLoading}
       />
-      <PostViewer 
-        data={postsData} 
-        loading={postsLoading} 
-        selectedStock={selectedStock} 
-        user={user} // Pass user prop
+      <PostViewer
+        data={postsData}
+        loading={postsLoading}
+        selectedStock={selectedStock}
+        user={user}
       />
     </div>
   );

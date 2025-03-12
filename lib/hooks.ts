@@ -5,13 +5,9 @@ import { useState, useEffect, useCallback } from "react";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { supabase } from "./supabase";
-import { debounce, getEnvironment } from "./utils";
-import {
-  fetchTickerTapeData as apiFetchTickerTapeData,
-  fetchStockLedgerData,
-  fetchMarketCanvasData,
-  fetchPostsData,
-} from "./api";
+import { getEnvironment } from "./utils";
+import { fetchTickerTapeDataRealTime } from "./api";
+import { fetchStockLedgerData, fetchMarketCanvasData, fetchPostsData } from "./api";
 import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "../types/api";
 
 interface SupabaseError {
@@ -39,7 +35,9 @@ export interface TickerData {
   tickerTapeData: TickerTapeItem[];
   setTickerTapeData: React.Dispatch<React.SetStateAction<TickerTapeItem[]>>;
   stockLedgerData: StockLedgerData;
+  setStockLedgerData: React.Dispatch<React.SetStateAction<StockLedgerData>>;
   marketCanvasData: MarketCanvasData;
+  setMarketCanvasData: React.Dispatch<React.SetStateAction<MarketCanvasData>>;
   postsData: PostData[];
   loading: boolean;
   stockLedgerLoading: boolean;
@@ -274,7 +272,7 @@ export function useTickerData(user: User | null): TickerData {
   const fetchTickerTapeData = async (): Promise<void> => {
     setLoading(true);
     try {
-      const data = await apiFetchTickerTapeData();
+      const data = await fetchTickerTapeDataRealTime();
       setTickerTapeData(data);
     } catch (error) {
       console.error("Error fetching TickerTape data:", error);
@@ -284,102 +282,137 @@ export function useTickerData(user: User | null): TickerData {
     }
   };
 
-  useEffect(() => {
-    if (user) fetchTickerTapeData();
-  }, [user]);
+  const handleTickerClick = async (ticker: string) => {
+    if (!user) return; // Do nothing if user isn’t logged in
 
-  const handleTickerClick = useCallback(
-    async (ticker: string) => {
-      if (!user || subLoading) return;
+    // Check click limits for FREE tier
+    if (subscription.status === "FREE" && subscription.clicksLeft <= 0) {
+      setErrorMessage("No clicks left. Subscribe to PREMIUM for unlimited access.");
+      return;
+    }
 
-      if (subscription.status === "FREE" && subscription.clicksLeft <= 0) {
-        setErrorMessage("Free limit reached (10 tickers). Upgrade to PREMIUM for unlimited access and summaries.");
-        return;
-      }
+    // Set the selected stock and start loading
+    setSelectedStock(ticker);
+    setStockLedgerLoading(true);
+    setPostsLoading(true);
+    setErrorMessage(null);
 
-      const environment = getEnvironment();
-      const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
+    try {
+      // Fetch data for the clicked ticker
+      const [ledger, canvas, posts] = await Promise.all([
+        fetchStockLedgerData(ticker),
+        fetchMarketCanvasData(ticker),
+        fetchPostsData(ticker),
+      ]);
 
-      // Increment ticker_click_count
-      const { data, error: clickError } = await supabase
-        .from(tableName)
-        .select("ticker_click_count")
-        .eq("user_id", user.id)
-        .single();
+      // Update state with the fetched data
+      setStockLedgerData(ledger);
+      setMarketCanvasData(canvas);
+      setPostsData(posts);
 
-      if (clickError && clickError.code !== "PGRST116") {
-        console.error("Error fetching ticker click count:", clickError);
-        setErrorMessage("Failed to record ticker click.");
-        return;
-      }
-
-      const currentCount = data?.ticker_click_count || 0;
-      const { error: updateError } = await supabase
-        .from(tableName)
-        .update({ ticker_click_count: currentCount + 1, updated_at: new Date().toISOString() })
-        .eq("user_id", user.id);
-
-      if (updateError) {
-        console.error("Error updating ticker click count:", updateError);
-        setErrorMessage("Failed to record ticker click.");
-        return;
-      }
-
+      // Update click count for FREE tier users
       if (subscription.status === "FREE") {
-        setSubscription((prev) => ({ ...prev, clicksLeft: prev.clicksLeft - 1 }));
+        const environment = getEnvironment();
+        const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
+        const newClickCount = Math.min((subscription.clicksLeft - 1) * -1 + 10, 10); // Increment click count
+        const { error } = await supabase
+          .from(tableName)
+          .update({ ticker_click_count: newClickCount })
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+
+        setSubscription((prev) => ({
+          ...prev,
+          clicksLeft: Math.max(10 - newClickCount, 0),
+        }));
       }
 
-      const debouncedHandleTickerClick = debounce(async (ticker: string): Promise<void> => {
-        setStockLedgerLoading(true);
-        setPostsLoading(true);
-        setErrorMessage(null);
-        const cleanTicker = ticker.replace("$", "");
-        setSelectedStock(cleanTicker);
-        setPostsData([]);
-        setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
-        setStockLedgerData({ stockName: cleanTicker, description: "", marketCap: "" });
+      console.log(`Ticker clicked: ${ticker}, data fetched successfully`);
+    } catch (error) {
+      console.error(`Error fetching data for ticker ${ticker}:`, error);
+      setErrorMessage(`Failed to load data for $${ticker}.`);
+    } finally {
+      setStockLedgerLoading(false);
+      setPostsLoading(false);
+    }
+  };
 
-        try {
-          // Fetch all data, including posts, for both tiers
-          const [ledgerResponse, canvasResponse, postsResponse] = await Promise.all([
-            fetchStockLedgerData(cleanTicker),
-            fetchMarketCanvasData(cleanTicker),
-            fetchPostsData(cleanTicker),
-          ]);
+  useEffect(() => {
+    if (!user || subLoading) return;
 
-          setStockLedgerData(ledgerResponse);
-          if (canvasResponse.lineData.length === 0 || canvasResponse.barData.length === 0) {
-            setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
-            setErrorMessage(`No price/volume data available for ${cleanTicker}.`);
-          } else {
-            setMarketCanvasData(canvasResponse);
-          }
-          setPostsData(postsResponse); // Set posts data regardless of tier
-        } catch (error) {
-          console.error("Error fetching data:", error);
-          setStockLedgerData({
-            stockName: cleanTicker,
-            description: "Failed to fetch ticker info",
-            marketCap: "N/A",
+    // Initial fetch
+    fetchTickerTapeData();
+
+    if (subscription.status === "PREMIUM") {
+      // Real-time subscription for PREMIUM users
+      try {
+        const channel = supabase
+          .channel("ticker-tape-changes")
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "frontend_timeseries_data" },
+            () => fetchTickerTapeData()
+          )
+          .on(
+            "postgres_changes",
+            { event: "UPDATE", schema: "public", table: "frontend_timeseries_data" },
+            () => fetchTickerTapeData()
+          )
+          .subscribe((status) => {
+            if (status === "SUBSCRIBED") {
+              console.log("Real-time subscription active for PREMIUM user");
+            } else if (status === "CHANNEL_ERROR") {
+              console.error("Subscription error");
+            }
           });
-          setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
-          setPostsData([]);
-          setErrorMessage(`Unable to load data for ${cleanTicker}. Please try another ticker.`);
-        } finally {
-          setStockLedgerLoading(false);
-          setPostsLoading(false);
+        return () => {
+          supabase.removeChannel(channel);
+        };
+      } catch (error) {
+        console.error("Error setting up real-time subscription:", error);
+      }
+    } else {
+      // Scheduled refresh for FREE users (12, 32, 47 minutes)
+      const scheduleRefresh = () => {
+        const now = new Date();
+        const minutes = now.getMinutes();
+        const seconds = now.getSeconds();
+        const msPastMinute = seconds * 1000;
+
+        const targetMinutes = [12, 32, 47];
+        let nextRefreshMinute = targetMinutes.find((m) => m > minutes) || targetMinutes[0];
+        if (nextRefreshMinute <= minutes) {
+          nextRefreshMinute += 60;
         }
-      }, 300);
-      debouncedHandleTickerClick(ticker);
-    },
-    [user, subscription, setSubscription, subLoading]
-  );
+
+        const msUntilNextRefresh = (nextRefreshMinute - minutes) * 60 * 1000 - msPastMinute;
+        console.log(`Next refresh for FREE user in ${msUntilNextRefresh / 1000} seconds`);
+
+        const timeout = setTimeout(() => {
+          fetchTickerTapeData();
+          setInterval(() => {
+            const now = new Date().getMinutes();
+            if (targetMinutes.includes(now)) {
+              fetchTickerTapeData();
+            }
+          }, 60 * 1000);
+        }, msUntilNextRefresh);
+
+        return () => clearTimeout(timeout);
+      };
+
+      scheduleRefresh();
+    }
+  }, [user, subLoading, subscription.status]);
 
   return {
     tickerTapeData,
     setTickerTapeData,
     stockLedgerData,
+    setStockLedgerData,
     marketCanvasData,
+    setMarketCanvasData,
     postsData,
     loading,
     stockLedgerLoading,
