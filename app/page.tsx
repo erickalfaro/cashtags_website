@@ -17,7 +17,6 @@ export default function Home() {
     tickerTapeData,
     setTickerTapeData,
     loading,
-    // Remove fetchTickerTapeData from destructuring if not used here
     stockLedgerData,
     marketCanvasData,
     postsData,
@@ -74,13 +73,45 @@ export default function Home() {
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-gray-200">
-        <h1 className="text-2xl font-bold mb-4">Please Log In</h1>
-        <AuthButtons />
+      <div className="h-[600px] bg-gradient-to-b from-gray-900 to-gray-800 text-gray-200 flex flex-col items-center justify-center px-6 overflow-hidden">
+        {/* Hero Section */}
+        <div className="landing-hero text-center mb-4">
+          <h1 className="text-3xl md:text-4xl font-bold text-[rgba(0,230,118,1)] mb-1 animate-fade-in">
+            Cashtags
+          </h1>
+          <p className="text-sm md:text-md text-gray-300 max-w-lg mx-auto animate-slide-up">
+            Real-time stock insights from social media.
+          </p>
+        </div>
+
+        {/* Condensed Sales Pitch Section */}
+        <div className="landing-pitch grid grid-cols-1 md:grid-cols-3 gap-3 max-w-3xl mb-4">
+          <div className="pitch-card p-3">
+            <h3 className="text-md font-semibold text-[rgba(0,230,118,1)] mb-1">Real-Time Trends</h3>
+            <p className="text-xs text-gray-400">Live stock mentions & sentiment.</p>
+          </div>
+          <div className="pitch-card p-3">
+            <h3 className="text-md font-semibold text-[rgba(0,230,118,1)] mb-1">AI Insights</h3>
+            <p className="text-xs text-gray-400">Smart market summaries.</p>
+          </div>
+          <div className="pitch-card p-3">
+            <h3 className="text-md font-semibold text-[rgba(0,230,118,1)] mb-1">Actionable Data</h3>
+            <p className="text-xs text-gray-400">Price & volume charts.</p>
+          </div>
+        </div>
+
+        {/* Call to Action with Auth Buttons */}
+        <div className="landing-cta text-center">
+          <p className="text-gray-300 mb-2 text-sm font-medium animate-slide-up">
+            Start now
+          </p>
+          <AuthButtons />
+        </div>
       </div>
     );
   }
 
+  // Authenticated view remains unchanged
   const isFree = subscription.status !== "PREMIUM";
   const hasCancelAt = subscription.cancelAt !== null && subscription.cancelAt !== undefined;
   const isPremiumActive = subscription.status === "PREMIUM" && !hasCancelAt;

@@ -484,3 +484,61 @@ header {
 .header-button {
   @apply px-4 py-1.5 bg-[rgba(0,230,118,0.9)] text-white rounded-full text-sm font-medium hover:bg-[rgba(0,255,130,1)] transition-all duration-200 shadow-sm;
 }
+
+
+
+
+/* app/globals.css (update landing-specific styles) */
+
+/* Background Gradient */
+.bg-gradient-to-b {
+  background: linear-gradient(to bottom, #111827, #1f2937);
+}
+
+/* Landing Hero */
+.landing-hero {
+  @apply animate-fade-in;
+}
+
+.animate-fade-in {
+  animation: fadeIn 1s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.8s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Sales Pitch Cards */
+.pitch-card {
+  @apply bg-gradient-to-br from-gray-800 to-gray-900 p-3 rounded-md shadow-md border border-[var(--border-color)] transition-transform duration-300 hover:scale-105;
+}
+
+/* Call to Action */
+.landing-cta {
+  @apply animate-slide-up;
+}
+
+/* Auth Buttons */
+.auth-buttons button {
+  @apply px-4 py-1 bg-[rgba(0,230,118,0.9)] text-white rounded-full font-medium hover:bg-[rgba(0,255,130,1)] transition-all duration-200 shadow-md text-sm;
+}
