@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Cashtags Dashboard",
   description: "A stock market dashboard",
+  icons: {
+    icon: "/favicon_io/favicon.ico", // Path relative to the `public/` folder
+  },
 };
 
 export default function RootLayout({

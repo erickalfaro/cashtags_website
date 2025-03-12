@@ -17,7 +17,6 @@ export default function Home() {
     tickerTapeData,
     setTickerTapeData,
     loading,
-    // Remove fetchTickerTapeData from destructuring if not used here
     stockLedgerData,
     marketCanvasData,
     postsData,
@@ -74,13 +73,45 @@ export default function Home() {
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-gray-200">
-        <h1 className="text-2xl font-bold mb-4">Please Log In</h1>
-        <AuthButtons />
+      <div className="h-[600px] bg-gradient-to-b from-gray-900 to-gray-800 text-gray-200 flex flex-col items-center justify-center px-6 overflow-hidden">
+        {/* Hero Section */}
+        <div className="landing-hero text-center mb-4">
+          <h1 className="text-3xl md:text-4xl font-bold text-[rgba(0,230,118,1)] mb-1 animate-fade-in">
+            Cashtags
+          </h1>
+          <p className="text-sm md:text-md text-gray-300 max-w-lg mx-auto animate-slide-up">
+            Real-time stock insights from social media.
+          </p>
+        </div>
+
+        {/* Condensed Sales Pitch Section */}
+        <div className="landing-pitch grid grid-cols-1 md:grid-cols-3 gap-3 max-w-3xl mb-4">
+          <div className="pitch-card p-3">
+            <h3 className="text-md font-semibold text-[rgba(0,230,118,1)] mb-1">Real-Time Trends</h3>
+            <p className="text-xs text-gray-400">Live stock mentions & sentiment.</p>
+          </div>
+          <div className="pitch-card p-3">
+            <h3 className="text-md font-semibold text-[rgba(0,230,118,1)] mb-1">AI Insights</h3>
+            <p className="text-xs text-gray-400">Smart market summaries.</p>
+          </div>
+          <div className="pitch-card p-3">
+            <h3 className="text-md font-semibold text-[rgba(0,230,118,1)] mb-1">Actionable Data</h3>
+            <p className="text-xs text-gray-400">Price & volume charts.</p>
+          </div>
+        </div>
+
+        {/* Call to Action with Auth Buttons */}
+        <div className="landing-cta text-center">
+          <p className="text-gray-300 mb-2 text-sm font-medium animate-slide-up">
+            Start now
+          </p>
+          <AuthButtons />
+        </div>
       </div>
     );
   }
 
+  // Authenticated view remains unchanged
   const isFree = subscription.status !== "PREMIUM";
   const hasCancelAt = subscription.cancelAt !== null && subscription.cancelAt !== undefined;
   const isPremiumActive = subscription.status === "PREMIUM" && !hasCancelAt;
@@ -93,17 +124,48 @@ export default function Home() {
 
   return (
     <div className="text-gray-200">
-      <div className="mb-6 bg-[#1e2529] rounded-sm shadow-xs p-3 transition-all duration-150 hover:bg-[#222a30]">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
-          <h1 className="text-lg font-medium text-[#f5f5f5]">
-            Welcome, {user.email}
-          </h1>
+      <div className="header-container">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+          <div>
+            <h1 className="header-welcome">Welcome, {user.email}</h1>
+            <p className="subscription-info">
+              <span
+                className={`tier-badge ${
+                  isFree || isPostCancellation
+                    ? "free"
+                    : isPremiumActive
+                    ? "premium"
+                    : isPremiumCancelling
+                    ? "cancelling"
+                    : ""
+                }`}
+              >
+                {isFree || isPostCancellation
+                  ? "Free Tier"
+                  : isPremiumActive
+                  ? "Premium - Active"
+                  : isPremiumCancelling
+                  ? "Premium - Cancelling"
+                  : ""}
+              </span>
+              {(isFree || isPostCancellation) && (
+                <span>({effectiveClicksLeft} clicks left)</span>
+              )}
+              {isPremiumActive && subscription.currentPeriodEnd && (
+                <span>Renews on {subscription.currentPeriodEnd.toLocaleDateString()}</span>
+              )}
+              {isPremiumCancelling && subscription.cancelAt && (
+                <span>Ends on {subscription.cancelAt.toLocaleDateString()}</span>
+              )}
+            </p>
+          </div>
           <div className="flex items-center gap-2">
             {(isFree || isPostCancellation) && (
               <SubscriptionButton
                 user={user}
                 disabled={false}
                 onSuccess={fetchSubscription}
+                label="Upgrade to Premium"
               />
             )}
             {isPremiumCancelling && (
@@ -111,39 +173,11 @@ export default function Home() {
                 user={user}
                 disabled={false}
                 onSuccess={fetchSubscription}
-                label="Reactivate Subscription"
+                label="Reactivate"
               />
             )}
           </div>
         </div>
-        <p className="mt-1 text-sm font-regular text-[#b0bec5]">
-          {isFree || isPostCancellation ? (
-            <span>
-              <span className="text-[#b0bec5]">Free Tier</span>
-              <span className="text-[#b0bec5] ml-1">({effectiveClicksLeft} clicks left)</span>
-            </span>
-          ) : isPremiumActive ? (
-            <span>
-              <span className="italic text-[rgba(0,230,118,0.85)]">Premium</span>
-              <span className="text-[#b0bec5] mx-1">Tier -</span>
-              <span className="italic text-[rgba(0,230,118,0.85)]">Active</span>
-              {subscription.currentPeriodEnd && (
-                <span className="text-[#b0bec5] ml-1">
-                  - Renews on {subscription.currentPeriodEnd.toLocaleDateString()}
-                </span>
-              )}
-            </span>
-          ) : isPremiumCancelling ? (
-            <span>
-              <span className="italic text-[rgba(0,230,118,0.85)]">Premium</span>
-              <span className="text-[#b0bec5] mx-1">Tier -</span>
-              <span className="italic text-[#ffca28]/80">Cancelling</span>
-              <span className="text-[#b0bec5] ml-1">
-                - on {subscription.cancelAt!.toLocaleDateString()}
-              </span>
-            </span>
-          ) : null}
-        </p>
       </div>
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
       <GenAISummary postsData={postsData} loading={postsLoading} selectedStock={selectedStock} />
