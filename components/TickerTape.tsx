@@ -4,7 +4,6 @@
 import React, { useEffect, useState } from "react";
 import { Sparklines, SparklinesLine } from "react-sparklines";
 import { useSubscription } from "../lib/hooks";
-import { User } from "@supabase/supabase-js";
 import { TickerTapeProps } from "../types/components";
 
 export const TickerTape: React.FC<TickerTapeProps> = ({

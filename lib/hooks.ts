@@ -5,8 +5,8 @@ import { useState, useEffect, useCallback } from "react";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { supabase } from "./supabase";
-import { debounce, getEnvironment } from "./utils";
-import { fetchTickerTapeDataRealTime, fetchStockLedgerData, fetchMarketCanvasData, fetchPostsData } from "./api";
+import { getEnvironment } from "./utils";
+import { fetchTickerTapeDataRealTime } from "./api";
 import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "../types/api";
 
 interface SupabaseError {
@@ -249,12 +249,12 @@ export function useSubscription(user: User | null): SubscriptionData {
 export function useTickerData(user: User | null): TickerData {
   const { subscription, setSubscription, loading: subLoading, fetchSubscription } = useSubscription(user);
   const [tickerTapeData, setTickerTapeData] = useState<TickerTapeItem[]>([]);
-  const [stockLedgerData, setStockLedgerData] = useState<StockLedgerData>({
+  const [stockLedgerData] = useState<StockLedgerData>({
     stockName: "",
     description: "",
     marketCap: "",
   });
-  const [marketCanvasData, setMarketCanvasData] = useState<MarketCanvasData>({
+  const [marketCanvasData] = useState<MarketCanvasData>({
     ticker: "",
     lineData: [],
     barData: [],
@@ -349,12 +349,10 @@ export function useTickerData(user: User | null): TickerData {
     }
   }, [user, subLoading, subscription.status]);
 
-  const handleTickerClick = useCallback(
-    async (ticker: string) => {
-      // ... (unchanged)
-    },
-    [user, subscription, setSubscription, subLoading]
-  );
+  const handleTickerClick = (ticker: string) => {
+    // Minimal implementation to use the prop; expand as needed
+    console.log(`Ticker clicked: ${ticker}`);
+  };
 
   return {
     tickerTapeData,
