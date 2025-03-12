@@ -7,6 +7,9 @@ https://dashboard.stripe.com/test/customers/
 https://dashboard.stripe.com/test/webhooks/
 https://console.cloud.google.com/apis/api/identitytoolkit.googleapis.com/credentials
 
+Setting up cloudflare > supabase
+https://grok.com/chat/146b3476-605d-403d-b40e-b49006c72145
+
 # Todo: 
 
 Website: 
@@ -244,3 +247,5 @@ if you exist in user_subscriptions DEV as premium, are you premium on PROD by de
 - **Payment Integration**: Seamless Stripe billing with un-cancel support.
 - **Real-Time Updates**: Supabase and Stripe keep data in sync.
 - **Financial Insights**: Ticker tape, stock ledger, market canvas, and AI summaries.
+
+

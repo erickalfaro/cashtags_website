@@ -373,7 +373,42 @@ header {
   position: relative;
 }
 
+/* Row update animation */
 /* Optional: Add a faint glow effect for extra coolness */
-.animated-placeholder span {
-  text-shadow: 0 0 8px rgba(0, 230, 118, 0.5);
+@keyframes rowHighlightPulse {
+  0% {
+    background-color: rgba(0, 230, 118, 0); /* Starting transparent */
+  }
+  50% {
+    background-color: rgba(0, 230, 118, 0.3); /* Peak green glow */
+  }
+  100% {
+    background-color: rgba(0, 230, 118, 0); /* Fade back to transparent */
+  }
+}
+
+.animate-row-update {
+  animation: rowHighlightPulse 1s ease-in-out forwards;
+}
+
+/* Slow pulsing "LIVE" animation (unchanged) */
+@keyframes pulseLive {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+.animate-pulse-live {
+  animation: pulseLive 2s infinite ease-in-out;
+}
+
+/* Ensure container-header supports absolute positioning */
+.container-header {
+  position: relative;
 }

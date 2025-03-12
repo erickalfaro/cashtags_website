@@ -52,7 +52,6 @@ export default function Home() {
     const direction =
       sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
     setSortConfig({ key, direction });
-
     const sortedData = [...tickerTapeData].sort((a, b) => {
       const aValue = a[key] ?? (typeof a[key] === "number" ? 0 : a[key]);
       const bValue = b[key] ?? (typeof b[key] === "number" ? 0 : b[key]);
@@ -133,17 +132,18 @@ export default function Home() {
         onTickerClick={handleTickerClick}
         onSort={handleSort}
         sortConfig={sortConfig}
+        user={user}
       />
       <StockOverview
         data={{ marketCanvas: marketCanvasData, stockLedger: stockLedgerData }}
         selectedStock={selectedStock}
         loading={stockLedgerLoading}
       />
-      <PostViewer 
-        data={postsData} 
-        loading={postsLoading} 
-        selectedStock={selectedStock} 
-        user={user} // Pass user prop
+      <PostViewer
+        data={postsData}
+        loading={postsLoading}
+        selectedStock={selectedStock}
+        user={user}
       />
     </div>
   );

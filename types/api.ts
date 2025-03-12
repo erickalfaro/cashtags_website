@@ -9,7 +9,7 @@ export interface AlpacaBar {
   n: number;
   vw: number;
 }
-
+// types/api.ts
 export interface TickerTapeItem {
   id: number;
   cashtag: string;
@@ -18,8 +18,11 @@ export interface TickerTapeItem {
   latest_price: number | null;
   chng: number | null;
   trend: number[];
+  rowId?: number; // Ensure this matches TickerTape.tsx
+  key?: string;  // Ensure this matches TickerTape.tsx
 }
 
+// Add other interfaces (StockLedgerData, MarketCanvasData, PostData) if needed
 export interface StockLedgerData {
   stockName: string;
   description: string;
