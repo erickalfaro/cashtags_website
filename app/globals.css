@@ -542,3 +542,31 @@ header {
 .auth-buttons button {
   @apply px-4 py-1 bg-[rgba(0,230,118,0.9)] text-white rounded-full font-medium hover:bg-[rgba(0,255,130,1)] transition-all duration-200 shadow-md text-sm;
 }
+
+
+/* app/globals.css (append at the end) */
+
+/* Toggle Switch Styles */
+.toggle-container {
+  @apply mb-6;
+}
+
+.toggle-switch {
+  @apply flex rounded-full border border-[var(--border-color)] overflow-hidden shadow-sm;
+}
+
+.toggle-btn {
+  @apply px-4 py-2 text-sm font-medium text-gray-200 bg-[var(--container-bg)] transition-colors duration-200;
+}
+
+.toggle-btn:hover {
+  @apply bg-gray-700;
+}
+
+.toggle-btn.active {
+  @apply bg-[rgba(0,230,118,0.9)] text-white;
+}
+
+.toggle-btn:not(.active):hover {
+  @apply bg-gray-700;
+}

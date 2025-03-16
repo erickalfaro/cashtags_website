@@ -8,7 +8,7 @@ import { supabase } from "./supabase";
 import { getEnvironment } from "./utils";
 import { fetchTickerTapeDataRealTime } from "./api";
 import { fetchStockLedgerData, fetchMarketCanvasData, fetchPostsData } from "./api";
-import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "../types/api";
+import { TickerTapeItem, TopicItem, StockLedgerData, MarketCanvasData, PostData } from "../types/api";
 
 interface SupabaseError {
   code: string;
@@ -32,8 +32,8 @@ interface SubscriptionData {
 }
 
 export interface TickerData {
-  tickerTapeData: TickerTapeItem[];
-  setTickerTapeData: React.Dispatch<React.SetStateAction<TickerTapeItem[]>>;
+  tickerTapeData: (TickerTapeItem | TopicItem)[];
+  setTickerTapeData: React.Dispatch<React.SetStateAction<(TickerTapeItem | TopicItem)[]>>;
   stockLedgerData: StockLedgerData;
   setStockLedgerData: React.Dispatch<React.SetStateAction<StockLedgerData>>;
   marketCanvasData: MarketCanvasData;
@@ -248,10 +248,9 @@ export function useSubscription(user: User | null): SubscriptionData {
 
   return { subscription, setSubscription, loading, fetchSubscription };
 }
-
-export function useTickerData(user: User | null): TickerData {
+export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"): TickerData {
   const { subscription, setSubscription, loading: subLoading, fetchSubscription } = useSubscription(user);
-  const [tickerTapeData, setTickerTapeData] = useState<TickerTapeItem[]>([]);
+  const [tickerTapeData, setTickerTapeData] = useState<(TickerTapeItem | TopicItem)[]>([]);
   const [stockLedgerData, setStockLedgerData] = useState<StockLedgerData>({
     stockName: "",
     description: "",
@@ -272,49 +271,45 @@ export function useTickerData(user: User | null): TickerData {
   const fetchTickerTapeData = async (): Promise<void> => {
     setLoading(true);
     try {
-      const data = await fetchTickerTapeDataRealTime();
+      const tableName = pageMode === "cashtags" ? "frontend_timeseries_data" : "frontend_topics";
+      const data = await fetchTickerTapeDataRealTime(tableName);
       setTickerTapeData(data);
     } catch (error) {
-      console.error("Error fetching TickerTape data:", error);
-      setErrorMessage("Failed to load ticker tape data.");
+      console.error(`Error fetching ${pageMode} data:`, error);
+      setErrorMessage(`Failed to load ${pageMode} data.`);
     } finally {
       setLoading(false);
     }
   };
 
   const handleTickerClick = async (ticker: string) => {
-    if (!user) return; // Do nothing if user isn’t logged in
+    if (!user) return;
 
-    // Check click limits for FREE tier
     if (subscription.status === "FREE" && subscription.clicksLeft <= 0) {
       setErrorMessage("No clicks left. Subscribe to PREMIUM for unlimited access.");
       return;
     }
 
-    // Set the selected stock and start loading
     setSelectedStock(ticker);
     setStockLedgerLoading(true);
     setPostsLoading(true);
     setErrorMessage(null);
 
     try {
-      // Fetch data for the clicked ticker
       const [ledger, canvas, posts] = await Promise.all([
         fetchStockLedgerData(ticker),
         fetchMarketCanvasData(ticker),
         fetchPostsData(ticker),
       ]);
 
-      // Update state with the fetched data
       setStockLedgerData(ledger);
       setMarketCanvasData(canvas);
       setPostsData(posts);
 
-      // Update click count for FREE tier users
       if (subscription.status === "FREE") {
         const environment = getEnvironment();
         const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
-        const newClickCount = Math.min((subscription.clicksLeft - 1) * -1 + 10, 10); // Increment click count
+        const newClickCount = Math.min((subscription.clicksLeft - 1) * -1 + 10, 10);
         const { error } = await supabase
           .from(tableName)
           .update({ ticker_click_count: newClickCount })
@@ -341,39 +336,45 @@ export function useTickerData(user: User | null): TickerData {
   useEffect(() => {
     if (!user || subLoading) return;
 
-    // Initial fetch
     fetchTickerTapeData();
 
+    let channel: any;
+
     if (subscription.status === "PREMIUM") {
-      // Real-time subscription for PREMIUM users
-      try {
-        const channel = supabase
-          .channel("ticker-tape-changes")
+      const tableName = pageMode === "cashtags" ? "frontend_timeseries_data" : "frontend_topics";
+      const channelName = `${pageMode}-changes`;
+
+      const subscribe = () => {
+        channel = supabase
+          .channel(channelName)
           .on(
             "postgres_changes",
-            { event: "INSERT", schema: "public", table: "frontend_timeseries_data" },
+            { event: "INSERT", schema: "public", table: tableName },
             () => fetchTickerTapeData()
           )
           .on(
             "postgres_changes",
-            { event: "UPDATE", schema: "public", table: "frontend_timeseries_data" },
+            { event: "UPDATE", schema: "public", table: tableName },
             () => fetchTickerTapeData()
           )
           .subscribe((status) => {
             if (status === "SUBSCRIBED") {
-              console.log("Real-time subscription active for PREMIUM user");
+              console.log(`Real-time subscription active for PREMIUM user on ${pageMode}`);
             } else if (status === "CHANNEL_ERROR") {
-              console.error("Subscription error");
+              console.error(`Subscription error for ${pageMode}`);
             }
           });
-        return () => {
+      };
+
+      subscribe();
+
+      return () => {
+        if (channel) {
           supabase.removeChannel(channel);
-        };
-      } catch (error) {
-        console.error("Error setting up real-time subscription:", error);
-      }
+          console.log(`Real-time subscription stopped for ${pageMode}`);
+        }
+      };
     } else {
-      // Scheduled refresh for FREE users (12, 32, 47 minutes)
       const scheduleRefresh = () => {
         const now = new Date();
         const minutes = now.getMinutes();
@@ -391,20 +392,22 @@ export function useTickerData(user: User | null): TickerData {
 
         const timeout = setTimeout(() => {
           fetchTickerTapeData();
-          setInterval(() => {
+          const interval = setInterval(() => {
             const now = new Date().getMinutes();
             if (targetMinutes.includes(now)) {
               fetchTickerTapeData();
             }
           }, 60 * 1000);
+          return () => clearInterval(interval);
         }, msUntilNextRefresh);
 
         return () => clearTimeout(timeout);
       };
 
-      scheduleRefresh();
+      const cleanup = scheduleRefresh();
+      return cleanup;
     }
-  }, [user, subLoading, subscription.status]);
+  }, [user, subLoading, subscription.status, pageMode]);
 
   return {
     tickerTapeData,

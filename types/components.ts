@@ -1,14 +1,15 @@
 // types/components.ts
-import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "./api";
+import { TickerTapeItem, TopicItem, StockLedgerData, MarketCanvasData, PostData } from "./api";
 import { User } from "@supabase/supabase-js";
 
 export interface TickerTapeProps {
-  data: TickerTapeItem[];
+  data: (TickerTapeItem | TopicItem)[];
   loading: boolean;
   onTickerClick: (ticker: string) => void;
-  onSort: (key: keyof TickerTapeItem) => void;
-  sortConfig: { key: keyof TickerTapeItem | null; direction: "asc" | "desc" };
+  onSort: (key: keyof TickerTapeItem | keyof TopicItem) => void;
+  sortConfig: { key: keyof TickerTapeItem | keyof TopicItem | null; direction: "asc" | "desc" };
   user: User | null;
+  pageMode: "cashtags" | "topics"; // Add pageMode to props
 }
 
 export interface StockOverviewProps {
@@ -31,4 +32,5 @@ export interface GenAISummaryProps {
   postsData: PostData[];
   loading: boolean;
   selectedStock: string | null;
+  pageMode: "cashtags" | "topics";
 }

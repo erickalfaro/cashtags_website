@@ -1,7 +1,7 @@
 // lib/api.ts
 import axios from "axios";
 import { supabase } from "./supabase";
-import { StockLedgerData, MarketCanvasData, PostData, TickerTapeItem } from "../types/api";
+import { TickerTapeItem, TopicItem, StockLedgerData, MarketCanvasData, PostData } from "../types/api";
 
 export const fetchTickerTapeData = async (): Promise<TickerTapeItem[]> => {
   const response = await axios.get("/api/mockdata");
@@ -23,9 +23,9 @@ export const fetchPostsData = async (ticker: string): Promise<PostData[]> => {
   return response.data;
 };
 
-export const fetchTickerTapeDataRealTime = async (): Promise<TickerTapeItem[]> => {
+export const fetchTickerTapeDataRealTime = async (tableName: string): Promise<(TickerTapeItem | TopicItem)[]> => {
   const { data, error } = await supabase
-    .from("frontend_timeseries_data")
+    .from(tableName)
     .select("id, data, created_at")
     .order("created_at", { ascending: false });
 
@@ -33,11 +33,29 @@ export const fetchTickerTapeDataRealTime = async (): Promise<TickerTapeItem[]> =
 
   const transformedData = data.flatMap((row) => {
     const parsedData = typeof row.data === "string" ? JSON.parse(row.data) : row.data;
-    return (parsedData as TickerTapeItem[]).map((item, index) => ({
-      ...item,
-      rowId: row.id, // Preserve the table’s row id for uniqueness
-      key: `${row.id}-${item.id || index}`, // Composite key
-    }));
+    console.log(`Raw data from ${tableName}:`, parsedData); // Debug log
+    return (parsedData as any[]).map((item, index) => {
+      if (tableName === "frontend_topics") {
+        return {
+          id: item.id || index + 1,
+          topic: item.cashtag || item.name || item.title || "Unnamed Topic", // Try common field names
+          trend: item.trend || [],
+          rowId: row.id,
+          key: `${row.id}-${item.id || index}`,
+        } as TopicItem;
+      }
+      return {
+        id: item.id,
+        cashtag: item.cashtag,
+        prev_open: item.prev_open,
+        prev_eod: item.prev_eod,
+        latest_price: item.latest_price,
+        chng: item.chng,
+        trend: item.trend,
+        rowId: row.id,
+        key: `${row.id}-${item.id || index}`,
+      } as TickerTapeItem;
+    });
   });
 
   return transformedData;
