@@ -1,10 +1,10 @@
 // lib/utils.ts
-export const debounce = <T extends unknown[]>(
-  func: (...args: T) => void,
+export const debounce = <T extends (...args: any[]) => void>(
+  func: T,
   wait: number
-): ((...args: T) => void) => {
+): ((...args: Parameters<T>) => void) => {
   let timeout: NodeJS.Timeout;
-  return (...args: T) => {
+  return (...args: Parameters<T>) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), wait);
   };

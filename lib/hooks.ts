@@ -2,10 +2,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { User } from "@supabase/supabase-js";
+import { User, RealtimeChannel } from "@supabase/supabase-js"; // Import RealtimeChannel
 import { useRouter } from "next/navigation";
 import { supabase } from "./supabase";
 import { getEnvironment } from "./utils";
+import { debounce } from "./utils";
 import { fetchTickerTapeDataRealTime } from "./api";
 import { fetchStockLedgerData, fetchMarketCanvasData, fetchPostsData } from "./api";
 import { TickerTapeItem, TopicItem, StockLedgerData, MarketCanvasData, PostData } from "../types/api";
@@ -248,6 +249,7 @@ export function useSubscription(user: User | null): SubscriptionData {
 
   return { subscription, setSubscription, loading, fetchSubscription };
 }
+
 export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"): TickerData {
   const { subscription, setSubscription, loading: subLoading, fetchSubscription } = useSubscription(user);
   const [tickerTapeData, setTickerTapeData] = useState<(TickerTapeItem | TopicItem)[]>([]);
@@ -268,7 +270,7 @@ export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const fetchTickerTapeData = async (): Promise<void> => {
+  const fetchTickerTapeData = useCallback(async () => {
     setLoading(true);
     try {
       const tableName = pageMode === "cashtags" ? "frontend_timeseries_data" : "frontend_topics";
@@ -280,7 +282,9 @@ export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"
     } finally {
       setLoading(false);
     }
-  };
+  }, [pageMode]);
+
+  const debouncedFetchTickerTapeData = useCallback(debounce(fetchTickerTapeData, 500), [fetchTickerTapeData]); // Debounce by 500ms
 
   const handleTickerClick = async (ticker: string) => {
     if (!user) return;
@@ -338,7 +342,7 @@ export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"
 
     fetchTickerTapeData();
 
-    let channel: any;
+    let channel: RealtimeChannel | undefined;
 
     if (subscription.status === "PREMIUM") {
       const tableName = pageMode === "cashtags" ? "frontend_timeseries_data" : "frontend_topics";
@@ -350,14 +354,14 @@ export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"
           .on(
             "postgres_changes",
             { event: "INSERT", schema: "public", table: tableName },
-            () => fetchTickerTapeData()
+            () => debouncedFetchTickerTapeData() // Use debounced version
           )
           .on(
             "postgres_changes",
             { event: "UPDATE", schema: "public", table: tableName },
-            () => fetchTickerTapeData()
+            () => debouncedFetchTickerTapeData() // Use debounced version
           )
-          .subscribe((status) => {
+          .subscribe((status: string) => {
             if (status === "SUBSCRIBED") {
               console.log(`Real-time subscription active for PREMIUM user on ${pageMode}`);
             } else if (status === "CHANNEL_ERROR") {
@@ -407,7 +411,7 @@ export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"
       const cleanup = scheduleRefresh();
       return cleanup;
     }
-  }, [user, subLoading, subscription.status, pageMode]);
+  }, [user, subLoading, subscription.status, pageMode, fetchTickerTapeData, debouncedFetchTickerTapeData]);
 
   return {
     tickerTapeData,

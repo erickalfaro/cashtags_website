@@ -1,7 +1,7 @@
 // components/TickerTape.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Sparklines, SparklinesLine } from "react-sparklines";
 import { useSubscription } from "../lib/hooks";
 import { TickerTapeProps } from "../types/components";
@@ -37,12 +37,14 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
 
   const isCashtagsMode = pageMode === "cashtags";
 
+  const headerText = useMemo(() => {
+    return `Top Trending on ${isCashtagsMode ? "Socials" : "Topics"} ${loading ? "(Updating...)" : ""}`;
+  }, [isCashtagsMode, loading]);
+
   return (
-    <div className="mt-6 TickerTape relative">
+    <div className={`mt-6 TickerTape ${pageMode === "topics" ? "topics-mode" : ""}`} key={pageMode}>
       <div className="container-header relative flex justify-center items-center px-3 py-2">
-        <span className="text-center">
-          Top Trending on {isCashtagsMode ? "Socials" : "Topics"} {loading ? "(Updating...)" : ""}
-        </span>
+        <span className="text-center">{headerText}</span>
         <span className="absolute right-3 text-sm">
           {subscription.status === "PREMIUM" ? (
             <span className="text-lg font-bold text-red-500 animate-pulse-live">LIVE</span>
@@ -144,7 +146,7 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
                         <td className="border border-gray-700 p-1 text-center w-24">
                           {(item as TickerTapeItem).latest_price !== null &&
                           (item as TickerTapeItem).latest_price !== undefined
-                            ? `$${(item as TickerTapeItem).latest_price!.toFixed(2)}` // Non-null assertion with prior check
+                            ? `$${(item as TickerTapeItem).latest_price!.toFixed(2)}`
                             : "-"}
                         </td>
                         <td className="border border-gray-700 p-1 text-center w-20">
