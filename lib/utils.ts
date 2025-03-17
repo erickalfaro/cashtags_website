@@ -1,15 +1,16 @@
 // lib/utils.ts
-export const debounce = <T extends unknown[]>(
-  func: (...args: T) => void,
+export const debounce = <T extends () => void>(
+  func: T,
   wait: number
-): ((...args: T) => void) => {
+): (() => void) => {
   let timeout: NodeJS.Timeout;
-  return (...args: T) => {
+  return () => {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
+    timeout = setTimeout(() => func(), wait);
   };
 };
 
+// Existing getEnvironment function remains unchanged
 export const getEnvironment = (): "dev" | "prod" => {
   const vercelEnv = process.env.VERCEL_ENV;
   const vercelUrl = process.env.VERCEL_URL;

@@ -9,20 +9,20 @@ interface GenAISummaryProps {
   postsData: PostData[];
   loading: boolean;
   selectedStock: string | null;
+  pageMode: "cashtags" | "topics"; // Add pageMode prop
 }
 
-export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selectedStock }) => {
-  const [summary, setSummary] = useState<string>(""); // Initial state is empty
-  const isStreamingRef = useRef<boolean>(false); // Track streaming state
-  const abortControllerRef = useRef<AbortController | null>(null); // Track active fetch request
-  const latestStockRef = useRef<string | null>(null); // Track the latest selected stock
+export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selectedStock, pageMode }) => {
+  const [summary, setSummary] = useState<string>("");
+  const isStreamingRef = useRef<boolean>(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const latestStockRef = useRef<string | null>(null);
 
   const fetchSummaryStream = useCallback(async () => {
-    // Cancel any ongoing request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       isStreamingRef.current = false;
-      setSummary(""); // Clear previous content immediately
+      setSummary("");
     }
 
     if (!selectedStock || postsData.length === 0) {
@@ -31,20 +31,23 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
       return;
     }
 
-    // Create a new AbortController for this request
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
     isStreamingRef.current = true;
-    latestStockRef.current = selectedStock; // Track the current stock
+    latestStockRef.current = selectedStock;
 
-    console.log(`Starting stream for ${selectedStock}, posts: ${postsData.length}`);
+    console.log(`Starting stream for ${selectedStock}, posts: ${postsData.length}, mode: ${pageMode}`);
 
     try {
       const response = await fetch("/api/summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ posts: postsData, ticker: selectedStock }),
-        signal, // Pass the abort signal
+        body: JSON.stringify({ 
+          posts: postsData, 
+          ticker: selectedStock, 
+          isTopic: pageMode === "topics" // Add flag to indicate if it's a topic
+        }),
+        signal,
       });
 
       if (!response.ok) {
@@ -65,7 +68,7 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
           console.log(`Stream completed for ${selectedStock}, total chunks: ${chunkCount}`);
           accumulatedSummary = accumulatedSummary.replace(/\.\.\.$/, "");
           if (latestStockRef.current === selectedStock) {
-            setSummary(accumulatedSummary); // Final update only for latest stock
+            setSummary(accumulatedSummary);
           }
           isStreamingRef.current = false;
           break;
@@ -86,7 +89,7 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
         console.log(`Received chunk ${chunkCount} for ${selectedStock}:`, chunk);
         accumulatedSummary += chunk;
         if (latestStockRef.current === selectedStock) {
-          setSummary(accumulatedSummary); // Update UI only for latest stock
+          setSummary(accumulatedSummary);
         }
       }
     } catch (error) {
@@ -100,11 +103,11 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
       }
       isStreamingRef.current = false;
     }
-  }, [postsData, selectedStock]);
+  }, [postsData, selectedStock, pageMode]); // Add pageMode to dependencies
 
   useEffect(() => {
     if (!selectedStock || postsData.length === 0) {
-      setSummary(""); // Reset to empty string
+      setSummary("");
       isStreamingRef.current = false;
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -114,7 +117,6 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
 
     fetchSummaryStream();
 
-    // Cleanup on unmount or dependency change
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -125,8 +127,13 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
   return (
     <div className="GenAISummary container" key={selectedStock || "no-stock"}>
       <div className="container-header">
-        {selectedStock ? `$${selectedStock} - ` : ""}
-        <span style={{ color: "rgba(0, 230, 118)" }}>AI Summary</span>
+        {selectedStock ? (
+          pageMode === "cashtags" ? `$${selectedStock} - ` : `${selectedStock} - `
+        ) : ""}
+        <span style={{ color: "rgba(0, 230, 118)" }}>
+          {pageMode === "cashtags" ? "AI Summary" : "Topic Summary"}
+        </span>
+        {loading && " (Loading...)"}
       </div>
       <div className="container-content relative">
         {loading && (
@@ -139,7 +146,11 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
             <ReactMarkdown>{summary}</ReactMarkdown>
           ) : (
             <div className="animated-placeholder absolute inset-0 flex items-center justify-center">
-              <span>Click a $CASHTAG</span>
+              <span>
+                {pageMode === "cashtags" 
+                  ? "Click a $CASHTAG" 
+                  : "Click a Topic"} to see the summary
+              </span>
             </div>
           )}
         </div>

@@ -18,11 +18,18 @@ export interface TickerTapeItem {
   latest_price: number | null;
   chng: number | null;
   trend: number[];
-  rowId?: number; // Ensure this matches TickerTape.tsx
-  key?: string;  // Ensure this matches TickerTape.tsx
+  rowId?: number;
+  key?: string;
 }
 
-// Add other interfaces (StockLedgerData, MarketCanvasData, PostData) if needed
+export interface TopicItem {
+  id: number;
+  topic: string;
+  trend: number[]; // Assuming this represents mentions over time
+  rowId?: number;
+  key?: string;
+}
+
 export interface StockLedgerData {
   stockName: string;
   description: string;

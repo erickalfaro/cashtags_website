@@ -9,10 +9,11 @@ import { TickerTape } from "../components/TickerTape";
 import { StockOverview } from "../components/StockOverview";
 import { PostViewer } from "../components/PostViewer";
 import { GenAISummary } from "../components/GenAISummary";
-import { TickerTapeItem } from "../types/api";
+import { TickerTapeItem, TopicItem } from "../types/api";
 
 export default function Home() {
   const { user } = useAuth();
+  const [pageMode, setPageMode] = useState<"cashtags" | "topics">("cashtags");
   const {
     tickerTapeData,
     setTickerTapeData,
@@ -27,10 +28,10 @@ export default function Home() {
     errorMessage,
     subscription,
     fetchSubscription,
-  } = useTickerData(user);
+  } = useTickerData(user, pageMode);
 
   const [sortConfig, setSortConfig] = useState<{
-    key: keyof TickerTapeItem | null;
+    key: keyof TickerTapeItem | keyof TopicItem | null;
     direction: "asc" | "desc";
   }>({
     key: null,
@@ -46,35 +47,53 @@ export default function Home() {
     }
   }, [fetchSubscription]);
 
-  const handleSort = (key: keyof TickerTapeItem): void => {
+  const handleSort = (key: keyof TickerTapeItem | keyof TopicItem): void => {
     const direction =
       sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
     setSortConfig({ key, direction });
-    const sortedData = [...tickerTapeData].sort((a, b) => {
-      const aValue = a[key] ?? (typeof a[key] === "number" ? 0 : a[key]);
-      const bValue = b[key] ?? (typeof b[key] === "number" ? 0 : b[key]);
-      if (typeof aValue === "number" && typeof bValue === "number") {
-        return direction === "asc" ? aValue - bValue : bValue - aValue;
-      }
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return direction === "asc"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-      if (Array.isArray(aValue) && Array.isArray(bValue)) {
-        const aLength = aValue.length;
-        const bLength = bValue.length;
-        return direction === "asc" ? aLength - bLength : bLength - aLength;
-      }
-      return 0;
-    });
-    setTickerTapeData(sortedData);
+
+    if (pageMode === "cashtags") {
+      const sortedData = [...(tickerTapeData as TickerTapeItem[])].sort((a, b) => {
+        const aValue = a[key as keyof TickerTapeItem] ?? (typeof a[key as keyof TickerTapeItem] === "number" ? 0 : a[key as keyof TickerTapeItem]);
+        const bValue = b[key as keyof TickerTapeItem] ?? (typeof b[key as keyof TickerTapeItem] === "number" ? 0 : b[key as keyof TickerTapeItem]);
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          return direction === "asc" ? aValue - bValue : bValue - aValue;
+        }
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+        }
+        if (Array.isArray(aValue) && Array.isArray(bValue)) {
+          const aLength = aValue.length;
+          const bLength = bValue.length;
+          return direction === "asc" ? aLength - bLength : bLength - aLength;
+        }
+        return 0;
+      });
+      setTickerTapeData(sortedData);
+    } else if (pageMode === "topics") {
+      const sortedData = [...(tickerTapeData as TopicItem[])].sort((a, b) => {
+        const aValue = a[key as keyof TopicItem];
+        const bValue = b[key as keyof TopicItem];
+        if (key === "id" && typeof aValue === "number" && typeof bValue === "number") {
+          return direction === "asc" ? aValue - bValue : bValue - aValue;
+        }
+        if (key === "topic" && typeof aValue === "string" && typeof bValue === "string") {
+          return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+        }
+        if (key === "trend" && Array.isArray(aValue) && Array.isArray(bValue)) {
+          const aLength = aValue.length;
+          const bLength = bValue.length;
+          return direction === "asc" ? aLength - bLength : bLength - aLength;
+        }
+        return 0;
+      });
+      setTickerTapeData(sortedData);
+    }
   };
 
   if (!user) {
     return (
       <div className="h-[600px] bg-gradient-to-b from-gray-900 to-gray-800 text-gray-200 flex flex-col items-center justify-center px-6 overflow-hidden">
-        {/* Hero Section */}
         <div className="landing-hero text-center mb-4">
           <h1 className="text-3xl md:text-4xl font-bold text-[rgba(0,230,118,1)] mb-1 animate-fade-in">
             Cashtags
@@ -83,8 +102,6 @@ export default function Home() {
             Real-time stock insights from social media.
           </p>
         </div>
-
-        {/* Condensed Sales Pitch Section */}
         <div className="landing-pitch grid grid-cols-1 md:grid-cols-3 gap-3 max-w-3xl mb-4">
           <div className="pitch-card p-3">
             <h3 className="text-md font-semibold text-[rgba(0,230,118,1)] mb-1">Real-Time Trends</h3>
@@ -99,8 +116,6 @@ export default function Home() {
             <p className="text-xs text-gray-400">Price & volume charts.</p>
           </div>
         </div>
-
-        {/* Call to Action with Auth Buttons */}
         <div className="landing-cta text-center">
           <p className="text-gray-300 mb-2 text-sm font-medium animate-slide-up">
             Start now
@@ -111,7 +126,6 @@ export default function Home() {
     );
   }
 
-  // Authenticated view remains unchanged
   const isFree = subscription.status !== "PREMIUM";
   const hasCancelAt = subscription.cancelAt !== null && subscription.cancelAt !== undefined;
   const isPremiumActive = subscription.status === "PREMIUM" && !hasCancelAt;
@@ -179,8 +193,27 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Toggle Switch */}
+      <div className="toggle-container mt-4 flex justify-center">
+        <div className="toggle-switch">
+          <button
+            className={`toggle-btn ${pageMode === "cashtags" ? "active" : ""}`}
+            onClick={() => setPageMode("cashtags")}
+          >
+            Cashtags
+          </button>
+          <button
+            className={`toggle-btn ${pageMode === "topics" ? "active" : ""}`}
+            onClick={() => setPageMode("topics")}
+          >
+            Topics
+          </button>
+        </div>
+      </div>
+
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
-      <GenAISummary postsData={postsData} loading={postsLoading} selectedStock={selectedStock} />
+      <GenAISummary postsData={postsData} loading={postsLoading} selectedStock={selectedStock} pageMode={pageMode} />
       <TickerTape
         data={tickerTapeData}
         loading={loading}
@@ -188,12 +221,15 @@ export default function Home() {
         onSort={handleSort}
         sortConfig={sortConfig}
         user={user}
+        pageMode={pageMode}
       />
-      <StockOverview
-        data={{ marketCanvas: marketCanvasData, stockLedger: stockLedgerData }}
-        selectedStock={selectedStock}
-        loading={stockLedgerLoading}
-      />
+      {pageMode === "cashtags" && (
+        <StockOverview
+          data={{ marketCanvas: marketCanvasData, stockLedger: stockLedgerData }}
+          selectedStock={selectedStock}
+          loading={stockLedgerLoading}
+        />
+      )}
       <PostViewer
         data={postsData}
         loading={postsLoading}
