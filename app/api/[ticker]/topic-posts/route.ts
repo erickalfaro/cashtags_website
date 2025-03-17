@@ -9,12 +9,19 @@ interface TopicPostData {
 }
 
 type ContextParams = {
-  params: Promise<{ ticker: string }>; // Changed from 'topic' to 'ticker'
+  params: Promise<{ ticker: string }>;
 };
+
+// Define the shape of the data returned from Supabase
+interface SupabaseTopicPost {
+  hours: number;
+  text: string;
+  tweet_id: number;
+}
 
 export async function GET(req: Request, ctx: ContextParams) {
   const params = await ctx.params;
-  const { ticker: topic } = params; // Rename 'ticker' to 'topic' internally for clarity
+  const { ticker: topic } = params;
 
   try {
     const { data, error } = await supabase
@@ -31,7 +38,8 @@ export async function GET(req: Request, ctx: ContextParams) {
       return NextResponse.json([], { status: 200 });
     }
 
-    const posts: TopicPostData[] = data.map((item: any) => ({
+    // Replace 'any' with the specific type
+    const posts: TopicPostData[] = data.map((item: SupabaseTopicPost) => ({
       hours: item.hours,
       text: item.text,
       tweet_id: item.tweet_id,
