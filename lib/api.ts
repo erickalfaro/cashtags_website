@@ -76,6 +76,17 @@ export const fetchTickerTapeDataRealTime = async (tableName: string): Promise<(T
   return transformedData;
 };
 
-export const fetchSummary = async (posts: PostData[], ticker: string): Promise<string> => {
-  return "Sample summary for " + ticker; // Placeholder
+// Add this function
+export const fetchTopicPostsData = async (topic: string): Promise<PostData[]> => {
+  try {
+    const response = await axios.get(`/api/${topic}/topic-posts`); // Still works with 'topic' as the value
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching topic posts for ${topic}:`, error);
+    return [];
+  }
+};
+
+export const fetchSummary = async (posts: PostData[], identifier: string, isTopic: boolean = false): Promise<string> => {
+  return `Sample summary for ${isTopic ? "topic" : "ticker"} ${identifier}`; // Placeholder, update as needed
 };

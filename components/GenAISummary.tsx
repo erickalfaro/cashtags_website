@@ -36,13 +36,17 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
     isStreamingRef.current = true;
     latestStockRef.current = selectedStock;
 
-    console.log(`Starting stream for ${selectedStock}, posts: ${postsData.length}`);
+    console.log(`Starting stream for ${selectedStock}, posts: ${postsData.length}, mode: ${pageMode}`);
 
     try {
       const response = await fetch("/api/summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ posts: postsData, ticker: selectedStock }),
+        body: JSON.stringify({ 
+          posts: postsData, 
+          ticker: selectedStock, 
+          isTopic: pageMode === "topics" // Add flag to indicate if it's a topic
+        }),
         signal,
       });
 
@@ -99,7 +103,7 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
       }
       isStreamingRef.current = false;
     }
-  }, [postsData, selectedStock]);
+  }, [postsData, selectedStock, pageMode]); // Add pageMode to dependencies
 
   useEffect(() => {
     if (!selectedStock || postsData.length === 0) {
@@ -123,8 +127,13 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
   return (
     <div className="GenAISummary container" key={selectedStock || "no-stock"}>
       <div className="container-header">
-        {selectedStock ? `$${selectedStock} - ` : ""}
-        <span style={{ color: "rgba(0, 230, 118)" }}>AI Summary</span>
+        {selectedStock ? (
+          pageMode === "cashtags" ? `$${selectedStock} - ` : `${selectedStock} - `
+        ) : ""}
+        <span style={{ color: "rgba(0, 230, 118)" }}>
+          {pageMode === "cashtags" ? "AI Summary" : "Topic Summary"}
+        </span>
+        {loading && " (Loading...)"}
       </div>
       <div className="container-content relative">
         {loading && (
@@ -137,7 +146,11 @@ export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, 
             <ReactMarkdown>{summary}</ReactMarkdown>
           ) : (
             <div className="animated-placeholder absolute inset-0 flex items-center justify-center">
-              <span>{pageMode === "cashtags" ? "Click a $CASHTAG" : "Click a Topic"}</span>
+              <span>
+                {pageMode === "cashtags" 
+                  ? "Click a $CASHTAG" 
+                  : "Click a Topic"} to see the summary
+              </span>
             </div>
           )}
         </div>

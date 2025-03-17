@@ -8,7 +8,7 @@ import { supabase } from "./supabase";
 import { getEnvironment } from "./utils";
 import { debounce } from "./utils";
 import { fetchTickerTapeDataRealTime } from "./api";
-import { fetchStockLedgerData, fetchMarketCanvasData, fetchPostsData } from "./api";
+import { fetchStockLedgerData, fetchMarketCanvasData, fetchPostsData, fetchTopicPostsData } from "./api";
 import { TickerTapeItem, TopicItem, StockLedgerData, MarketCanvasData, PostData } from "../types/api";
 
 interface SupabaseError {
@@ -284,9 +284,12 @@ export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"
     }
   }, [pageMode]);
 
-  const debouncedFetchTickerTapeData = useCallback(debounce(fetchTickerTapeData, 500), [fetchTickerTapeData]); // Debounce by 500ms
+  const debouncedFetchTickerTapeData = useCallback(() => {
+    const debounced = debounce(fetchTickerTapeData, 500);
+    return debounced();
+  }, [fetchTickerTapeData]);
 
-  const handleTickerClick = async (ticker: string) => {
+  const handleTickerClick = async (identifier: string) => {
     if (!user) return;
 
     if (subscription.status === "FREE" && subscription.clicksLeft <= 0) {
@@ -294,21 +297,29 @@ export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"
       return;
     }
 
-    setSelectedStock(ticker);
-    setStockLedgerLoading(true);
+    setSelectedStock(identifier); // Using selectedStock for both cashtags and topics
+    setStockLedgerLoading(true); // Only relevant for cashtags
     setPostsLoading(true);
     setErrorMessage(null);
 
     try {
-      const [ledger, canvas, posts] = await Promise.all([
-        fetchStockLedgerData(ticker),
-        fetchMarketCanvasData(ticker),
-        fetchPostsData(ticker),
-      ]);
+      if (pageMode === "cashtags") {
+        const [ledger, canvas, posts] = await Promise.all([
+          fetchStockLedgerData(identifier),
+          fetchMarketCanvasData(identifier),
+          fetchPostsData(identifier),
+        ]);
 
-      setStockLedgerData(ledger);
-      setMarketCanvasData(canvas);
-      setPostsData(posts);
+        setStockLedgerData(ledger);
+        setMarketCanvasData(canvas);
+        setPostsData(posts);
+      } else if (pageMode === "topics") {
+        const posts = await fetchTopicPostsData(identifier);
+        setPostsData(posts);
+        // Reset cashtag-specific data when switching to topics
+        setStockLedgerData({ stockName: "", description: "", marketCap: "" });
+        setMarketCanvasData({ ticker: "", lineData: [], barData: [] });
+      }
 
       if (subscription.status === "FREE") {
         const environment = getEnvironment();
@@ -327,10 +338,10 @@ export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"
         }));
       }
 
-      console.log(`Ticker clicked: ${ticker}, data fetched successfully`);
+      console.log(`${pageMode === "cashtags" ? "Ticker" : "Topic"} clicked: ${identifier}, data fetched successfully`);
     } catch (error) {
-      console.error(`Error fetching data for ticker ${ticker}:`, error);
-      setErrorMessage(`Failed to load data for $${ticker}.`);
+      console.error(`Error fetching data for ${pageMode === "cashtags" ? "ticker" : "topic"} ${identifier}:`, error);
+      setErrorMessage(`Failed to load data for ${pageMode === "cashtags" ? "$" : ""}${identifier}.`);
     } finally {
       setStockLedgerLoading(false);
       setPostsLoading(false);
