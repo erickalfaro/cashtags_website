@@ -11,6 +11,94 @@ import { PostViewer } from "../components/PostViewer";
 import { GenAISummary } from "../components/GenAISummary";
 import { TickerTapeItem, TopicItem } from "../types/api";
 
+// Mock Data for Cashtags
+const mockCashtagData: TickerTapeItem[] = [
+  {
+    id: 1,
+    cashtag: "AAPL",
+    prev_open: 175.50,
+    prev_eod: 176.20,
+    latest_price: 178.90,
+    chng: 1.53,
+    trend: [175, 176, 177, 178, 178.90],
+    key: "mock-1",
+  },
+  {
+    id: 2,
+    cashtag: "TSLA",
+    prev_open: 240.00,
+    prev_eod: 245.10,
+    latest_price: 250.30,
+    chng: 2.12,
+    trend: [240, 242, 245, 248, 250.30],
+    key: "mock-2",
+  },
+  {
+    id: 3,
+    cashtag: "NVDA",
+    prev_open: 420.75,
+    prev_eod: 425.00,
+    latest_price: 430.20,
+    chng: 1.22,
+    trend: [420, 422, 425, 428, 430.20],
+    key: "mock-3",
+  },
+  {
+    id: 4,
+    cashtag: "GOOGL",
+    prev_open: 135.20,
+    prev_eod: 136.80,
+    latest_price: 138.50,
+    chng: 1.24,
+    trend: [135, 136, 137, 138, 138.50],
+    key: "mock-4",
+  },
+  {
+    id: 5,
+    cashtag: "AMZN",
+    prev_open: 127.90,
+    prev_eod: 129.30,
+    latest_price: 131.10,
+    chng: 1.39,
+    trend: [127, 128, 129, 130, 131.10],
+    key: "mock-5",
+  },
+];
+
+// Mock Data for Topics
+const mockTopicData: TopicItem[] = [
+  {
+    id: 1,
+    topic: "AI Revolution",
+    trend: [10, 15, 20, 25, 30],
+    key: "mock-topic-1",
+  },
+  {
+    id: 2,
+    topic: "Electric Vehicles",
+    trend: [8, 12, 18, 22, 28],
+    key: "mock-topic-2",
+  },
+  {
+    id: 3,
+    topic: "Crypto Boom",
+    trend: [5, 10, 15, 20, 25],
+    key: "mock-topic-3",
+  },
+  {
+    id: 4,
+    topic: "Tech Earnings",
+    trend: [12, 14, 16, 18, 20],
+    key: "mock-topic-4",
+  },
+  {
+    id: 5,
+    topic: "Green Energy",
+    trend: [7, 9, 11, 13, 15],
+    key: "mock-topic-5",
+  },
+];
+
 export default function Home() {
   const { user } = useAuth();
   const [pageMode, setPageMode] = useState<"cashtags" | "topics">("cashtags");
@@ -51,16 +139,21 @@ export default function Home() {
     const direction =
       sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
     setSortConfig({ key, direction });
-
+  
+    let sortedData: (TickerTapeItem | TopicItem)[];
+    
     if (pageMode === "cashtags") {
-      const sortedData = [...(tickerTapeData as TickerTapeItem[])].sort((a, b) => {
-        const aValue = a[key as keyof TickerTapeItem] ?? (typeof a[key as keyof TickerTapeItem] === "number" ? 0 : a[key as keyof TickerTapeItem]);
-        const bValue = b[key as keyof TickerTapeItem] ?? (typeof b[key as keyof TickerTapeItem] === "number" ? 0 : b[key as keyof TickerTapeItem]);
+      sortedData = [...tickerTapeData as TickerTapeItem[]].sort((a, b) => {
+        const aValue = (a as TickerTapeItem)[key as keyof TickerTapeItem] ?? 
+                       (typeof (a as TickerTapeItem)[key as keyof TickerTapeItem] === "number" ? 0 : (a as TickerTapeItem)[key as keyof TickerTapeItem]);
+        const bValue = (b as TickerTapeItem)[key as keyof TickerTapeItem] ?? 
+                       (typeof (b as TickerTapeItem)[key as keyof TickerTapeItem] === "number" ? 0 : (b as TickerTapeItem)[key as keyof TickerTapeItem]);
+  
         if (typeof aValue === "number" && typeof bValue === "number") {
           return direction === "asc" ? aValue - bValue : bValue - aValue;
         }
         if (typeof aValue === "string" && typeof bValue === "string") {
-          return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+          return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(bValue);
         }
         if (Array.isArray(aValue) && Array.isArray(bValue)) {
           const aLength = aValue.length;
@@ -69,63 +162,123 @@ export default function Home() {
         }
         return 0;
       });
-      setTickerTapeData(sortedData);
-    } else if (pageMode === "topics") {
-      const sortedData = [...(tickerTapeData as TopicItem[])].sort((a, b) => {
-        const aValue = a[key as keyof TopicItem];
-        const bValue = b[key as keyof TopicItem];
-        if (key === "id" && typeof aValue === "number" && typeof bValue === "number") {
+    } else {
+      sortedData = [...tickerTapeData as TopicItem[]].sort((a, b) => {
+        const aValue = (a as TopicItem)[key as keyof TopicItem] ?? 
+                       (typeof (a as TopicItem)[key as keyof TopicItem] === "number" ? 0 : (a as TopicItem)[key as keyof TopicItem]);
+        const bValue = (b as TopicItem)[key as keyof TopicItem] ?? 
+                       (typeof (b as TopicItem)[key as keyof TopicItem] === "number" ? 0 : (b as TopicItem)[key as keyof TopicItem]);
+  
+        if (typeof aValue === "number" && typeof bValue === "number") {
           return direction === "asc" ? aValue - bValue : bValue - aValue;
         }
-        if (key === "topic" && typeof aValue === "string" && typeof bValue === "string") {
-          return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(bValue);
         }
-        if (key === "trend" && Array.isArray(aValue) && Array.isArray(bValue)) {
+        if (Array.isArray(aValue) && Array.isArray(bValue)) {
           const aLength = aValue.length;
           const bLength = bValue.length;
           return direction === "asc" ? aLength - bLength : bLength - aLength;
         }
         return 0;
       });
-      setTickerTapeData(sortedData);
     }
+  
+    setTickerTapeData(sortedData);
+  };
+
+  const handleMockTickerClick = (ticker: string) => {
+    console.log(`Mock ticker clicked: ${ticker}`);
   };
 
   if (!user) {
     return (
-      <div className="h-[600px] bg-gradient-to-b from-gray-900 to-gray-800 text-gray-200 flex flex-col items-center justify-center px-6 overflow-hidden">
-        <div className="landing-hero text-center mb-4">
-          <h1 className="text-3xl md:text-4xl font-bold text-[rgba(0,230,118,1)] mb-1 animate-fade-in">
-            Cashtags
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-200 flex flex-col items-center justify-center px-4 py-8 overflow-hidden">
+        {/* Reduced from px-6 py-12 to px-4 py-8 */}
+        
+        {/* Hero Section */}
+        <div className="landing-hero text-center mb-8 animate-fade-in">
+          <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-[rgba(0,230,118,1)] to-[rgba(0,255,130,1)] bg-clip-text text-transparent mb-4">
+            Cashtags Unleashed
           </h1>
-          <p className="text-sm md:text-md text-gray-300 max-w-lg mx-auto animate-slide-up">
-            Real-time stock insights from social media.
+          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto animate-slide-up">
+            Dive into real-time stock insights powered by AI, trending cashtags, and hot topics from the social sphere.
           </p>
         </div>
-        <div className="landing-pitch grid grid-cols-1 md:grid-cols-3 gap-3 max-w-3xl mb-4">
-          <div className="pitch-card p-3">
-            <h3 className="text-md font-semibold text-[rgba(0,230,118,1)] mb-1">Real-Time Trends</h3>
-            <p className="text-xs text-gray-400">Live stock mentions & sentiment.</p>
+
+        {/* Trending Section with Mock Data */}
+        <div className="w-full max-w-4xl mb-12">
+          <div className="toggle-container flex justify-center mb-6">
+            <div className="toggle-switch">
+              <button
+                className={`toggle-btn ${pageMode === "cashtags" ? "active" : ""}`}
+                onClick={() => setPageMode("cashtags")}
+              >
+                Trending Cashtags
+              </button>
+              <button
+                className={`toggle-btn ${pageMode === "topics" ? "active" : ""}`}
+                onClick={() => setPageMode("topics")}
+              >
+                Trending Topics
+              </button>
+            </div>
           </div>
-          <div className="pitch-card p-3">
-            <h3 className="text-md font-semibold text-[rgba(0,230,118,1)] mb-1">AI Insights</h3>
-            <p className="text-xs text-gray-400">Smart market summaries.</p>
-          </div>
-          <div className="pitch-card p-3">
-            <h3 className="text-md font-semibold text-[rgba(0,230,118,1)] mb-1">Actionable Data</h3>
-            <p className="text-xs text-gray-400">Price & volume charts.</p>
+          <TickerTape
+            data={pageMode === "cashtags" ? mockCashtagData : mockTopicData}
+            loading={false}
+            onTickerClick={handleMockTickerClick}
+            onSort={handleSort}
+            sortConfig={sortConfig}
+            user={null}
+            pageMode={pageMode}
+          />
+        </div>
+
+        {/* AI Summary Teaser */}
+        <div className="w-full max-w-2xl mb-8">
+          <div className="container bg-gradient-to-br from-gray-800 to-gray-900 border-[rgba(0,230,118,0.2)] shadow-xl">
+            <div className="container-header">
+              <span style={{ color: "rgba(0, 230, 118)" }}>AI-Powered Insights</span>
+            </div>
+            <div className="container-content p-6 text-sm">
+              <p className="text-gray-300">
+                - **Market Buzz:** AI instantly summarizes social sentiment for any stock or topic.<br />
+                - **Real-Time Edge:** Get concise, actionable insights in seconds.<br />
+                - **Unlock More:** Sign in to see full summaries and dive deeper!
+              </p>
+            </div>
           </div>
         </div>
-        <div className="landing-cta text-center">
-          <p className="text-gray-300 mb-2 text-sm font-medium animate-slide-up">
-            Start now
+
+        {/* CTA (Login Prompt) - Accentuated */}
+        <div className="landing-cta text-center mb-8">
+          <p className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[rgba(0,230,118,1)] to-[rgba(0,255,130,1)] bg-clip-text text-transparent mb-4 animate-slide-up">
+            Join the Future Now
           </p>
-          <AuthButtons />
+          <div className="flex justify-center gap-4">
+            <AuthButtons />
+          </div>
+        </div>
+
+        {/* Video Embed */}
+        <div className="w-full max-w-3xl">
+          <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden shadow-2xl animate-fade-in">
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[rgba(0,230,118,0.1)] to-gray-900">
+              <p className="text-gray-400 text-lg font-semibold">
+                Video Coming Soon: See Cashtags in Action!
+              </p>
+            </div>
+            <div className="absolute top-4 left-4 bg-[rgba(0,230,118,0.9)] text-white px-3 py-1 rounded-full text-sm font-medium animate-scale-in">
+              Watch Now
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
+  // Authenticated user content (unchanged)
   const isFree = subscription.status !== "PREMIUM";
   const hasCancelAt = subscription.cancelAt !== null && subscription.cancelAt !== undefined;
   const isPremiumActive = subscription.status === "PREMIUM" && !hasCancelAt;
@@ -194,7 +347,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Toggle Switch */}
       <div className="toggle-container mt-4 flex justify-center">
         <div className="toggle-switch">
           <button
