@@ -191,92 +191,92 @@ export default function Home() {
     console.log(`Mock ticker clicked: ${ticker}`);
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-200 flex flex-col items-center justify-center px-4 py-8 overflow-hidden">
-        {/* Reduced from px-6 py-12 to px-4 py-8 */}
-        
-        {/* Hero Section */}
-        <div className="landing-hero text-center mb-8 animate-fade-in">
-          <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-[rgba(0,230,118,1)] to-[rgba(0,255,130,1)] bg-clip-text text-transparent mb-4">
-            Cashtags Unleashed
-          </h1>
-          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto animate-slide-up">
-            Dive into real-time stock insights powered by AI, trending cashtags, and hot topics from the social sphere.
-          </p>
-        </div>
+// app/page.tsx (partial update for !user block)
+if (!user) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-200 flex flex-col items-center justify-center px-5 py-10 overflow-hidden">
+      {/* Hero Section */}
+      <div className="landing-hero text-center mb-6 animate-fade-in">
+        <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-[rgba(0,230,118,1)] to-[rgba(0,255,130,1)] bg-clip-text text-transparent mb-4">
+          Cashtags Unleashed
+        </h1>
+        <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto animate-slide-up">
+          Dive into real-time stock insights powered by AI, trending cashtags, and hot topics from the social sphere.
+        </p>
+      </div>
 
-        {/* Trending Section with Mock Data */}
-        <div className="w-full max-w-4xl mb-12">
-          <div className="toggle-container flex justify-center mb-6">
-            <div className="toggle-switch">
-              <button
-                className={`toggle-btn ${pageMode === "cashtags" ? "active" : ""}`}
-                onClick={() => setPageMode("cashtags")}
-              >
-                Trending Cashtags
-              </button>
-              <button
-                className={`toggle-btn ${pageMode === "topics" ? "active" : ""}`}
-                onClick={() => setPageMode("topics")}
-              >
-                Trending Topics
-              </button>
-            </div>
-          </div>
-          <TickerTape
-            data={pageMode === "cashtags" ? mockCashtagData : mockTopicData}
-            loading={false}
-            onTickerClick={handleMockTickerClick}
-            onSort={handleSort}
-            sortConfig={sortConfig}
-            user={null}
-            pageMode={pageMode}
-          />
-        </div>
-
-        {/* AI Summary Teaser */}
-        <div className="w-full max-w-2xl mb-8">
-          <div className="container bg-gradient-to-br from-gray-800 to-gray-900 border-[rgba(0,230,118,0.2)] shadow-xl">
-            <div className="container-header">
-              <span style={{ color: "rgba(0, 230, 118)" }}>AI-Powered Insights</span>
-            </div>
-            <div className="container-content p-6 text-sm">
-              <p className="text-gray-300">
-                - **Market Buzz:** AI instantly summarizes social sentiment for any stock or topic.<br />
-                - **Real-Time Edge:** Get concise, actionable insights in seconds.<br />
-                - **Unlock More:** Sign in to see full summaries and dive deeper!
-              </p>
-            </div>
+      {/* Trending Section with Mock Data */}
+      <div className="w-full max-w-4xl mb-2">
+        {/* Reduced from mb-6 to mb-2 */}
+        <div className="toggle-container flex justify-center mb-5">
+          <div className="toggle-switch">
+            <button
+              className={`toggle-btn ${pageMode === "cashtags" ? "active" : ""}`}
+              onClick={() => setPageMode("cashtags")}
+            >
+              Trending Cashtags
+            </button>
+            <button
+              className={`toggle-btn ${pageMode === "topics" ? "active" : ""}`}
+              onClick={() => setPageMode("topics")}
+            >
+              Trending Topics
+            </button>
           </div>
         </div>
+        <TickerTape
+          data={pageMode === "cashtags" ? mockCashtagData : mockTopicData}
+          loading={false}
+          onTickerClick={handleMockTickerClick}
+          onSort={handleSort}
+          sortConfig={sortConfig}
+          user={null}
+          pageMode={pageMode}
+        />
+      </div>
 
-        {/* CTA (Login Prompt) - Accentuated */}
-        <div className="landing-cta text-center mb-8">
-          <p className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[rgba(0,230,118,1)] to-[rgba(0,255,130,1)] bg-clip-text text-transparent mb-4 animate-slide-up">
-            Join the Future Now
-          </p>
-          <div className="flex justify-center gap-4">
-            <AuthButtons />
+      {/* AI Summary Teaser */}
+      <div className="w-full max-w-2xl mb-6">
+        <div className="container bg-gradient-to-br from-gray-800 to-gray-900 border-[rgba(0,230,118,0.2)] shadow-xl">
+          <div className="container-header">
+            <span style={{ color: "rgba(0, 230, 118)" }}>AI-Powered Insights</span>
           </div>
-        </div>
-
-        {/* Video Embed */}
-        <div className="w-full max-w-3xl">
-          <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden shadow-2xl animate-fade-in">
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[rgba(0,230,118,0.1)] to-gray-900">
-              <p className="text-gray-400 text-lg font-semibold">
-                Video Coming Soon: See Cashtags in Action!
-              </p>
-            </div>
-            <div className="absolute top-4 left-4 bg-[rgba(0,230,118,0.9)] text-white px-3 py-1 rounded-full text-sm font-medium animate-scale-in">
-              Watch Now
-            </div>
+          <div className="container-content p-5 text-sm">
+            <p className="text-gray-300">
+              - **Market Buzz:** AI instantly summarizes social sentiment for any stock or topic.<br />
+              - **Real-Time Edge:** Get concise, actionable insights in seconds.<br />
+              - **Unlock More:** Sign in to see full summaries and dive deeper!
+            </p>
           </div>
         </div>
       </div>
-    );
-  }
+
+      {/* CTA (Login Prompt) */}
+      <div className="landing-cta text-center mb-6">
+        <p className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[rgba(0,230,118,1)] to-[rgba(0,255,130,1)] bg-clip-text text-transparent mb-4 animate-slide-up">
+          Join the Future Now
+        </p>
+        <div className="flex justify-center gap-4">
+          <AuthButtons />
+        </div>
+      </div>
+
+      {/* Video Embed */}
+      <div className="w-full max-w-3xl">
+        <div className="relative aspect-video bg-gradient-to-br bg-gray-900 rounded-lg overflow-hidden shadow-2xl animate-fade-in">
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[rgba(0,230,118,0.1)] to-gray-900">
+            <p className="text-gray-400 text-lg font-semibold">
+              Video Coming Soon: See Cashtags in Action!
+            </p>
+          </div>
+          <div className="absolute top-4 left-4 bg-[rgba(0,230,118,0.9)] text-white px-3 py-1 rounded-full text-sm font-medium animate-scale-in">
+            Watch Now
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
   // Authenticated user content (unchanged)
   const isFree = subscription.status !== "PREMIUM";
