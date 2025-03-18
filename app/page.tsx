@@ -142,7 +142,7 @@ export default function Home() {
 ➤ **Social Buzz:** Twitter explodes with #${selectedMockCashtag || "Stock"}ToTheMoon trends.
   `;
 
-  // Streaming effect for summary with active line tracking
+  // Streaming effect for summary with blinking cursor
   useEffect(() => {
     if (!user && selectedMockCashtag && !isStreaming) {
       setSummary(""); // Reset summary when new cashtag is selected
@@ -162,7 +162,7 @@ export default function Home() {
           clearInterval(interval);
           setIsStreaming(false);
         }
-      }, 30); // Adjust speed here (30ms per character)
+      }, 10); // Faster streaming (10ms per character)
 
       return () => clearInterval(interval);
     }
@@ -300,7 +300,7 @@ export default function Home() {
                 AI Summary{selectedMockCashtag ? ` for $${selectedMockCashtag}` : ""}
               </span>
             </div>
-            <div className="container-content p-5 text-sm text-left">
+            <div className="container-content p-5 text-sm text-left no-scrollbar">
               {selectedMockCashtag ? (
                 <div className="text-gray-300 w-full relative">
                   <ReactMarkdown
@@ -314,12 +314,13 @@ export default function Home() {
                   </ReactMarkdown>
                   {isStreaming && summary && (
                     <span
-                      className="cursor absolute"
+                      className="cursor text-[rgba(0,230,118,1)] animate-blink"
                       style={{
-                        top: `${activeLineIndex * 1.5}rem`, // Approx line height
-                        left: "calc(100% + 0.25rem)", // Position after text
+                        marginLeft: "0.25rem", // Inline with text
                       }}
-                    ></span>
+                    >
+                      █
+                    </span>
                   )}
                 </div>
               ) : (
@@ -343,12 +344,14 @@ export default function Home() {
 
         {/* Video Embed */}
         <div className="w-full max-w-3xl">
-          <div className="relative aspect-video bg-gradient-to-br bg-gray-900 rounded-lg overflow-hidden shadow-2xl animate-fade-in">
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[rgba(0,230,118,0.1)] to-gray-900">
-              <p className="text-gray-400 text-lg font-semibold">
-                Video Coming Soon: See Cashtags in Action!
-              </p>
-            </div>
+          <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl animate-fade-in">
+            <iframe
+              src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+              title="Cashtags Demo Video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full"
+            ></iframe>
             <div className="absolute top-4 left-4 bg-[rgba(0,230,118,0.9)] text-white px-3 py-1 rounded-full text-sm font-medium animate-scale-in">
               Watch Now
             </div>
