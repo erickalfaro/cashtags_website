@@ -37,14 +37,23 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
 
   const isCashtagsMode = pageMode === "cashtags";
 
-  const headerText = useMemo(() => {
-    return `Top Trending on ${isCashtagsMode ? "Socials" : "Topics"} ${loading ? "(Updating...)" : ""}`;
-  }, [isCashtagsMode, loading]);
+  // Use useMemo to determine the header content, but render it in JSX
+  const headerContent = useMemo(() => {
+    return isCashtagsMode ? (
+      <>
+        Trending <span style={{ color: "rgba(0, 230, 118, 1)" }}>Cashtags</span>
+      </>
+    ) : (
+      <>
+        Trending <span style={{ color: "rgba(0, 230, 118, 1)" }}>Topics</span>
+      </>
+    );
+  }, [isCashtagsMode]);
 
   return (
     <div className={`mt-6 TickerTape ${pageMode === "topics" ? "topics-mode" : ""}`} key={pageMode}>
       <div className="container-header relative flex justify-center items-center px-3 py-2">
-        <span className="text-center">{headerText}</span>
+        <span className="text-center">{headerContent}</span>
         <span className="absolute right-3 text-sm">
           {subscription.status === "PREMIUM" ? (
             <span className="text-lg font-bold text-red-500 animate-pulse-live">LIVE</span>

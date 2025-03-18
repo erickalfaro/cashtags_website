@@ -1,5 +1,3 @@
-/* app/globals.css */
-
 /* Tailwind Directives */
 @tailwind base;
 @tailwind components;
@@ -31,11 +29,11 @@
 
   /* Spacing */
   --spacing-sm: 0.3125rem; /* 5px */
-  --spacing-md: 0.625rem; /* 10px */
+  --spacing-md: 0.625rem;  /* 10px */
   --spacing-lg: 0.9375rem; /* 15px */
 }
 
-/* Dark Mode Adjustments */
+/* Dark Mode */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -46,39 +44,47 @@
 /* Responsive Adjustments */
 @media (min-width: 768px) {
   :root {
-    --ticker-height: 360px; /* 20% larger for desktop */
+    --ticker-height: 360px;
     --stock-overview-chart-height: 250px;
   }
-}
-
-/* Base Styles */
-body {
-  @apply bg-[var(--background)] text-[var(--text-primary)] font-sans m-0 text-sm;
-  padding: var(--spacing-sm);
-}
-
-@media (min-width: 768px) {
   body {
     padding: var(--spacing-md);
   }
 }
 
+/* Base Styles */
+body {
+  background: var(--background);
+  color: var(--text-primary);
+  font-family: sans-serif;
+  margin: 0;
+  padding: var(--spacing-sm);
+  font-size: 0.875rem; /* 14px */
+}
+
 a {
-  @apply text-[var(--link-color)] no-underline;
+  color: var(--link-color);
+  text-decoration: none;
 }
 
 a:hover {
-  @apply underline;
+  text-decoration: underline;
 }
 
 header {
-  @apply border-b border-[var(--border-color)] mb-[var(--spacing-lg)];
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: var(--spacing-lg);
 }
 
 /* General Component Styles */
 .container {
-  @apply bg-[var(--container-bg)] border border-[var(--border-color)] rounded-md overflow-hidden relative transition-shadow duration-200 ease-in-out;
+  background: var(--container-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem; /* 6px */
+  overflow: hidden;
+  position: relative;
   box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease-in-out;
 }
 
 .container:hover {
@@ -86,261 +92,258 @@ header {
 }
 
 .container-header {
-  @apply bg-gradient-to-r from-[var(--header-gradient-start)] to-[var(--header-gradient-end)] px-3 py-2 border-b border-[var(--border-color)] rounded-t-md text-center text-gray-200 font-bold text-base;
+  background: linear-gradient(to right, var(--header-gradient-start), var(--header-gradient-end));
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+  color: #e5e7eb; /* gray-200 */
+  font-weight: bold;
+  font-size: 1rem; /* 16px */
+  text-align: center;
+  margin-bottom: 0;
 }
 
 .container-content {
-  @apply max-h-[calc(100%-34px)] overflow-y-auto rounded-b-md;
+  max-height: calc(100% - 2.125rem); /* 34px accounts for header height */
+  overflow-y: auto;
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
 }
 
+/* Component-Specific Styles */
 .TickerTape {
-  @apply container;
-  height: var(--ticker-height); /* 300px */
+  height: var(--ticker-height);
 }
 
 .TickerTape table {
-  @apply w-full border-collapse bg-[var(--container-bg)] text-[11px] table-fixed;
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--container-bg);
+  font-size: 0.6875rem; /* 11px */
+  table-layout: fixed;
 }
 
 .TickerTape thead {
   position: sticky;
-  top: -1px; /* Nudge up 1px to close the gap */
+  top: -1px;
   background: linear-gradient(to right, var(--header-gradient-start), var(--header-gradient-end));
   z-index: 10;
-  margin-top: 0;
-  padding-top: 0;
 }
 
 .TickerTape th,
 .TickerTape td {
-  @apply border border-[var(--border-color)] p-[6px_8px] text-center truncate transition-colors duration-200 ease-in;
+  border: 1px solid var(--border-color);
+  padding: 0.375rem 0.5rem; /* 6px 8px */
+  text-align: center;
+  transition: background-color 0.2s ease-in;
 }
 
 .TickerTape th {
-  @apply text-center font-bold text-gray-200;
-  padding-top: 6px;
-  padding-bottom: 6px;
-  margin: 0;
+  color: #e5e7eb; /* gray-200 */
+  font-weight: bold;
 }
 
-/* New class for cashtag cells */
 .TickerTape .cashtag-cell {
-  @apply cursor-pointer text-[rgba(0,230,118,1)] font-semibold;
-  transition: all 0.2s ease-in-out; /* Smooth hover transition */
+  color: rgba(0, 230, 118, 1);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
 }
 
 .TickerTape .cashtag-cell:hover {
-  @apply underline text-[rgba(0,255,130,1)];
-  transform: scale(1.05); /* Slight scale-up for interactivity */
+  color: rgba(0, 255, 130, 1);
+  text-decoration: underline;
+  transform: scale(1.05);
 }
 
 .TickerTape .container-content {
-  @apply max-h-[calc(100%-34px)] overflow-y-auto rounded-b-md;
-  padding-top: 0; /* Ensure no top padding */
-  margin-top: 0; /* Remove any top margin */
-  border-top: none; /* Prevent double borders */
+  padding-top: 0;
+  margin-top: 0;
+  border-top: none;
 }
 
-/* Scrollbar styles */
-.TickerTape .container-content {
-  &::-webkit-scrollbar {
-    width: 10px;
-  }
-  &::-webkit-scrollbar-track {
-    background: var(--container-bg);
-    border-left: 1px solid var(--border-color);
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #4a5568;
-    border-radius: 5px;
-    border: 2px solid var(--container-bg);
-  }
-  &::-webkit-scrollbar-thumb:hover {
-    background: #718096;
-  }
+.TickerTape .container-content::-webkit-scrollbar,
+.PostViewer .container-content::-webkit-scrollbar,
+.GenAISummary .container-content::-webkit-scrollbar {
+  width: 0.625rem; /* 10px */
+}
+
+.TickerTape .container-content::-webkit-scrollbar-track,
+.PostViewer .container-content::-webkit-scrollbar-track,
+.GenAISummary .container-content::-webkit-scrollbar-track {
+  background: var(--container-bg);
+  border-left: 1px solid var(--border-color);
+}
+
+.TickerTape .container-content::-webkit-scrollbar-thumb,
+.PostViewer .container-content::-webkit-scrollbar-thumb,
+.GenAISummary .container-content::-webkit-scrollbar-thumb {
+  background: #4a5568; /* gray-600 */
+  border-radius: 0.3125rem; /* 5px */
+  border: 2px solid var(--container-bg);
+}
+
+.TickerTape .container-content::-webkit-scrollbar-thumb:hover,
+.PostViewer .container-content::-webkit-scrollbar-thumb:hover,
+.GenAISummary .container-content::-webkit-scrollbar-thumb:hover {
+  background: #718096; /* gray-500 */
+}
+
+.TickerTape .container-content,
+.PostViewer .container-content,
+.GenAISummary .container-content {
   scrollbar-width: thin;
   scrollbar-color: #4a5568 var(--container-bg);
 }
 
-/* Ensure container-header has no bottom spacing issues */
-.TickerTape .container-header {
-  @apply bg-gradient-to-r from-[var(--header-gradient-start)] to-[var(--header-gradient-end)] px-3 py-2 border-b border-[var(--border-color)] rounded-t-md text-center text-gray-200 font-bold text-base;
-  margin-bottom: 0; /* Fixed typo from 'margi' to 'margin-bottom' */
+.StockLedger,
+.PostViewer,
+.GenAISummary,
+.StockOverview {
+  margin-top: 1.25rem; /* 20px */
 }
 
 .StockLedger {
-  @apply container mt-5;
   height: var(--ledger-height);
 }
 
-.StockLedger table {
-  @apply w-full border-collapse bg-[var(--container-bg)] text-[11px];
+.StockLedger table,
+.PostViewer table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--container-bg);
+  font-size: 0.6875rem; /* 11px */
 }
 
 .StockLedger th,
-.StockLedger td {
-  @apply border border-[var(--border-color)] p-[6px_8px] transition-colors duration-200 ease-in;
+.StockLedger td,
+.PostViewer th,
+.PostViewer td {
+  border: 1px solid var(--border-color);
+  padding: 0.375rem 0.5rem; /* 6px 8px */
+  transition: background-color 0.2s ease-in;
 }
 
 .PostViewer {
-  @apply container mt-5;
-  height: var(--post-height); /* 300px */
-}
-
-.PostViewer table {
-  @apply w-full border-collapse bg-[var(--container-bg)] text-[11px];
+  height: var(--post-height);
 }
 
 .PostViewer thead {
   position: sticky;
-  top: -1px; /* Nudge up 1px to close any gap, matching TickerTape fix */
-  background: linear-gradient(to right, var(--header-gradient-start), var(--header-gradient-end)); /* Match container-header */
-  z-index: 10; /* Stay above tbody */
-  margin-top: 0;
-  padding-top: 0;
-}
-
-.PostViewer th,
-.PostViewer td {
-  @apply border border-[var(--border-color)] p-[6px_8px] text-left transition-colors duration-200 ease-in;
+  top: -1px;
+  background: linear-gradient(to right, var(--header-gradient-start), var(--header-gradient-end));
+  z-index: 10;
 }
 
 .PostViewer th {
-  @apply text-center font-bold text-gray-200; /* Enhance visibility */
-  padding-top: 6px;
-  padding-bottom: 6px;
-  margin: 0;
+  color: #e5e7eb; /* gray-200 */
+  font-weight: bold;
+  text-align: center;
+}
+
+.PostViewer td {
+  text-align: left;
 }
 
 .PostViewer .container-content {
-  @apply max-h-[calc(100%-34px)] overflow-y-auto rounded-b-md; /* Match TickerTape height calc */
-  padding-top: 0; /* No top padding */
-  margin-top: 0; /* No top margin */
-  border-top: none; /* Prevent double borders */
-}
-
-/* Scrollbar styles */
-.PostViewer .container-content {
-  &::-webkit-scrollbar {
-    width: 10px;
-  }
-  &::-webkit-scrollbar-track {
-    background: var(--container-bg);
-    border-left: 1px solid var(--border-color);
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #4a5568;
-    border-radius: 5px;
-    border: 2px solid var(--container-bg);
-  }
-  &::-webkit-scrollbar-thumb:hover {
-    background: #718096;
-  }
-  scrollbar-width: thin;
-  scrollbar-color: #4a5568 var(--container-bg);
-}
-
-/* Ensure container-header has no bottom spacing */
-.PostViewer .container-header {
-  @apply bg-gradient-to-r from-[var(--header-gradient-start)] to-[var(--header-gradient-end)] px-3 py-2 border-b border-[var(--border-color)] rounded-t-md text-center text-gray-200 font-bold text-base;
-  margin-bottom: 0;
+  padding-top: 0;
+  margin-top: 0;
+  border-top: none;
 }
 
 .GenAISummary {
-  @apply container mt-5;
-  height: var(--summary-height); /* 240px */
+  height: var(--summary-height);
 }
 
 .GenAISummary .container-content {
-  @apply rounded-b-md; /* Keep existing styles */
-  height: calc(100% - 34px); /* Ensure it matches the original intent */
-  overflow-y: auto; /* Explicitly enable vertical scrolling */
-  padding-bottom: 10px; /* Add padding to prevent cutoff */
-}
-
-/* Scrollbar styles remain the same but ensure they don’t overlap content */
-.GenAISummary .container-content {
-  /* Webkit (Chrome, Safari, Edge) */
-  &::-webkit-scrollbar {
-    width: 10px;
-  }
-  &::-webkit-scrollbar-track {
-    background: var(--container-bg);
-    border-left: 1px solid var(--border-color);
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #4a5568;
-    border-radius: 5px;
-    border: 2px solid var(--container-bg);
-  }
-  &::-webkit-scrollbar-thumb:hover {
-    background: #718096;
-  }
-  /* Firefox */
-  scrollbar-width: thin;
-  scrollbar-color: #4a5568 var(--container-bg);
-}
-
-.StockOverview {
-  @apply container mt-5;
+  height: calc(100% - 2.125rem); /* 34px accounts for header */
+  padding-bottom: 0.625rem; /* 10px */
 }
 
 .StockOverview .chart-section {
-  @apply relative;
+  position: relative;
 }
 
 .StockOverview .chart-wrapper {
-  @apply w-full;
+  width: 100%;
+  padding: var(--spacing-md);
 }
 
 .StockOverview .table-section {
-  @apply w-full;
+  width: 100%;
 }
 
 .StockOverview th,
 .StockOverview td {
-  @apply border border-[var(--border-color)] p-[6px_8px] transition-colors duration-200 ease-in;
+  border: 1px solid var(--border-color);
+  padding: 0.375rem 0.5rem; /* 6px 8px */
+  transition: background-color 0.2s ease-in;
 }
 
 .StockOverview thead tr {
-  @apply bg-gradient-to-r from-[var(--header-gradient-start)] to-[var(--header-gradient-end)] text-[var(--text-primary)] font-bold;
+  background: linear-gradient(to right, var(--header-gradient-start), var(--header-gradient-end));
+  color: var(--text-primary);
+  font-weight: bold;
 }
 
 /* Header Controls */
 .header-controls {
-  @apply flex items-center gap-2 mb-2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* 8px */
+  margin-bottom: 0.5rem; /* 8px */
 }
 
 .header-controls h1 {
-  @apply text-base font-semibold;
+  font-size: 1rem; /* 16px */
+  font-weight: 600;
 }
 
 .header-controls button {
-  @apply px-2 py-1 text-sm rounded;
+  padding: 0.5rem 0.75rem; /* 8px 12px */
+  font-size: 0.875rem; /* 14px */
+  border-radius: 0.25rem; /* 4px */
 }
 
 .header-controls .refresh-btn {
-  @apply bg-blue-500 hover:bg-blue-600 text-white;
+  background: #3b82f6; /* blue-500 */
+  color: #ffffff;
+}
+
+.header-controls .refresh-btn:hover {
+  background: #2563eb; /* blue-600 */
 }
 
 .header-controls .logout-btn {
-  @apply bg-red-600 hover:bg-red-700 text-white;
+  background: #dc2626; /* red-600 */
+  color: #ffffff;
+}
+
+.header-controls .logout-btn:hover {
+  background: #b91c1c; /* red-700 */
 }
 
 /* Spinner */
 .spinner {
-  @apply w-10 h-10 border-4 border-[var(--text-primary)] border-t-transparent rounded-full animate-spin;
+  width: 2.5rem; /* 40px */
+  height: 2.5rem; /* 40px */
+  border: 4px solid var(--text-primary);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 /* Utilities */
 .hover\:bg-gray-800:hover {
-  @apply bg-gray-800;
+  background: #1f2937; /* gray-800 */
 }
 
 /* Animated Placeholder */
 .animated-placeholder {
-  @apply text-center text-[var(--text-primary)] font-semibold;
-  color: rgba(0, 230, 118, 1); /* Matching the green from your previous request */
+  text-align: center;
+  color: rgba(0, 230, 118, 1);
+  font-weight: 600;
 }
 
 .animated-placeholder span {
@@ -348,225 +351,225 @@ header {
   animation: pulse 2s infinite ease-in-out, bounce 0.5s infinite alternate;
 }
 
-/* Pulse Animation (Opacity Fade) */
+/* Modern Header Styles */
+.header-container {
+  background: linear-gradient(to right, #1f2937, #374151); /* gray-800 to gray-900 */
+  border-radius: 0.5rem; /* 8px */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* shadow-lg */
+  padding: 0.5rem 1rem; /* Reduced from 1rem to 0.5rem vertically */
+  margin-bottom: 0.75rem; /* Reduced from 1.5rem to 0.75rem */
+  border: 1px solid var(--border-color);
+  transition: box-shadow 0.3s ease;
+}
+
+.header-container:hover {
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2); /* shadow-xl */
+}
+
+.header-welcome {
+  font-size: 1rem; /* Reduced from 1.125rem to 1rem */
+  font-weight: 600;
+  color: #f3f4f6; /* gray-100 */
+  letter-spacing: 0.025em; /* tracking-wide */
+}
+
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem; /* 4px 12px */
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.875rem; /* 14px */
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* shadow-md */
+  animation: scaleIn 0.2s ease-out forwards;
+  border: 1px solid var(--border-color);
+}
+
+.tier-badge.free {
+  background: #4b5563; /* gray-700 */
+  color: #d1d5db; /* gray-300 */
+}
+
+.tier-badge.premium {
+  background: linear-gradient(to right, rgba(0, 230, 118, 0.9), rgba(0, 200, 100, 0.9));
+  color: #ffffff;
+}
+
+.tier-badge.cancelling {
+  background: linear-gradient(to right, rgba(255, 202, 40, 0.9), rgba(251, 146, 60, 0.9));
+  color: #ffffff;
+}
+
+.subscription-info {
+  font-size: 0.75rem; /* Reduced from 0.875rem to 12px */
+  color: #9ca3af; /* gray-400 */
+  margin-top: 0.125rem; /* Reduced from 0.25rem to 2px */
+  display: flex;
+  align-items: center;
+  gap: 0.25rem; /* Reduced from 0.5rem to 4px */
+}
+
+.header-button {
+  padding: 0.25rem 0.75rem; /* Reduced from 0.375rem 1rem to 4px 12px */
+  background: rgba(0, 230, 118, 0.9);
+  color: #ffffff;
+  border-radius: 9999px; /* rounded-full */
+  font-size: 0.75rem; /* Reduced from 0.875rem to 12px */
+  font-weight: 500;
+  transition: background 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* shadow-sm */
+}
+
+.header-button:hover {
+  background: rgba(0, 255, 130, 1);
+}
+
+/* Landing Page Styles */
+.bg-gradient-to-b {
+  background: linear-gradient(to bottom, #111827, #1f2937); /* gray-900 to gray-800 */
+}
+
+.landing-hero {
+  animation: fadeIn 1s ease-out;
+}
+
+.pitch-card {
+  background: linear-gradient(135deg, #1f2937, #374151); /* gray-800 to gray-900 */
+  padding: 0.75rem; /* 12px */
+  border-radius: 0.375rem; /* 6px */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* shadow-md */
+  border: 1px solid var(--border-color);
+  transition: transform 0.3s ease;
+}
+
+.pitch-card:hover {
+  transform: scale(1.05);
+}
+
+.landing-cta {
+  animation: slideUp 0.8s ease-out;
+}
+
+.auth-buttons button {
+  padding: 0.25rem 1rem; /* 4px 16px */
+  background: rgba(0, 230, 118, 0.9);
+  color: #ffffff;
+  border-radius: 9999px; /* rounded-full */
+  font-weight: 500;
+  transition: background 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* shadow-md */
+  font-size: 0.875rem; /* 14px */
+}
+
+.auth-buttons button:hover {
+  background: rgba(0, 255, 130, 1);
+}
+
+/* Toggle Switch */
+.toggle-container {
+  margin-bottom: 1rem; /* Reduced from 1.5rem to 16px */
+}
+
+.toggle-switch {
+  display: flex;
+  border-radius: 9999px; /* rounded-full */
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* shadow-sm */
+}
+
+.toggle-btn {
+  padding: 0.375rem 0.75rem; /* Reduced from 0.5rem 1rem to 6px 12px */
+  font-size: 0.875rem; /* 14px */
+  font-weight: 500;
+  color: rgba(0, 230, 118, 1); /* Green for unselected state */
+  background: var(--container-bg);
+  transition: background 0.2s ease, color 0.2s ease; /* Added color transition */
+}
+
+.toggle-btn:hover {
+  background: #374151; /* gray-700 */
+}
+
+.toggle-btn.active {
+  background: rgba(0, 230, 118, 0.9);
+  color: var(--container-bg); /* Matches default background for active state */
+}
+
+/* Animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes pulse {
-  0%, 100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
-/* Bounce Animation (Subtle Up/Down Movement) */
 @keyframes bounce {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(-5px);
-  }
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-5px); }
 }
 
-/* Ensure the placeholder is visible over the container background */
-.GenAISummary-content {
-  position: relative;
-}
-
-/* Row update animation */
-/* Optional: Add a faint glow effect for extra coolness */
 @keyframes rowHighlightPulse {
-  0% {
-    background-color: rgba(0, 230, 118, 0); /* Starting transparent */
-  }
-  50% {
-    background-color: rgba(0, 230, 118, 0.3); /* Peak green glow */
-  }
-  100% {
-    background-color: rgba(0, 230, 118, 0); /* Fade back to transparent */
-  }
+  0% { background-color: rgba(0, 230, 118, 0); }
+  50% { background-color: rgba(0, 230, 118, 0.3); }
+  100% { background-color: rgba(0, 230, 118, 0); }
+}
+
+@keyframes pulseLive {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0.8; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .animate-row-update {
   animation: rowHighlightPulse 1s ease-in-out forwards;
 }
 
-/* Slow pulsing "LIVE" animation (unchanged) */
-@keyframes pulseLive {
-  0% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.6;
-  }
-}
-
 .animate-pulse-live {
   animation: pulseLive 2s infinite ease-in-out;
-}
-
-/* Ensure container-header supports absolute positioning */
-.container-header {
-  position: relative;
-}
-
-
-/* app/globals.css (append at the end) */
-
-/* Scale-in Animation for Badges */
-@keyframes scaleIn {
-  from {
-    transform: scale(0.9);
-    opacity: 0.8;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
 }
 
 .animate-scale-in {
   animation: scaleIn 0.2s ease-out forwards;
 }
 
-/* Ensure text gradient works across browsers */
-.bg-clip-text {
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-
-
-/* app/globals.css (append at the end) */
-
-/* Modern Header Styles */
-.header-container {
-  @apply bg-gradient-to-r from-gray-800 to-gray-900 rounded-lg shadow-lg p-4 mb-6 transition-all duration-300;
-  border: 1px solid var(--border-color);
-}
-
-.header-container:hover {
-  @apply shadow-xl;
-}
-
-/* Welcome Text */
-.header-welcome {
-  @apply text-lg font-semibold text-gray-100 tracking-wide;
-}
-
-/* Tier Badge */
-.tier-badge {
-  @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium shadow-md animate-scale-in;
-  background: linear-gradient(135deg, #1f2937, #2d3748);
-  border: 1px solid var(--border-color);
-}
-
-.tier-badge.free {
-  @apply bg-gray-700 text-gray-300;
-}
-
-.tier-badge.premium {
-  @apply bg-gradient-to-r from-[rgba(0,230,118,0.9)] to-[rgba(0,200,100,0.9)] text-white;
-}
-
-.tier-badge.cancelling {
-  @apply bg-gradient-to-r from-[rgba(255,202,40,0.9)] to-[rgba(251,146,60,0.9)] text-white;
-}
-
-/* Subscription Info */
-.subscription-info {
-  @apply text-sm text-gray-400 mt-1 flex items-center gap-2;
-}
-
-/* Button Styling */
-.header-button {
-  @apply px-4 py-1.5 bg-[rgba(0,230,118,0.9)] text-white rounded-full text-sm font-medium hover:bg-[rgba(0,255,130,1)] transition-all duration-200 shadow-sm;
-}
-
-
-
-
-/* app/globals.css (update landing-specific styles) */
-
-/* Background Gradient */
-.bg-gradient-to-b {
-  background: linear-gradient(to bottom, #111827, #1f2937);
-}
-
-/* Landing Hero */
-.landing-hero {
-  @apply animate-fade-in;
-}
-
 .animate-fade-in {
   animation: fadeIn 1s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 .animate-slide-up {
   animation: slideUp 0.8s ease-out;
 }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+/* Text Gradient Utility */
+.bg-clip-text {
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
-/* Sales Pitch Cards */
-.pitch-card {
-  @apply bg-gradient-to-br from-gray-800 to-gray-900 p-3 rounded-md shadow-md border border-[var(--border-color)] transition-transform duration-300 hover:scale-105;
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
-/* Call to Action */
-.landing-cta {
-  @apply animate-slide-up;
-}
-
-/* Auth Buttons */
-.auth-buttons button {
-  @apply px-4 py-1 bg-[rgba(0,230,118,0.9)] text-white rounded-full font-medium hover:bg-[rgba(0,255,130,1)] transition-all duration-200 shadow-md text-sm;
-}
-
-
-/* app/globals.css (append at the end) */
-
-/* Toggle Switch Styles */
-.toggle-container {
-  @apply mb-6;
-}
-
-.toggle-switch {
-  @apply flex rounded-full border border-[var(--border-color)] overflow-hidden shadow-sm;
-}
-
-.toggle-btn {
-  @apply px-4 py-2 text-sm font-medium text-gray-200 bg-[var(--container-bg)] transition-colors duration-200;
-}
-
-.toggle-btn:hover {
-  @apply bg-gray-700;
-}
-
-.toggle-btn.active {
-  @apply bg-[rgba(0,230,118,0.9)] text-white;
-}
-
-.toggle-btn:not(.active):hover {
-  @apply bg-gray-700;
+.animate-blink {
+  animation: blink 0.5s infinite;
 }
