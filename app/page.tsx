@@ -254,7 +254,7 @@ if (!user) {
       {/* CTA (Login Prompt) */}
       <div className="landing-cta text-center mb-6">
         <p className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[rgba(0,230,118,1)] to-[rgba(0,255,130,1)] bg-clip-text text-transparent mb-4 animate-slide-up">
-          Join the Future Now
+          Sign Up and Get Access
         </p>
         <div className="flex justify-center gap-4">
           <AuthButtons />
