@@ -10,6 +10,7 @@ import { StockOverview } from "../components/StockOverview";
 import { PostViewer } from "../components/PostViewer";
 import { GenAISummary } from "../components/GenAISummary";
 import { TickerTapeItem, TopicItem } from "../types/api";
+import ReactMarkdown from "react-markdown";
 
 // Mock Data for Cashtags
 const mockCashtagData: TickerTapeItem[] = [
@@ -118,6 +119,12 @@ export default function Home() {
     fetchSubscription,
   } = useTickerData(user, pageMode);
 
+  // Hooks for the landing page
+  const [selectedMockCashtag, setSelectedMockCashtag] = useState<string | null>(null);
+  const [summary, setSummary] = useState<string>("");
+  const [isStreaming, setIsStreaming] = useState<boolean>(false);
+  const [activeLineIndex, setActiveLineIndex] = useState<number>(0); // Track the active line
+
   const [sortConfig, setSortConfig] = useState<{
     key: keyof TickerTapeItem | keyof TopicItem | null;
     direction: "asc" | "desc";
@@ -125,6 +132,41 @@ export default function Home() {
     key: null,
     direction: "asc",
   });
+
+  // Predefined fake summary (extravagant and fun)
+  const fakeSummary = `
+➤ **Tech Leap:** ${selectedMockCashtag || "Selected Stock"} unveils iPhone 28 with holographic display!\n
+➤ **Auto Ambition:** ${selectedMockCashtag || "Selected Stock"} introduces flying car line for 2030.\n
+➤ **Market Hype:** ${selectedMockCashtag || "Selected Stock"} surges 300% on rumors of alien tech partnership.\n
+➤ **AI Craze:** ${selectedMockCashtag || "Selected Stock"} new AI chip promises to outsmart humans by 2035.\n
+➤ **Social Buzz:** Twitter explodes with #${selectedMockCashtag || "Stock"}ToTheMoon trends.
+  `;
+
+  // Streaming effect for summary with active line tracking
+  useEffect(() => {
+    if (!user && selectedMockCashtag && !isStreaming) {
+      setSummary(""); // Reset summary when new cashtag is selected
+      setActiveLineIndex(0); // Reset active line
+      setIsStreaming(true);
+      let index = 0;
+
+      const interval = setInterval(() => {
+        if (index < fakeSummary.length) {
+          const currentChar = fakeSummary[index];
+          setSummary((prev) => prev + currentChar);
+          if (currentChar === "\n") {
+            setActiveLineIndex((prev) => prev + 1);
+          }
+          index++;
+        } else {
+          clearInterval(interval);
+          setIsStreaming(false);
+        }
+      }, 30); // Adjust speed here (30ms per character)
+
+      return () => clearInterval(interval);
+    }
+  }, [user, selectedMockCashtag]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -139,21 +181,27 @@ export default function Home() {
     const direction =
       sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
     setSortConfig({ key, direction });
-  
+
     let sortedData: (TickerTapeItem | TopicItem)[];
-    
+
     if (pageMode === "cashtags") {
       sortedData = [...tickerTapeData as TickerTapeItem[]].sort((a, b) => {
-        const aValue = (a as TickerTapeItem)[key as keyof TickerTapeItem] ?? 
-                       (typeof (a as TickerTapeItem)[key as keyof TickerTapeItem] === "number" ? 0 : (a as TickerTapeItem)[key as keyof TickerTapeItem]);
-        const bValue = (b as TickerTapeItem)[key as keyof TickerTapeItem] ?? 
-                       (typeof (b as TickerTapeItem)[key as keyof TickerTapeItem] === "number" ? 0 : (b as TickerTapeItem)[key as keyof TickerTapeItem]);
-  
+        const aValue =
+          (a as TickerTapeItem)[key as keyof TickerTapeItem] ??
+          (typeof (a as TickerTapeItem)[key as keyof TickerTapeItem] === "number"
+            ? 0
+            : (a as TickerTapeItem)[key as keyof TickerTapeItem]);
+        const bValue =
+          (b as TickerTapeItem)[key as keyof TickerTapeItem] ??
+          (typeof (b as TickerTapeItem)[key as keyof TickerTapeItem] === "number"
+            ? 0
+            : (b as TickerTapeItem)[key as keyof TickerTapeItem]);
+
         if (typeof aValue === "number" && typeof bValue === "number") {
           return direction === "asc" ? aValue - bValue : bValue - aValue;
         }
         if (typeof aValue === "string" && typeof bValue === "string") {
-          return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(bValue);
+          return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
         }
         if (Array.isArray(aValue) && Array.isArray(bValue)) {
           const aLength = aValue.length;
@@ -164,16 +212,22 @@ export default function Home() {
       });
     } else {
       sortedData = [...tickerTapeData as TopicItem[]].sort((a, b) => {
-        const aValue = (a as TopicItem)[key as keyof TopicItem] ?? 
-                       (typeof (a as TopicItem)[key as keyof TopicItem] === "number" ? 0 : (a as TopicItem)[key as keyof TopicItem]);
-        const bValue = (b as TopicItem)[key as keyof TopicItem] ?? 
-                       (typeof (b as TopicItem)[key as keyof TopicItem] === "number" ? 0 : (b as TopicItem)[key as keyof TopicItem]);
-  
+        const aValue =
+          (a as TopicItem)[key as keyof TopicItem] ??
+          (typeof (a as TopicItem)[key as keyof TopicItem] === "number"
+            ? 0
+            : (a as TopicItem)[key as keyof TopicItem]);
+        const bValue =
+          (b as TopicItem)[key as keyof TopicItem] ??
+          (typeof (b as TopicItem)[key as keyof TopicItem] === "number"
+            ? 0
+            : (b as TopicItem)[key as keyof TopicItem]);
+
         if (typeof aValue === "number" && typeof bValue === "number") {
           return direction === "asc" ? aValue - bValue : bValue - aValue;
         }
         if (typeof aValue === "string" && typeof bValue === "string") {
-          return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(bValue);
+          return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
         }
         if (Array.isArray(aValue) && Array.isArray(bValue)) {
           const aLength = aValue.length;
@@ -183,7 +237,7 @@ export default function Home() {
         return 0;
       });
     }
-  
+
     setTickerTapeData(sortedData);
   };
 
@@ -191,94 +245,120 @@ export default function Home() {
     console.log(`Mock ticker clicked: ${ticker}`);
   };
 
-// app/page.tsx (partial update for !user block)
-if (!user) {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-200 flex flex-col items-center justify-center px-5 py-10 overflow-hidden">
-      {/* Hero Section */}
-      <div className="landing-hero text-center mb-6 animate-fade-in">
-        <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-[rgba(0,230,118,1)] to-[rgba(0,255,130,1)] bg-clip-text text-transparent mb-4">
-          Cashtags Unleashed
-        </h1>
-        <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto animate-slide-up">
-          Dive into real-time stock insights powered by AI, trending cashtags, and hot topics from the social sphere.
-        </p>
-      </div>
+  const handleMockCashtagClick = (cashtag: string) => {
+    setSelectedMockCashtag(cashtag);
+  };
 
-      {/* Trending Section with Mock Data */}
-      <div className="w-full max-w-4xl mb-2">
-        {/* Reduced from mb-6 to mb-2 */}
-        <div className="toggle-container flex justify-center mb-5">
-          <div className="toggle-switch">
-            <button
-              className={`toggle-btn ${pageMode === "cashtags" ? "active" : ""}`}
-              onClick={() => setPageMode("cashtags")}
-            >
-              Trending Cashtags
-            </button>
-            <button
-              className={`toggle-btn ${pageMode === "topics" ? "active" : ""}`}
-              onClick={() => setPageMode("topics")}
-            >
-              Trending Topics
-            </button>
+  // Landing page for unauthenticated users
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-200 flex flex-col items-center justify-center px-5 py-10 overflow-hidden">
+        {/* Hero Section */}
+        <div className="landing-hero text-center mb-6 animate-fade-in">
+          <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-[rgba(0,230,118,1)] to-[rgba(0,255,130,1)] bg-clip-text text-transparent mb-4">
+            Cashtags Unleashed
+          </h1>
+          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto animate-slide-up">
+            Dive into real-time stock insights powered by AI, trending cashtags, and hot topics from the social sphere.
+          </p>
+        </div>
+
+        {/* Trending Section with Mock Data */}
+        <div className="w-full max-w-4xl mb-2">
+          <div className="toggle-container flex justify-center mb-5">
+            <div className="toggle-switch">
+              <button
+                className={`toggle-btn ${pageMode === "cashtags" ? "active" : ""}`}
+                onClick={() => setPageMode("cashtags")}
+              >
+                Trending Cashtags
+              </button>
+              <button
+                className={`toggle-btn ${pageMode === "topics" ? "active" : ""}`}
+                onClick={() => setPageMode("topics")}
+              >
+                Trending Topics
+              </button>
+            </div>
+          </div>
+          <TickerTape
+            data={pageMode === "cashtags" ? mockCashtagData : mockTopicData}
+            loading={false}
+            onTickerClick={pageMode === "cashtags" ? handleMockCashtagClick : handleMockTickerClick}
+            onSort={handleSort}
+            sortConfig={sortConfig}
+            user={null}
+            pageMode={pageMode}
+          />
+        </div>
+
+        {/* AI Summary Section */}
+        <div className="w-full max-w-2xl mb-6">
+          <div className="container bg-gradient-to-br from-gray-800 to-gray-900 border-[rgba(0,230,118,0.2)] shadow-xl">
+            <div className="container-header">
+              <span style={{ color: "rgba(0, 230, 118)" }}>
+                AI Summary{selectedMockCashtag ? ` for $${selectedMockCashtag}` : ""}
+              </span>
+            </div>
+            <div className="container-content p-5 text-sm text-left">
+              {selectedMockCashtag ? (
+                <div className="text-gray-300 w-full relative">
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => (
+                        <div className="flex items-baseline m-0">{children}</div>
+                      ),
+                    }}
+                  >
+                    {summary || "Generating summary..."}
+                  </ReactMarkdown>
+                  {isStreaming && summary && (
+                    <span
+                      className="cursor absolute"
+                      style={{
+                        top: `${activeLineIndex * 1.5}rem`, // Approx line height
+                        left: "calc(100% + 0.25rem)", // Position after text
+                      }}
+                    ></span>
+                  )}
+                </div>
+              ) : (
+                <div className="animated-placeholder text-center">
+                  <span>Click a Cashtag</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-        <TickerTape
-          data={pageMode === "cashtags" ? mockCashtagData : mockTopicData}
-          loading={false}
-          onTickerClick={handleMockTickerClick}
-          onSort={handleSort}
-          sortConfig={sortConfig}
-          user={null}
-          pageMode={pageMode}
-        />
-      </div>
 
-      {/* AI Summary Teaser */}
-      <div className="w-full max-w-2xl mb-6">
-        <div className="container bg-gradient-to-br from-gray-800 to-gray-900 border-[rgba(0,230,118,0.2)] shadow-xl">
-          <div className="container-header">
-            <span style={{ color: "rgba(0, 230, 118)" }}>AI-Powered Insights</span>
+        {/* CTA (Login Prompt) */}
+        <div className="landing-cta text-center mb-6">
+          <p className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[rgba(0,230,118,1)] to-[rgba(0,255,130,1)] bg-clip-text text-transparent mb-4 animate-slide-up">
+            Sign Up and Get Access
+          </p>
+          <div className="flex justify-center gap-4">
+            <AuthButtons />
           </div>
-          <div className="container-content p-5 text-sm">
-            <p className="text-gray-300">
-              - **Market Buzz:** AI instantly summarizes social sentiment for any stock or topic.<br />
-              - **Real-Time Edge:** Get concise, actionable insights in seconds.<br />
-              - **Unlock More:** Sign in to see full summaries and dive deeper!
-            </p>
+        </div>
+
+        {/* Video Embed */}
+        <div className="w-full max-w-3xl">
+          <div className="relative aspect-video bg-gradient-to-br bg-gray-900 rounded-lg overflow-hidden shadow-2xl animate-fade-in">
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[rgba(0,230,118,0.1)] to-gray-900">
+              <p className="text-gray-400 text-lg font-semibold">
+                Video Coming Soon: See Cashtags in Action!
+              </p>
+            </div>
+            <div className="absolute top-4 left-4 bg-[rgba(0,230,118,0.9)] text-white px-3 py-1 rounded-full text-sm font-medium animate-scale-in">
+              Watch Now
+            </div>
           </div>
         </div>
       </div>
+    );
+  }
 
-      {/* CTA (Login Prompt) */}
-      <div className="landing-cta text-center mb-6">
-        <p className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[rgba(0,230,118,1)] to-[rgba(0,255,130,1)] bg-clip-text text-transparent mb-4 animate-slide-up">
-          Sign Up and Get Access
-        </p>
-        <div className="flex justify-center gap-4">
-          <AuthButtons />
-        </div>
-      </div>
-
-      {/* Video Embed */}
-      <div className="w-full max-w-3xl">
-        <div className="relative aspect-video bg-gradient-to-br bg-gray-900 rounded-lg overflow-hidden shadow-2xl animate-fade-in">
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[rgba(0,230,118,0.1)] to-gray-900">
-            <p className="text-gray-400 text-lg font-semibold">
-              Video Coming Soon: See Cashtags in Action!
-            </p>
-          </div>
-          <div className="absolute top-4 left-4 bg-[rgba(0,230,118,0.9)] text-white px-3 py-1 rounded-full text-sm font-medium animate-scale-in">
-            Watch Now
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-  // Authenticated user content (unchanged)
+  // Authenticated user content
   const isFree = subscription.status !== "PREMIUM";
   const hasCancelAt = subscription.cancelAt !== null && subscription.cancelAt !== undefined;
   const isPremiumActive = subscription.status === "PREMIUM" && !hasCancelAt;
