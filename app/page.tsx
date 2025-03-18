@@ -123,7 +123,6 @@ export default function Home() {
   const [selectedMockCashtag, setSelectedMockCashtag] = useState<string | null>(null);
   const [summary, setSummary] = useState<string>("");
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
-  const [activeLineIndex, setActiveLineIndex] = useState<number>(0); // Track the active line
 
   const [sortConfig, setSortConfig] = useState<{
     key: keyof TickerTapeItem | keyof TopicItem | null;
@@ -146,7 +145,6 @@ export default function Home() {
   useEffect(() => {
     if (!user && selectedMockCashtag && !isStreaming) {
       setSummary(""); // Reset summary when new cashtag is selected
-      setActiveLineIndex(0); // Reset active line
       setIsStreaming(true);
       let index = 0;
 
@@ -154,9 +152,6 @@ export default function Home() {
         if (index < fakeSummary.length) {
           const currentChar = fakeSummary[index];
           setSummary((prev) => prev + currentChar);
-          if (currentChar === "\n") {
-            setActiveLineIndex((prev) => prev + 1);
-          }
           index++;
         } else {
           clearInterval(interval);
