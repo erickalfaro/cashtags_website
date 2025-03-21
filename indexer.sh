@@ -51,32 +51,45 @@ generate_directory_structure() {
     echo "Directory Structure:" >> "$OUTPUT_FILE"
     echo "====================" >> "$OUTPUT_FILE"
     
-    # Get the root directory name (current directory)
-    local root_dir=$(basename "$(pwd)")
-    
-    # Start the tree with the root directory
-    echo "└── ${root_dir}/" >> "$OUTPUT_FILE"
-    
-    # Use git ls-files to get tracked files, then build the structure
-    git ls-files | while IFS= read -r file; do
-        if [ -f "$file" ] && ! should_ignore "$file"; then
-            # Split the file path into components
-            IFS='/' read -ra parts <<< "$file"
-            local indent="    "  # Initial indent after root
-            
-            # Build the path level by level
-            for ((i=0; i<${#parts[@]}-1; i++)); do
-                # Print directories with proper indentation
-                echo "${indent}├── ${parts[$i]}/" >> "$OUTPUT_FILE"
-                indent="${indent}│   "  # Increase indent for next level
-            done
-            
-            # Print the file with its final indent
-            echo "${indent}└── ${parts[-1]}" >> "$OUTPUT_FILE"
+    # Collect files that are not ignored and are text files
+    files=()
+    while IFS= read -r file; do
+        if [ -f "$file" ] && ! should_ignore "$file" && ! file "$file" | grep -q "executable\|binary\|image\|font"; then
+            files+=("$file")
         fi
+    done < <(git ls-files)
+    
+    # Sort the files
+    sorted_files=($(printf '%s\n' "${files[@]}" | sort))
+    
+    # Initialize current_path
+    current_path=()
+    
+    for file in "${sorted_files[@]}"; do
+        IFS='/' read -ra path_components <<< "$file"
+        
+        # Find common prefix length
+        common_prefix=0
+        for ((i=0; i<${#current_path[@]} && i<${#path_components[@]}-1; i++)); do
+            if [ "${current_path[$i]}" != "${path_components[$i]}" ]; then
+                break
+            fi
+            common_prefix=$((i+1))
+        done
+        
+        # Print directories from common_prefix to ${#path_components[@]}-2
+        for ((i=common_prefix; i<${#path_components[@]}-1; i++)); do
+            printf "%*s%s/\n" $((i * 2)) "" "${path_components[$i]}" >> "$OUTPUT_FILE"
+        done
+        
+        # Print the file name
+        printf "%*s%s\n" $(((${#path_components[@]}-1) * 2)) "" "${path_components[-1]}" >> "$OUTPUT_FILE"
+        
+        # Update current_path
+        current_path=("${path_components[@]}")
     done
     
-    # Add some spacing after the structure
+    # Add spacing after the structure
     echo -e "\n\n" >> "$OUTPUT_FILE"
 }
 
@@ -105,7 +118,7 @@ if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
     exit 1
 fi
 
-# Export functions for find to use
+# Export functions for use in subshells
 export -f should_ignore process_file
 
 # Generate the directory structure at the top
