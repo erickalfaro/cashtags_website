@@ -18,7 +18,7 @@ should_ignore() {
         "dist/" "build/" ".next/" "out/" "*.log" "*.log.*" "*.tmp"
         "*.png" "*.jpg" "*.jpeg" "*.gif" "*.svg" "*.ico" "*.webp" "docs/"
         "*.woff" "*.woff2" "*.ttf" "*.eot" "*.min.js" "*.min.css" "*.map"
-        ".vercel/" "vercel.json" ".env" ".env.*" "*.md" "coverage/" "test/"
+        ".vercel/" "vercel.json" ".env" ".env.*" "coverage/" "test/"
         "__tests__/" "*.test.*" "*.spec.*" "vendor/" "*.bak" "*.swp" "*.swo"
         # Your specific .gitignore patterns
         "/node_modules" "/.pnp" ".pnp.*" ".yarn/*" "!.yarn/patches" "!.yarn/plugins"

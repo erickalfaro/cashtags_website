@@ -1,19 +1,80 @@
 // app/legal/page.tsx
-export default function Legal() {
+"use client";
+
+import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+
+export default function LegalPage() {
+  const [privacyContent, setPrivacyContent] = useState<string>("");
+  const [termsContent, setTermsContent] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Fetch Privacy Policy
+        const privacyResponse = await fetch("/content/legal/privacy.md");
+        if (!privacyResponse.ok) {
+          throw new Error("Failed to fetch Privacy Policy");
+        }
+        const privacyText = await privacyResponse.text();
+        setPrivacyContent(privacyText);
+
+        // Fetch Terms and Conditions
+        const termsResponse = await fetch("/content/legal/terms.md");
+        if (!termsResponse.ok) {
+          throw new Error("Failed to fetch Terms and Conditions");
+        }
+        const termsText = await termsResponse.text();
+        setTermsContent(termsText);
+      } catch (err) {
+        console.error("Error fetching legal content:", err);
+        setError(err instanceof Error ? err.message : "An unexpected error occurred.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContent();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-gray-200">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-gray-200">
+        <h1 className="text-2xl font-bold mb-4">Error</h1>
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">Legal Information</h1>
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold">Disclaimer</h2>
-        <p>The information provided on this site is for informational purposes only and does not constitute financial advice.</p>
+    <div className="container mx-auto p-4 text-gray-200">
+      <h1 className="text-3xl font-bold mb-6">Legal</h1>
+
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Privacy Policy</h2>
+        <div className="prose prose-invert max-w-none">
+          <ReactMarkdown>{privacyContent}</ReactMarkdown>
+        </div>
       </section>
-      <section className="mb-6">
-        <h2 className="text-xl font-semibold">Privacy Policy</h2>
-        <p>We collect minimal user data for authentication and subscription purposes. Your data is protected and not shared with third parties except as required for payment processing.</p>
-      </section>
+
       <section>
-        <h2 className="text-xl font-semibold">Terms of Service</h2>
-        <p>By using this site, you agree to our terms of service, which include responsible use and compliance with applicable laws.</p>
+        <h2 className="text-2xl font-semibold mb-4">Terms and Conditions</h2>
+        <div className="prose prose-invert max-w-none">
+          <ReactMarkdown>{termsContent}</ReactMarkdown>
+        </div>
       </section>
     </div>
   );
