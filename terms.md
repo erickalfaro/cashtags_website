@@ -1,121 +1,144 @@
+Highlight oddities in my terms and policy below. My company is called "www.cashtags.ai". Cashtags.ai collects and aggregates mentions of stocks on the internet and compiles what is being leveraging generative AI to summarize and extract insights for subscribers.
+
 
 FRONT PAGE SNIPPET
-©2025 Cashtags.ai. All rights reserved.
+©2025 Cashtags LLC. All rights reserved.
 
-Market Data aggregated from publicly available internet sources by Cashtags.ai.
+Market Data aggregated from publicly available internet sources by Cashtags LLC.
 
-Cashtags.ai is an entertainment platform that aggregates mentions of stocks from across the internet using generative AI to provide summaries and insights for your amusement. We are not a securities broker-dealer, investment adviser, or financial professional. No content on the Cashtags.ai platform should be considered an offer, solicitation of an offer, or advice to buy or sell securities or any other type of investment or financial product.
+Cashtags LLC operates cashtags.ai (the “Service”), a platform that uses generative artificial intelligence to aggregate mentions of stocks from across the internet, synthesizing them into summaries and insights for informational purposes for subscribers. Cashtags LLC is not a securities broker-dealer, investment adviser, or financial professional. No content on the Service constitutes an offer, solicitation, or advice to buy or sell securities or any other investment or financial product. By using the Service, you acknowledge that it is not intended as financial advice and that you assume full responsibility for any decisions based on its content. For support, contact support@cashtags.ai.
 
-By using the Cashtags.ai platform, you understand and agree that Cashtags.ai is a data aggregator focused on entertainment, not a financial advisor. We do not provide investment advice or recommend any security or transaction. You are solely responsible for any decisions you make based on the Service, and we encourage you to enjoy it as an informational pastime. For additional disclosures, please see [insert link to detailed disclosures page, if applicable].
-
-Cashtags.ai. Email: privacy@cashtags.ai. We’re a remote team dedicated to your entertainment. Reach us anytime via email for support or data requests.
-
-TERMS OF SERVICE
 Last Revised: March 25, 2025
 
-The following terms and conditions (the “Terms”) govern all use of the www.cashtags.ai website and any related Cashtags.ai mobile device application (collectively, the “Service”). The Service is operated by Cashtags.ai and its affiliates (“we,” “us,” “our,” or “Cashtags.ai”), a data aggregator providing entertainment through AI-generated summaries of internet stock mentions. In these Terms, “you” or “your” means the person accepting these Terms and the company (if any) on whose behalf they are acting.
+The following terms and conditions (“Terms”) govern all use of the cashtags.ai website. The Service is operated by Cashtags LLC (“we,” “us,” “our,” or “Cashtags”), a data aggregator providing AI-generated summaries and insights from internet stock mentions for subscribers. In these Terms, “you” or “your” refers to the individual accepting these Terms. By accessing or using the Service, you affirm that you have read, understand, and agree to be bound by these Terms, forming a legally binding agreement between you and Cashtags LLC. If you do not agree, you must not use the Service.
 
-By using or accessing the Service, you agree that you are at least eighteen (18) years old, have read, understand, and agree to be bound by these Terms, which form a legally binding agreement between you and Cashtags.ai. If you do not agree, you must not use the Service. If you are entering these Terms on behalf of a company, you represent that you have the authority to bind that company. We may modify these Terms at our discretion, and your continued use after changes are posted constitutes acceptance of those changes. Additional terms may apply to specific products or services and will control if they conflict with these Terms.
+We reserve the right to modify these Terms with at least 30 days’ prior notice via email or a notice on the Service. Changes will not retroactively affect existing subscriptions unless required by law. Your continued use following such notification constitutes acceptance of the changes. Additional terms may apply to specific products or services and will prevail in case of conflict with these Terms.
 
-PLEASE READ THESE TERMS CAREFULLY AS THEY CONTAIN IMPORTANT INFORMATION REGARDING YOUR LEGAL RIGHTS, REMEDIES, AND OBLIGATIONS, INCLUDING LIMITATIONS, EXCLUSIONS, AND A DISPUTE RESOLUTION CLAUSE. THE SERVICE IS INTENDED FOR ENTERTAINMENT PURPOSES ONLY.
+PLEASE READ THESE TERMS CAREFULLY, AS THEY CONTAIN IMPORTANT INFORMATION REGARDING YOUR LEGAL RIGHTS, REMEDIES, AND OBLIGATIONS, INCLUDING LIMITATIONS AND EXCLUSIONS.
 
-I. Registration Data and Account Security
-To use parts of the Service, you may need to register an account with an email address, password, and username (“Registration Data”). You agree to:
+### I. Registration Data and Account Security
+
+To access certain features of the Service, you may need to register an account using an email address, password, and username (“Registration Data”). You agree to:
 
 (a) provide accurate, current, and complete Registration Data;
 
 (b) maintain the security of your password and username;
 
-(c) update your Registration Data to keep it accurate and current;
+(c) update your Registration Data as needed to keep it accurate;
 
-(d) be fully responsible for all use of your account.
+(d) assume full responsibility for all activities under your account.
 
-You must maintain the confidentiality of your Registration Data and notify us immediately at support@cashtags.ai if you suspect unauthorized use. You consent to receive required notices electronically via your email or the Service.
+You shall keep your Registration Data confidential and notify us at support@cashtags.ai of any suspected unauthorized use. Required notices (e.g., regarding account changes, billing, or legal obligations) will be sent electronically to your registered email address or via the Service. To delete your account, contact support@cashtags.ai.
 
-II. Access to the Service
-Subject to your compliance with these Terms, Cashtags.ai grants you a limited, revocable, nonexclusive license to access and use the Service and its Content for your personal, non-commercial entertainment consistent with your subscription tier. This license does not include any collection, aggregation, copying, duplication, scraping, display, or derivative use of the Service for redistribution or commercial purposes unless expressly permitted by Cashtags.ai in writing. A limited exception is provided to general-purpose internet search engines and non-commercial public archives that gather information solely to display hyperlinks to the Service.
+### II. Access to the Service
 
-III. Your Responsibilities
-Cashtags.ai is a data aggregator that compiles publicly available internet data for your entertainment. You are solely responsible for any decisions or actions you take based on the Service—whether financial, personal, or otherwise—and we do not guide or influence those choices. Enjoy the Service as a fun, informational tool, but know that what you do with it is entirely up to you.
+Subject to your compliance with these Terms, Cashtags LLC grants you a limited, non-exclusive license to access and use the Service and its Content for personal, non-commercial purposes. This license does not permit redistribution, commercial use, or derivative works based on the Service unless expressly authorized by Cashtags LLC in writing.
 
-IV. Paid Products or Services
-We may offer paid subscriptions for access to premium AI-generated summaries and insights (“Paid Services”) as part of the entertainment experience. If you purchase Paid Services, you agree to pay the applicable fees listed on the Service. Fees may change with notice posted on the Service; temporary promotions or fee reductions require no advance notice.
+### III. Your Responsibilities
 
-You must provide a payment method via our third-party payment processor, Stripe. If payment fails or your account is past due, we may charge other methods on file, use collection agencies, or report to credit bureaus. Late fees may apply. Contact support@cashtags.ai to dispute reported information.
+Cashtags LLC aggregates publicly available internet data and synthesizes it into insights. You bear sole responsibility for any decisions or actions taken based on the Service, whether financial, personal, or otherwise. Cashtags LLC does not direct or influence such decisions.
 
-V. Payment Policies
-Payments are processed through Stripe, subject to its terms and privacy policy (see https://stripe.com/privacy). You agree to pay all charges at the listed prices using your provided payment method. We may correct payment errors even after payment is received.
+### IV. Paid Products or Services
 
-Subscriptions may be billed monthly, quarterly, or annually (“Subscription Period”), with fees pre-paid at the start of each period. Fee changes take effect at the next Subscription Period. Pre-paid fees are non-refundable except at our discretion or if legally required. Cancel via your account dashboard or by emailing support@cashtags.ai; access continues until the current Subscription Period ends. You are responsible for all taxes related to your use of the Service.
+We offer paid subscriptions for access to premium AI-generated summaries and insights (“Paid Services”) as part of the Service. By purchasing Paid Services, you agree to pay the fees specified on the Service. Fees are subject to change, with adjustments reflected at the start of your next Subscription Period. We will notify you of fee changes via email or the Service prior to the next Subscription Period. Payments are processed through our third-party payment processor, Stripe.
 
-We may cancel your subscription at any time. If cancellation is not due to non-payment or breach of Terms, you’ll receive a pro-rated refund for remaining full months.
+You shall provide a payment method via Stripe. If payment fails or your account becomes past due, we may charge alternative payment methods you have provided or suspend your access until resolved. Disputes regarding billing may be addressed by contacting support@cashtags.ai.
 
-VI. Site Content
-Content (e.g., text, data, AI-generated summaries) on the Service is provided by Cashtags.ai, a data aggregator, based on publicly available internet data for entertainment purposes. We are not responsible for its accuracy or completeness. You use Content at your own risk and may not rely on it as investment advice. Cashtags.ai is not liable for any loss or damage from your use of Content. Our AI-generated summaries reflect the AI’s interpretation of aggregated data and are meant to entertain, not to advise or recommend.
+### V. Payment Policies
 
-VII. Feedback
-Any feedback you provide about the Service becomes our property. We may use it without restriction or compensation to you.
+Payments are processed through Stripe, subject to its terms and privacy policy (see https://stripe.com/privacy). You agree to pay all charges at the prices listed using your designated payment method. Subscriptions are billed monthly, quarterly, or annually (“Subscription Period”), with fees prepaid at the start of each period. Refunds are not guaranteed and will be considered on a case-by-case basis at our sole discretion. To request a refund, contact support@cashtags.ai with your reason for the request. We may issue full or partial refunds depending on factors such as usage, the timing of the request, and applicable law. After cancellation via your account dashboard or by emailing support@cashtags.ai, access terminates at the end of the current Subscription Period, with no automatic refund for unused time unless approved by us. We reserve the right to terminate your subscription at any time, with any refund for the unused portion determined at our discretion or as required by law. You are liable for all applicable taxes arising from your use of the Service.
 
-VIII. Copyright Complaints
-If you believe your copyrighted work is infringed on the Service, notify our copyright agent per the Digital Millennium Copyright Act (DMCA) with:
+### VI. Site Content
 
-Identification of the copyrighted work;
-Location of the infringing material on the Service;
-Your contact information;
-A good-faith statement that the use is unauthorized;
-A statement under penalty of perjury that the information is accurate;
-Your signature.
-Email notices to copyright@cashtags.ai.
+Content on the Service, including text, data, and AI-generated summaries, is provided by Cashtags LLC based on publicly available internet data synthesized into insights. We do not guarantee its accuracy or completeness. Use of Content is at your own risk and shall not be relied upon as investment advice. Cashtags LLC bears no liability for any loss or damage arising from your use of Content. AI-generated summaries are original outputs derived from aggregated data, not advice or recommendations.
 
-IX. Third-Party Services
-The Service may link to third-party websites or services not controlled by Cashtags.ai. We are not responsible for their content or your use of them.
+#### Copyright and Fair Use
 
-X. Securities Disclaimer
-CASHTAGS.AI IS AN ENTERTAINMENT PLATFORM, NOT A TAX ADVISOR, BROKER, FINANCIAL ADVISOR, OR INVESTMENT ADVISOR. WE AGGREGATE PUBLIC DATA FOR YOUR AMUSEMENT, NOT TO PROVIDE TAX, LEGAL, FINANCIAL, OR INVESTMENT ADVICE. NOTHING ON THE SERVICE IS AN OFFER, SOLICITATION, OR RECOMMENDATION FOR ANY SECURITY. Trading securities can result in significant losses, and any such decisions are yours alone. Cashtags.ai is a data aggregator, not a financial advisor—use it for fun, not finance. Consult professionals for your specific needs.
+Cashtags LLC aggregates publicly available internet data, such as stock mentions from social media and other sources, to generate AI-driven summaries and insights. Our proprietary artificial intelligence synthesizes this data into transformative content—offering original analysis, trends, and perspectives. We believe this use aligns with fair use principles under U.S. copyright law, as it transforms factual data into new insights without reproducing original works. Cashtags LLC respects the intellectual property rights of others and strives to operate within applicable copyright laws. If you believe your copyrighted work has been used improperly, contact support@cashtags.ai (see Section VIII). For users outside the U.S., we comply with local copyright laws where fair use may not apply.
 
-PRIVACY POLICY
+### VII. Feedback
+
+Any feedback you submit regarding the Service may be used by Cashtags LLC without restriction or compensation to you.
+
+### VIII. Copyright Complaints
+
+If you believe your copyrighted work has been infringed on the Service, notify our designated DMCA Agent pursuant to the Digital Millennium Copyright Act (DMCA) with:
+
+- Identification of the copyrighted work;
+- Location of the infringing material on the Service;
+- Your contact information;
+- A good-faith statement that the use is unauthorized;
+- A statement under penalty of perjury that the information is accurate;
+- Your affirmation of ownership.
+
+Email notices to: DMCA Agent, Cashtags LLC, support@cashtags.ai.
+
+If we remove or disable access to material based on such a notice, we will notify the affected user and provide them an opportunity to submit a counter-notice. A counter-notice must include:
+
+- Identification of the removed material and its prior location;
+- A statement under penalty of perjury that the material was removed or disabled due to mistake or misidentification;
+- The user’s contact information and consent to jurisdiction of a federal court;
+- A signature (physical or electronic).
+
+Counter-notices should be emailed to: DMCA Agent, Cashtags LLC, support@cashtags.ai. If a valid counter-notice is received, we may restore the material after 10 business days unless the original complainant notifies us of legal action to restrain its use.
+
+### IX. Third-Party Services
+
+The Service may include links to third-party websites or services not controlled by Cashtags LLC. We are not responsible for their content or your interactions with them.
+
+### X. Securities Disclaimer
+
+CASHTAGS LLC IS NOT A TAX ADVISOR, BROKER, FINANCIAL ADVISOR, OR INVESTMENT ADVISOR. WE AGGREGATE PUBLICLY AVAILABLE DATA AND SYNTHESIZE IT INTO INSIGHTS. NO CONTENT ON THE SERVICE CONSTITUTES AN OFFER, SOLICITATION, OR RECOMMENDATION REGARDING ANY SECURITY. TRADING SECURITIES MAY RESULT IN SIGNIFICANT LOSSES, AND ANY RELATED DECISIONS ARE YOUR SOLE RESPONSIBILITY. CONSULT QUALIFIED PROFESSIONALS FOR YOUR SPECIFIC NEEDS.
+
 Last Revised: March 25, 2025
 
-This Privacy Policy explains how Cashtags.ai (“we,” “us,” “our”), an entertainment platform aggregating internet stock mentions, collects, uses, and protects personal data through www.cashtags.ai and related services (the “Service”). Cashtags.ai is the data controller for your personal data. By using the Service, you agree to this policy. If you do not agree, please do not use the Service.
+This Privacy Policy governs how Cashtags LLC (“we,” “us,” “our”), a platform aggregating internet stock mentions into AI-generated insights, collects, uses, and protects personal data through cashtags.ai and related services (the “Service”). Cashtags LLC is the data controller for your personal data. By using the Service, you consent to this policy. If you do not consent, you must not use the Service.
 
-I. Personal Information We Collect
+### I. Personal Information We Collect
+
 We collect:
 
-Account Data: Your email address, username, and password when you register.
-Payment Data: Name and billing details via Stripe when you subscribe (we don’t store payment card numbers; Stripe does).
-Usage Data: Automatically collected data like IP address, browser type, and pages viewed to operate and improve the Service.
-Cookies: We may use cookies to enhance functionality. See our [Cookie Policy] for details.
-II. How We Use Your Personal Information
+- **Account Data**: Your email address, username, and password upon registration.
+- **Payment Data**: Name and billing details via Stripe upon subscription (we do not store payment card numbers; Stripe does).
+- **Usage Data**: IP address, browser type, and pages viewed, automatically collected to operate and enhance the Service.
+
+### II. How We Use Your Personal Information
+
 We use your data:
 
-To provide the Service (e.g., account access, AI-generated summaries), based on our contract with you.
-To communicate with you (e.g., support, updates), based on our contract or legitimate interest in user support.
-To process payments via Stripe, based on your subscription agreement.
-To improve and secure the Service, based on our legitimate interest in functionality and safety.
-III. Information Sharing
+- To provide the Service (e.g., account access, AI-generated insights), per our contract with you;
+- To communicate with you (e.g., support, updates), per our contract or legitimate interest in user support;
+- To process payments via Stripe, per your subscription agreement;
+- To improve and secure the Service, per our legitimate interest in functionality and safety.
+
+### III. Information Sharing
+
 We share:
 
-Email with service providers (e.g., hosting) to operate the Service, under strict confidentiality agreements.
-Payment data with Stripe (see https://stripe.com/privacy).
-Data with authorities if legally required.
-IV. Data Retention
-We retain data for 12 months post-closure to resolve disputes or comply with legal obligations, after which it’s deleted unless longer retention is justified (e.g., tax laws). Payment data is retained per Stripe’s policies.
+- Email addresses with service providers (e.g., hosting) to operate the Service, under confidentiality agreements;
+- Payment data with Stripe (see https://stripe.com/privacy);
+- Data with authorities if required by law.
 
-V. Your Choices and Rights
-You can:
+### IV. Data Retention
 
-Update your email or delete your account via privacy@cashtags.ai.
-Under GDPR, access, correct, delete, restrict, or port your data, or object to its processing. Email privacy@cashtags.ai; we’ll respond within one month (extendable by two if complex).
-Complain to your local data protection authority if unsatisfied.
-Opt out of non-essential cookies via our [Cookie Policy].
-VI. Cross-Border Data Transfers
-Your data may be transferred to the U.S. or other countries outside the EEA. We use providers like Stripe, which comply with GDPR via Standard Contractual Clauses or adequacy frameworks.
+Data from active accounts is retained while the account remains open. Following account closure, we delete your personal data within 90 days, unless longer retention is necessary to comply with legal obligations (e.g., tax or accounting laws requiring retention up to 7 years) or to resolve contractual disputes (e.g., billing issues). Payment data retention is governed by Stripe’s policies (see https://stripe.com/privacy).
 
-VII. Security
-We use encryption and access controls to protect your data, though no system is fully secure.
+### V. Your Choices and Rights
 
-VIII. Children’s Data
-The Service is for users 18+. If we detect a minor’s data, we’ll delete it within 72 hours and notify privacy@cashtags.ai if you suspect this applies.
+You may:
 
-IX. Contact Us
-Cashtags.ai. Email: privacy@cashtags.ai. We’re a remote team dedicated to your entertainment. Reach us anytime via email for support or data requests.
+- Update your email or delete your account by contacting support@cashtags.ai;
+- Under applicable laws (e.g., GDPR), request access, correction, deletion, restriction, or portability of your data, or object to its processing, by emailing support@cashtags.ai with sufficient identity verification. We will respond within one month, extendable by two months if complex;
+- Lodge a complaint with your local data protection authority if dissatisfied.
+
+### VI. Data Processing Location
+
+Cashtags LLC processes and stores personal data in the United States. We do not transfer your data outside the United States except as necessary to process payments via Stripe, which complies with applicable data protection laws (see https://stripe.com/privacy).
+
+### VII. Security
+
+We use encryption and access controls to safeguard your data, though no system is entirely secure.
+
+### VIII. Contact Us
+
+Cashtags LLC. Email: support@cashtags.ai. Contact us for support or data requests.
