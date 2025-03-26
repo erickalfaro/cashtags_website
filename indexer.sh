@@ -12,21 +12,35 @@ TEMP_GITIGNORE=".temp_gitignore"
 should_ignore() {
     local path="$1"
     
-    # Extended patterns to ignore for Vercel/Next.js projects
+    # Extended patterns to ignore for Vercel/Next.js projects plus your specific patterns
     local default_ignore=(
         ".git/" ".gitignore" "node_modules/" "package-lock.json" "yarn.lock" "*.lock"
         "dist/" "build/" ".next/" "out/" "*.log" "*.log.*" "*.tmp"
-        "*.png" "*.jpg" "*.jpeg" "*.gif" "*.svg" "*.ico" "*.webp"
+        "*.png" "*.jpg" "*.jpeg" "*.gif" "*.svg" "*.ico" "*.webp" "docs/"
         "*.woff" "*.woff2" "*.ttf" "*.eot" "*.min.js" "*.min.css" "*.map"
         ".vercel/" "vercel.json" ".env" ".env.*" "*.md" "coverage/" "test/"
         "__tests__/" "*.test.*" "*.spec.*" "vendor/" "*.bak" "*.swp" "*.swo"
+        # Your specific .gitignore patterns
+        "/node_modules" "/.pnp" ".pnp.*" ".yarn/*" "!.yarn/patches" "!.yarn/plugins"
+        "!.yarn/releases" "!.yarn/versions" "/coverage" "/.next/" "/out/" "/build"
+        ".DS_Store" "*.pem" "npm-debug.log*" "yarn-debug.log*" "yarn-error.log*"
+        ".pnpm-debug.log*" "*.tsbuildinfo" "next-env.d.ts" "$OUTPUT_FILE"
     )
     
     # Check against default ignore patterns
     for pattern in "${default_ignore[@]}"; do
-        regex=$(echo "$pattern" | sed 's/\./\\./g' | sed 's/\*/.*/g')
-        if [[ "$path" =~ $regex ]]; then
-            return 0
+        # Handle negation patterns (starting with !)
+        if [[ "$pattern" =~ ^! ]]; then
+            pattern=${pattern#!}
+            regex=$(echo "$pattern" | sed 's/\./\\./g' | sed 's/\*/.*/g')
+            if [[ "$path" =~ $regex ]]; then
+                return 1  # Do not ignore if it matches a negation pattern
+            fi
+        else
+            regex=$(echo "$pattern" | sed 's/\./\\./g' | sed 's/\*/.*/g')
+            if [[ "$path" =~ $regex ]]; then
+                return 0  # Ignore if it matches a regular pattern
+            fi
         fi
     done
     
@@ -35,9 +49,19 @@ should_ignore() {
         grep -v '^#' .gitignore | grep -v '^$' > "$TEMP_GITIGNORE"
         while IFS= read -r pattern; do
             [[ -z "$pattern" || "$pattern" =~ ^# ]] && continue
-            pattern=$(echo "$pattern" | sed 's/\./\\./g' | sed 's/\*/.*/g')
-            if [[ "$path" =~ $pattern ]]; then
-                return 0
+            
+            # Handle negation patterns in .gitignore
+            if [[ "$pattern" =~ ^! ]]; then
+                pattern=${pattern#!}
+                regex=$(echo "$pattern" | sed 's/\./\\./g' | sed 's/\*/.*/g')
+                if [[ "$path" =~ $regex ]]; then
+                    return 1  # Do not ignore if it matches a negation pattern
+                fi
+            else
+                pattern=$(echo "$pattern" | sed 's/\./\\./g' | sed 's/\*/.*/g')
+                if [[ "$path" =~ $regex ]]; then
+                    return 0  # Ignore if it matches a regular pattern
+                fi
             fi
         done < "$TEMP_GITIGNORE"
         rm -f "$TEMP_GITIGNORE"
