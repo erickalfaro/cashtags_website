@@ -16,7 +16,7 @@ should_ignore() {
     local default_ignore=(
         ".git/" ".gitignore" "node_modules/" "package-lock.json" "yarn.lock" "*.lock"
         "dist/" "build/" ".next/" "out/" "*.log" "*.log.*" "*.tmp"
-        "*.png" "*.jpg" "*.jpeg" "*.gif" "*.svg" "*.ico" "*.webp"
+        "*.png" "*.jpg" "*.jpeg" "*.gif" "*.svg" "*.ico" "*.webp" "docs/"
         "*.woff" "*.woff2" "*.ttf" "*.eot" "*.min.js" "*.min.css" "*.map"
         ".vercel/" "vercel.json" ".env" ".env.*" "*.md" "coverage/" "test/"
         "__tests__/" "*.test.*" "*.spec.*" "vendor/" "*.bak" "*.swp" "*.swo"
