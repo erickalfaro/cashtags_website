@@ -100,6 +100,45 @@ const mockTopicData: TopicItem[] = [
   },
 ];
 
+// Define funny headlines for each cashtag with proper bolding
+const cashtagHeadlines: { [key: string]: string } = {
+  AAPL: `
+➤ **Tech Leap:** Apple’s iBrain Implant Hits Stores, Stock Soars as Pre-Orders Crash Servers Worldwide\n
+➤ **Auto Ambition:** Leaked iCar Specs Promise 1,000-Mile Range, AAPL Jumps 15% in After-Hours Trading\n
+➤ **Market Hype:** Holographic iPhone 15 Unveiled at Keynote, Analysts Predict 20% Revenue Spike\n
+➤ **AI Craze:** Apple Time Machine Patent Filing Leaks, Shares Surge on Rumors of Subscription Model\n
+➤ **Social Buzz:** iEye Wearable Tracks Consumer Habits, AAPL Gains 10% as Ad Revenue Potential Explodes
+  `,
+  TSLA: `
+➤ **Tech Leap:** Tesla Cybertruck 2.0 Lands on Mars, TSLA Rockets 25% on Interplanetary Sales Hype\n
+➤ **Auto Ambition:** Tesla Teleportation Pod Demo Wows Investors, Stock Pops 18% Despite Recall Rumors\n
+➤ **Market Hype:** Tesla’s AI Driver Upgrade Boosts Autopilot Adoption, TSLA Climbs 12% Overnight\n
+➤ **AI Craze:** Tesla Solar Roof Powers NYC Blackout Recovery, Shares Surge 15% on Grid Deal Talks\n
+➤ **Social Buzz:** Orbital Gigafactory Announcement Sparks 20% Rally in TSLA as Musk Teases Zero-G Cars
+  `,
+  NVDA: `
+➤ **Tech Leap:** NVIDIA RTX 9090 Doubles as Crypto Miner, Stock Spikes 22% on Gaming-Mining Craze\n
+➤ **Auto Ambition:** NVDA’s AI Chip Powers First Sentient Robot, Shares Jump 17% on Defense Contract Buzz\n
+➤ **Market Hype:** NVIDIA Holographic Gaming Console Leaks, Analysts Boost Price Target as Stock Rises 13%\n
+➤ **AI Craze:** NVDA Partners With SpaceX for Satellite GPUs, Stock Soars 19% on Cosmic Compute Bets\n
+➤ **Social Buzz:** NVIDIA’s Quantum GPU Prototype Unveiled, NVDA Up 25% as Tech Giants Bid for Exclusivity
+  `,
+  GOOGL: `
+➤ **Tech Leap:** Google’s Mind-Reading Search Algorithm Goes Live, GOOGL Climbs 14% on Ad Revenue Hopes\n
+➤ **Auto Ambition:** Quantum Google Maps Predicts Traffic 10 Years Ahead, Stock Jumps 16% on Licensing Deals\n
+➤ **Market Hype:** Google Buys Time Travel Startup, Shares Surge 20% as Investors Eye Future Ad Placements\n
+➤ **AI Craze:** Android Brain OS Syncs With Humans, GOOGL Gains 12% on Wearable Tech Breakthrough\n
+➤ **Social Buzz:** Google’s Weather Control AI Patent Sparks 18% Rally as Governments Line Up to Bid
+  `,
+  AMZN: `
+➤ **Tech Leap:** Amazon Drone Army Delivers in 60 Seconds Flat, AMZN Soars 15% on Logistics Hype\n
+➤ **Auto Ambition:** Bezos Unveils Amazon Teleport Hubs, Stock Pops 20% as Shipping Costs Vanish\n
+➤ **Market Hype:** Prime Brain Chip Streams Movies to Your Mind, AMZN Up 13% on Subscription Surge\n
+➤ **AI Craze:** Amazon Buys Half the Moon for Warehouses, Shares Jump 17% on Galactic Expansion\n
+➤ **Social Buzz:** AWS Powers First AI President, AMZN Rockets 22% as Cloud Dominance Grows
+  `,
+};
+
 export default function Home() {
   const { user } = useAuth();
   const [pageMode, setPageMode] = useState<"cashtags" | "topics">("cashtags");
@@ -121,7 +160,8 @@ export default function Home() {
 
   // Hooks for the landing page
   const [selectedMockCashtag, setSelectedMockCashtag] = useState<string | null>(null);
-  const [summary, setSummary] = useState<string>("");
+  const [summaryLines, setSummaryLines] = useState<string[]>([]); // Array of lines
+  const [currentLineIndex, setCurrentLineIndex] = useState<number>(0); // Track the current streaming line
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null); // Ref to store interval ID
 
@@ -133,16 +173,7 @@ export default function Home() {
     direction: "asc",
   });
 
-  // Predefined fake summary (unchanged)
-  const fakeSummary = `
-➤ **Tech Leap:** ${selectedMockCashtag || "Selected Stock"} unveils iPhone 28 with holographic display!\n
-➤ **Auto Ambition:** ${selectedMockCashtag || "Selected Stock"} introduces flying car line for 2030.\n
-➤ **Market Hype:** ${selectedMockCashtag || "Selected Stock"} surges 300% on rumors of alien tech partnership.\n
-➤ **AI Craze:** ${selectedMockCashtag || "Selected Stock"} new AI chip promises to outsmart humans by 2035.\n
-➤ **Social Buzz:** Twitter explodes with #${selectedMockCashtag || "Stock"}ToTheMoon trends.
-  `;
-
-  // Streaming effect for summary with blinking cursor
+  // Streaming effect for summary with blinking cursor at the end of the current line
   useEffect(() => {
     if (!user && selectedMockCashtag) {
       // Clean up any existing interval
@@ -152,16 +183,41 @@ export default function Home() {
       }
 
       // Reset state for a new stream
-      setSummary("");
+      setSummaryLines([]);
+      setCurrentLineIndex(0);
       setIsStreaming(true);
 
-      let index = 0;
+      // Use the specific headlines for the selected cashtag, or fallback to a generic message
+      const selectedHeadlines = cashtagHeadlines[selectedMockCashtag] || `
+➤ **Notice:** No headlines available for ${selectedMockCashtag}. Please select another cashtag.
+      `;
+
+      // Split the headlines into an array of lines and initialize summaryLines with empty strings
+      const lines = selectedHeadlines.trim().split("\n");
+      setSummaryLines(Array(lines.length).fill("")); // Initialize with empty strings for all lines
+
+      let charIndex = 0;
+      let lineIndex = 0;
+
       const streamSummary = () => {
-        if (index < fakeSummary.length) {
-          const currentChar = fakeSummary[index];
-          setSummary((prev) => prev + currentChar);
-          index++;
+        if (lineIndex < lines.length) {
+          const currentLine = lines[lineIndex];
+          if (charIndex < currentLine.length) {
+            // Stream the current line character by character
+            setSummaryLines((prev) => {
+              const newLines = [...prev];
+              newLines[lineIndex] = currentLine.slice(0, charIndex + 1);
+              return newLines;
+            });
+            charIndex++;
+          } else {
+            // Move to the next line
+            lineIndex++;
+            setCurrentLineIndex(lineIndex);
+            charIndex = 0;
+          }
         } else {
+          // Streaming complete
           clearInterval(intervalRef.current!);
           intervalRef.current = null;
           setIsStreaming(false);
@@ -179,7 +235,7 @@ export default function Home() {
         }
       };
     }
-  }, [user, selectedMockCashtag]); // Dependency only on user and selectedMockCashtag
+  }, [user, selectedMockCashtag]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -206,7 +262,7 @@ export default function Home() {
             : (a as TickerTapeItem)[key as keyof TickerTapeItem]);
         const bValue =
           (b as TickerTapeItem)[key as keyof TickerTapeItem] ??
-          (typeof (b as TickerTapeItem)[key as keyof TickerTapeItem] === "number"
+          (typeof (a as TickerTapeItem)[key as keyof TickerTapeItem] === "number"
             ? 0
             : (b as TickerTapeItem)[key as keyof TickerTapeItem]);
 
@@ -316,23 +372,17 @@ export default function Home() {
             <div className="container-content p-5 text-sm text-left no-scrollbar">
               {selectedMockCashtag ? (
                 <div className="text-gray-300 w-full relative">
-                  <ReactMarkdown
-                    components={{
-                      p: ({ children }) => (
-                        <span className="inline-flex items-baseline m-0">
-                          {children}
-                          <br />
+                  {summaryLines.map((line, index) => (
+                    <div key={index} className="flex items-baseline">
+                      <ReactMarkdown>{line}</ReactMarkdown>
+                      {isStreaming && index === currentLineIndex && (
+                        <span className="inline-block animate-blink text-[rgba(0,230,118,1)] ml-1">
+                          █
                         </span>
-                      ),
-                    }}
-                  >
-                    {summary || "Generating summary..."}
-                  </ReactMarkdown>
-                  {isStreaming && (
-                    <span className="inline-block animate-blink text-[rgba(0,230,118,1)] ml-1">
-                      █
-                    </span>
-                  )}
+                      )}
+                    </div>
+                  ))}
+                  {summaryLines.length === 0 && <span>Generating summary...</span>}
                 </div>
               ) : (
                 <div className="animated-placeholder text-center">
