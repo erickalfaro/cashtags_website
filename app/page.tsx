@@ -1,7 +1,7 @@
 // app/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth, useTickerData } from "../lib/hooks";
 import { AuthButtons } from "../components/AuthButtons";
 import { SubscriptionButton } from "../components/SubscriptionButton";
@@ -12,7 +12,7 @@ import { GenAISummary } from "../components/GenAISummary";
 import { TickerTapeItem, TopicItem } from "../types/api";
 import ReactMarkdown from "react-markdown";
 
-// Mock Data for Cashtags
+// Mock Data for Cashtags (unchanged)
 const mockCashtagData: TickerTapeItem[] = [
   {
     id: 1,
@@ -66,7 +66,7 @@ const mockCashtagData: TickerTapeItem[] = [
   },
 ];
 
-// Mock Data for Topics
+// Mock Data for Topics (unchanged)
 const mockTopicData: TopicItem[] = [
   {
     id: 1,
@@ -123,6 +123,7 @@ export default function Home() {
   const [selectedMockCashtag, setSelectedMockCashtag] = useState<string | null>(null);
   const [summary, setSummary] = useState<string>("");
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null); // Ref to store interval ID
 
   const [sortConfig, setSortConfig] = useState<{
     key: keyof TickerTapeItem | keyof TopicItem | null;
@@ -132,7 +133,7 @@ export default function Home() {
     direction: "asc",
   });
 
-  // Predefined fake summary (extravagant and fun)
+  // Predefined fake summary (unchanged)
   const fakeSummary = `
 ➤ **Tech Leap:** ${selectedMockCashtag || "Selected Stock"} unveils iPhone 28 with holographic display!\n
 ➤ **Auto Ambition:** ${selectedMockCashtag || "Selected Stock"} introduces flying car line for 2030.\n
@@ -143,25 +144,42 @@ export default function Home() {
 
   // Streaming effect for summary with blinking cursor
   useEffect(() => {
-    if (!user && selectedMockCashtag && !isStreaming) {
-      setSummary(""); // Reset summary when new cashtag is selected
-      setIsStreaming(true);
-      let index = 0;
+    if (!user && selectedMockCashtag) {
+      // Clean up any existing interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
 
-      const interval = setInterval(() => {
+      // Reset state for a new stream
+      setSummary("");
+      setIsStreaming(true);
+
+      let index = 0;
+      const streamSummary = () => {
         if (index < fakeSummary.length) {
           const currentChar = fakeSummary[index];
           setSummary((prev) => prev + currentChar);
           index++;
         } else {
-          clearInterval(interval);
+          clearInterval(intervalRef.current!);
+          intervalRef.current = null;
           setIsStreaming(false);
         }
-      }, 15); // Faster streaming (10ms per character)
+      };
 
-      return () => clearInterval(interval);
+      intervalRef.current = setInterval(streamSummary, 15);
+
+      // Cleanup function to clear interval when cashtag changes or component unmounts
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          setIsStreaming(false); // Ensure streaming stops
+        }
+      };
     }
-  }, [user, selectedMockCashtag]);
+  }, [user, selectedMockCashtag]); // Dependency only on user and selectedMockCashtag
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -298,23 +316,23 @@ export default function Home() {
             <div className="container-content p-5 text-sm text-left no-scrollbar">
               {selectedMockCashtag ? (
                 <div className="text-gray-300 w-full relative">
-<ReactMarkdown
-  components={{
-    p: ({ children }) => (
-      <span className="inline-flex items-baseline m-0">
-        {children}
-        <br />
-      </span>
-    ),
-  }}
->
-  {summary || "Generating summary..."}
-</ReactMarkdown>
-{isStreaming && summary && (
-  <span className="inline-block animate-blink text-[rgba(0,230,118,1)] ml-1">
-    █
-  </span>
-)}
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => (
+                        <span className="inline-flex items-baseline m-0">
+                          {children}
+                          <br />
+                        </span>
+                      ),
+                    }}
+                  >
+                    {summary || "Generating summary..."}
+                  </ReactMarkdown>
+                  {isStreaming && (
+                    <span className="inline-block animate-blink text-[rgba(0,230,118,1)] ml-1">
+                      █
+                    </span>
+                  )}
                 </div>
               ) : (
                 <div className="animated-placeholder text-center">
@@ -354,7 +372,7 @@ export default function Home() {
     );
   }
 
-  // Authenticated user content
+  // Authenticated user content (unchanged)
   const isFree = subscription.status !== "PREMIUM";
   const hasCancelAt = subscription.cancelAt !== null && subscription.cancelAt !== undefined;
   const isPremiumActive = subscription.status === "PREMIUM" && !hasCancelAt;
