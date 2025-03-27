@@ -7,6 +7,29 @@ import { useSubscription } from "../lib/hooks";
 import { TickerTapeProps } from "../types/components";
 import { TickerTapeItem, TopicItem } from "../types/api";
 
+const SparklineSVG: React.FC<{ data: number[] }> = ({ data }) => {
+  const width = 128;
+  const height = 30;
+  if (data.length < 2) return <svg className="w-full h-full" />;
+
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+
+  const coords = data.map((v, i) =>
+    `${(i / (data.length - 1)) * width},${height - ((v - min) / range) * height}`
+  );
+  const linePath = `M${coords.join(" L")}`;
+  const fillPath = `${linePath} L${width},${height} L0,${height} Z`;
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="w-full h-full">
+      <path d={fillPath} fill="rgba(141, 141, 141, 0.1)" />
+      <path d={linePath} fill="none" stroke="var(--sparkline-color, rgb(255, 255, 255))" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+};
+
 export const TickerTape: React.FC<TickerTapeProps> = ({
   data,
   loading,
@@ -62,17 +85,20 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
           )}
         </span>
       </div>
-      <div className="container-content">
+        <div className="container-content relative">
+
+          {loading && (
+            <div className="absolute inset-0 bg-[var(--container-bg)] bg-opacity-75 flex items-center justify-center z-10">
+              <div className="spinner"></div>
+            </div>
+          )}
         <table className="border-collapse w-full">
           <thead>
             <tr className="bg-gray-800 text-center">
               <th className="border border-gray-700 p-1 text-center w-12 cursor-pointer" onClick={() => onSort("id")}>
                 Sort {sortConfig.key === "id" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
               </th>
-              <th
-                className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
-                onClick={() => onSort(isCashtagsMode ? "cashtag" : "topic")}
-              >
+              <th className={`border border-gray-700 p-1 text-center ${isCashtagsMode ? "w-20" : "w-[8rem]"} cursor-pointer`} onClick={() => onSort(isCashtagsMode ? "cashtag" : "topic")}>
                 {isCashtagsMode ? (
                   <span style={{ color: "rgba(0, 230, 118, 1)" }}>$</span>
                 ) : null}
@@ -127,18 +153,11 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
                     }`}
                   >
                     <td className="border border-gray-700 p-1 text-center w-12">{item.id}</td>
-                    <td
-                      className="cashtag-cell border border-gray-700 p-1 text-center w-20"
-                      onClick={() => onTickerClick(isTopicItem ? (item as TopicItem).topic : (item as TickerTapeItem).cashtag)}
-                    >
+                    <td className={`cashtag-cell border border-gray-700 p-1 text-center ${isTopicItem ? "w-[5.5rem]" : "w-20"}`} onClick={() => onTickerClick(isTopicItem ? (item as TopicItem).topic : (item as TickerTapeItem).cashtag)}>
                       {isTopicItem ? (item as TopicItem).topic : `$${(item as TickerTapeItem).cashtag}`}
                     </td>
-                    <td className="border border-gray-700 p-1 text-center w-32">
-                      <div className="w-full h-full overflow-hidden">
-                        <Sparklines data={item.trend}>
-                          <SparklinesLine color="rgb(255, 255, 255)" style={{ strokeWidth: 1 }} />
-                        </Sparklines>
-                      </div>
+                    <td className="border border-gray-700 !p-0 w-32 h-10">
+                      <SparklineSVG data={item.trend} />
                     </td>
                     {isCashtagsMode && (
                       <>

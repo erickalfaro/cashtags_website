@@ -2,148 +2,92 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth, useSubscription } from "../../lib/hooks";
-import { SubscriptionButton } from "../../components/SubscriptionButton";
-import { supabase } from "../../lib/supabase";
+import { useAuth, useSubscription } from "@/lib/hooks";
+import { SubscriptionButton } from "@/components/SubscriptionButton";
+import { supabase } from "@/lib/supabase";
 
 export default function MyAccount() {
   const { user, signOut } = useAuth();
   const { subscription, fetchSubscription } = useSubscription(user);
   const [cancelLoading, setCancelLoading] = useState(false);
-  const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!user) {
-    return <div>Please log in to view your account.</div>;
+    return (
+      <div className="bg-black text-green-400 font-mono min-h-screen pt-20 px-4">
+        <p className="text-center text-xl">Please log in to view your account.</p>
+      </div>
+    );
   }
 
-  const isFree = subscription.status !== "PREMIUM";
-  const hasCancelAt = subscription.cancelAt !== null && subscription.cancelAt !== undefined;
-  const isPremiumActive = subscription.status === "PREMIUM" && !hasCancelAt;
-  const isPremiumCancelling =
-    subscription.status === "PREMIUM" && hasCancelAt && subscription.cancelAt! > new Date();
-  const isPostCancellation =
-    subscription.status === "PREMIUM" && hasCancelAt && subscription.cancelAt! <= new Date();
-
-  const effectiveClicksLeft = isPostCancellation ? subscription.clicksLeft : subscription.clicksLeft;
-
-  const handleCancelSubscription = async () => {
+  const handleCancel = async () => {
     setCancelLoading(true);
     setError(null);
     try {
-      const session = await supabase.auth.getSession();
-      const accessToken = session.data.session?.access_token;
-      if (!accessToken) throw new Error("No access token available");
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token;
+      if (!token) throw new Error("Not authorized");
 
-      const response = await fetch("/api/cancel", {
+      const res = await fetch("/api/cancel", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to cancel subscription");
+      if (!res.ok) {
+        const { error } = await res.json();
+        throw new Error(error);
       }
-
       await fetchSubscription();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      setError(err instanceof Error ? err.message : "Unexpected error");
     } finally {
       setCancelLoading(false);
     }
   };
 
-  const handleCustomerPortal = async () => {
-    setPortalLoading(true);
-    setError(null);
-    try {
-      const session = await supabase.auth.getSession();
-      const accessToken = session.data.session?.access_token;
-      if (!accessToken) throw new Error("No access token available");
-
-      const response = await fetch("/api/create-customer-portal", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to create customer portal session");
-      }
-
-      const { url } = await response.json();
-      window.location.href = url;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
-    } finally {
-      setPortalLoading(false);
-    }
-  };
-
   return (
-    <div className="text-gray-200">
-      <h1 className="text-2xl font-bold mb-6">My Account</h1>
-      <div className="space-y-4">
-        <p>Email: {user.email}</p>
-        <p>
-          Subscription Status:{" "}
-          {isFree || isPostCancellation
-            ? `FREE (${effectiveClicksLeft} clicks left)`
-            : isPremiumActive
-            ? `PREMIUM - Active${subscription.currentPeriodEnd ? ` - Renews on ${subscription.currentPeriodEnd.toLocaleDateString()}` : ""}`
-            : isPremiumCancelling
-            ? `PREMIUM - Cancelling on ${subscription.cancelAt!.toLocaleDateString()}`
-            : ""}
-        </p>
+    <div className="bg-black text-green-400 font-mono min-h-screen pt-16 px-4">
+      <div className="max-w-md mx-auto border border-green-400 rounded-lg p-8 space-y-6">
+        <h1 className="text-3xl font-bold text-center uppercase">My Account</h1>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          {(isFree || isPostCancellation) && (
-            <SubscriptionButton user={user} disabled={false} onSuccess={fetchSubscription} />
-          )}
-          {isPremiumCancelling && (
-            <SubscriptionButton
-              user={user}
-              disabled={false}
-              onSuccess={fetchSubscription}
-              label="Reactivate Subscription"
-            />
-          )}
-          {isPremiumActive && (
-            <button
-              onClick={handleCancelSubscription}
-              disabled={cancelLoading}
-              className={`px-4 py-2 bg-red-600 text-white rounded ${
-                cancelLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-red-700"
-              }`}
-            >
-              {cancelLoading ? "Cancelling..." : "Cancel Subscription"}
-            </button>
-          )}
-          {(isPremiumActive || isPremiumCancelling) && (
-            <button
-              onClick={handleCustomerPortal}
-              disabled={portalLoading}
-              className={`px-4 py-2 bg-blue-600 text-white rounded ${
-                portalLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
-              }`}
-            >
-              {portalLoading ? "Loading..." : "Manage Billing"}
-            </button>
+        <div className="text-center">
+          <p className="text-xs uppercase text-gray-500">Signed in as</p>
+          <p className="text-lg font-medium">{user.email}</p>
+        </div>
+
+        <div className="space-y-2">
+          <p>
+            Subscription: <span className={`font-semibold ${subscription.status === "PREMIUM" ? "text-green-400" : "text-gray-500"}`}>{subscription.status}</span>
+          </p>
+          {subscription.status === "PREMIUM" && subscription.currentPeriodEnd && (
+            <p className="text-sm text-gray-500">Renews on {subscription.currentPeriodEnd.toLocaleDateString()}</p>
           )}
         </div>
 
-        {error && <p className="text-red-500">{error}</p>}
+        {subscription.status !== "PREMIUM" ? (
+          <SubscriptionButton user={user} onSuccess={fetchSubscription} />
+        ) : (
+          <div className="space-y-3">
+            <button
+              onClick={handleCancel}
+              disabled={cancelLoading}
+              className="w-full py-3 border-2 border-gray-600 text-gray-600 rounded-lg font-semibold transition disabled:opacity-50"
+            >
+              {cancelLoading ? "Cancelling..." : "Cancel Subscription"}
+            </button>
+            <SubscriptionButton user={user} onSuccess={fetchSubscription} label="Reactivate Subscription" />
+          </div>
+        )}
 
-        <button
-          onClick={signOut}
-          className="mt-6 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-        >
-          Sign Out
-        </button>
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+
+        <div className="flex justify-start">
+          <button
+            onClick={signOut}
+            className="px-4 py-1 border-2 border-red-600 text-red-600 rounded font-semibold text-sm hover:bg-red-800 transition"
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
     </div>
   );
