@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { Sparklines, SparklinesLine } from "react-sparklines";
 import { useSubscription } from "../lib/hooks";
 import { TickerTapeProps } from "../types/components";
 import { TickerTapeItem, TopicItem } from "../types/api";

@@ -157,7 +157,7 @@ export default function Home() {
           clearInterval(interval);
           setIsStreaming(false);
         }
-      }, 10); // Faster streaming (10ms per character)
+      }, 15); // Faster streaming (10ms per character)
 
       return () => clearInterval(interval);
     }
@@ -298,25 +298,23 @@ export default function Home() {
             <div className="container-content p-5 text-sm text-left no-scrollbar">
               {selectedMockCashtag ? (
                 <div className="text-gray-300 w-full relative">
-                  <ReactMarkdown
-                    components={{
-                      p: ({ children }) => (
-                        <div className="flex items-baseline m-0">{children}</div>
-                      ),
-                    }}
-                  >
-                    {summary || "Generating summary..."}
-                  </ReactMarkdown>
-                  {isStreaming && summary && (
-                    <span
-                      className="cursor text-[rgba(0,230,118,1)] animate-blink"
-                      style={{
-                        marginLeft: "0.25rem", // Inline with text
-                      }}
-                    >
-                      █
-                    </span>
-                  )}
+<ReactMarkdown
+  components={{
+    p: ({ children }) => (
+      <span className="inline-flex items-baseline m-0">
+        {children}
+        <br />
+      </span>
+    ),
+  }}
+>
+  {summary || "Generating summary..."}
+</ReactMarkdown>
+{isStreaming && summary && (
+  <span className="inline-block animate-blink text-[rgba(0,230,118,1)] ml-1">
+    █
+  </span>
+)}
                 </div>
               ) : (
                 <div className="animated-placeholder text-center">
