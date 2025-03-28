@@ -42,7 +42,7 @@ export async function withAuthAndRateLimit(
     
     const { ticker } = await ctx.params; // Resolve ticker from ctx
     return await handler(req, ticker);
-  } catch (_rateLimitError) { // Prefix with _ to indicate unused
+  } catch (rateLimitError) { // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return NextResponse.json(
       { error: "Too Many Requests", message: "Rate limit exceeded" },
       { status: 429, headers: { "Retry-After": "60" } }
