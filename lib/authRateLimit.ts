@@ -12,7 +12,6 @@ export async function withAuthAndRateLimit(
   ctx: ContextParams,
   handler: (req: Request, ticker: string) => Promise<NextResponse>
 ) {
-  // Check Supabase authentication
   const authHeader = req.headers.get("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return NextResponse.json(
@@ -28,21 +27,17 @@ export async function withAuthAndRateLimit(
     return NextResponse.json({ error: "Unauthorized: Invalid token" }, { status: 401 });
   }
 
-  // Get user's ID as the rate limit key
   const key = user.id;
-
-  // Determine rate limit based on subscription status
   const subscriptionStatus = await getUserSubscriptionStatus(user.id);
-  const points = subscriptionStatus === "PREMIUM" ? 50 : 10; // 50 requests/min for premium, 10 for free
+  const points = subscriptionStatus === "PREMIUM" ? 50 : 10;
 
   try {
-    // Apply rate limiting
     const limiter = new RateLimiterMemory({ points, duration: 60 });
-    await limiter.consume(key, 1); // Consume 1 point per request
-    
-    const { ticker } = await ctx.params; // Resolve ticker from ctx
+    await limiter.consume(key, 1);
+    const { ticker } = await ctx.params;
     return await handler(req, ticker);
-  } catch (rateLimitError) { // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (rateLimitError) {
+    console.error("Rate limit exceeded for user:", key, rateLimitError);
     return NextResponse.json(
       { error: "Too Many Requests", message: "Rate limit exceeded" },
       { status: 429, headers: { "Retry-After": "60" } }
@@ -62,7 +57,7 @@ async function getUserSubscriptionStatus(userId: string): Promise<"FREE" | "PREM
 
   if (error) {
     console.error("Error fetching subscription status:", error);
-    return "FREE"; // Default to FREE if there's an error
+    return "FREE";
   }
 
   return data?.subscription_status || "FREE";
