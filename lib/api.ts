@@ -24,18 +24,60 @@ export const fetchTickerTapeData = async (): Promise<TickerTapeItem[]> => {
 };
 
 export const fetchStockLedgerData = async (ticker: string): Promise<StockLedgerData> => {
-  const response = await axios.get(`/api/${ticker}/ticker`);
-  return response.data;
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session) throw new Error("User not authenticated");
+
+  const response = await axios.get(`/api/${ticker}/ticker`, { // Assuming this endpoint exists
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+  return response.data; // Adjust based on your actual response structure
 };
 
 export const fetchMarketCanvasData = async (ticker: string): Promise<MarketCanvasData> => {
-  const response = await axios.get(`/api/${ticker}/series`);
-  return response.data;
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session) throw new Error("User not authenticated");
+
+  const response = await axios.get(`/api/${ticker}/series`, {
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+  return response.data; // Adjust based on your actual response structure
 };
 
 export const fetchPostsData = async (ticker: string): Promise<PostData[]> => {
-  const response = await axios.get(`/api/${ticker}/posts`);
-  return response.data;
+  try {
+    // Get the current session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session) {
+      console.error("No valid session found:", sessionError?.message || "Session is null");
+      throw new Error("User not authenticated");
+    }
+
+    const token = session.access_token;
+    if (!token) {
+      console.error("No access token found in session");
+      throw new Error("No access token available");
+    }
+
+    console.log(`Fetching posts for ticker: ${ticker} with token: ${token.substring(0, 10)}...`); // Log first 10 chars for debugging
+
+    const response = await axios.get(`/api/${ticker}/posts`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching posts for ${ticker}:`, error);
+    if (axios.isAxiosError(error)) {
+      console.error("Axios error details:", {
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+    }
+    return [];
+  }
 };
 
 export const fetchTickerTapeDataRealTime = async (tableName: string): Promise<(TickerTapeItem | TopicItem)[]> => {

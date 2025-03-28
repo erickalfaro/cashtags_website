@@ -297,8 +297,8 @@ export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"
       return;
     }
 
-    setSelectedStock(identifier); // Using selectedStock for both cashtags and topics
-    setStockLedgerLoading(true); // Only relevant for cashtags
+    setSelectedStock(identifier);
+    setStockLedgerLoading(true);
     setPostsLoading(true);
     setErrorMessage(null);
 
@@ -310,13 +310,14 @@ export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"
           fetchPostsData(identifier),
         ]);
 
+        console.log("Fetched data:", { ledger, canvas, posts }); // Debug log
+
         setStockLedgerData(ledger);
         setMarketCanvasData(canvas);
         setPostsData(posts);
       } else if (pageMode === "topics") {
         const posts = await fetchTopicPostsData(identifier);
         setPostsData(posts);
-        // Reset cashtag-specific data when switching to topics
         setStockLedgerData({ stockName: "", description: "", marketCap: "" });
         setMarketCanvasData({ ticker: "", lineData: [], barData: [] });
       }
