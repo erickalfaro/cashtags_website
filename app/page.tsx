@@ -362,7 +362,7 @@ export default function Home() {
         </div>
 
         {/* AI Summary Section */}
-        <div className="w-full max-w-2xl mb-6">
+        <div className="w-full max-w-4xl mb-6">
           <div className="container bg-gradient-to-br from-gray-800 to-gray-900 border-[rgba(0,230,118,0.2)] shadow-xl">
             <div className="container-header">
               <span style={{ color: "rgba(0, 230, 118)" }}>
