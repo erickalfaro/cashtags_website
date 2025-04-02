@@ -3,9 +3,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
+// Import the proper type instead of using "any"
+import { PostData } from "@/types/api";
 
 interface GenAISummaryProps {
-  postsData: any[]; // adjust types as needed
+  postsData: PostData[]; // Now using PostData type
   loading: boolean;
   selectedStock: string | null;
   pageMode: "cashtags" | "topics";
@@ -15,10 +17,9 @@ const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selecte
   const [summary, setSummary] = useState("");
   const abortControllerRef = useRef<AbortController | null>(null);
   const latestStockRef = useRef<string | null>(null);
+  const accumulatedRef = useRef("");
   const isStreamingRef = useRef(false);
 
-  // Only re-run the stream when selectedStock (or postsData) changes.
-  // We deliberately leave pageMode out so that switching tabs doesn't re-fetch the summary.
   const fetchSummaryStream = useCallback(async () => {
     if (!selectedStock) return;
 
@@ -27,8 +28,8 @@ const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selecte
       abortControllerRef.current.abort();
     }
     setSummary("");
+    accumulatedRef.current = "";
 
-    // Save the currently selected ticker
     latestStockRef.current = selectedStock;
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
@@ -36,15 +37,14 @@ const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selecte
 
     isStreamingRef.current = true;
     try {
-      // Capture the current mode as a constant so the request payload is correct
-      const isTopic = pageMode === "topics";
+      // Capture pageMode for the API payload
       const response = await fetch("/api/summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           posts: postsData,
           ticker: selectedStock,
-          isTopic, // using captured value
+          isTopic: pageMode === "topics",
         }),
         signal,
       });
@@ -60,7 +60,8 @@ const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selecte
         if (done) break;
         chunkCount++;
         const chunk = decoder.decode(value, { stream: true });
-        // Append each chunk to the current summary
+        accumulatedRef.current += chunk;
+        // Append each new chunk to the summary
         setSummary((prev) => prev + chunk);
       }
       console.log(`Stream completed for ${selectedStock}, total chunks: ${chunkCount}`);
@@ -72,7 +73,8 @@ const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selecte
     } finally {
       isStreamingRef.current = false;
     }
-  }, [selectedStock, postsData]); // pageMode removed from dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedStock, postsData]); // Intentionally omitting pageMode
 
   useEffect(() => {
     fetchSummaryStream();
@@ -82,7 +84,7 @@ const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selecte
       }
       isStreamingRef.current = false;
     };
-  }, [fetchSummaryStream, selectedStock]); // pageMode removed here, too
+  }, [fetchSummaryStream, selectedStock]); // Intentionally omitting pageMode
 
   return (
     <div className="GenAISummary container">
