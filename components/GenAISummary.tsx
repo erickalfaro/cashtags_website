@@ -1,13 +1,14 @@
+// components/GenAISummary.tsx
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
-// Import the proper type instead of using "any"
 import { PostData } from "@/types/api";
+import { supabase } from "@/lib/supabase";
 
 interface GenAISummaryProps {
-  postsData: PostData[]; // Now using PostData type
+  postsData: PostData[];
   loading: boolean;
   selectedStock: string | null;
   pageMode: "cashtags" | "topics";
@@ -20,71 +21,95 @@ const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selecte
   const accumulatedRef = useRef("");
   const isStreamingRef = useRef(false);
 
-  const fetchSummaryStream = useCallback(async () => {
-    if (!selectedStock) return;
+  const fetchSummaryStream = useCallback(
+    async (currentPageMode: "cashtags" | "topics") => {
+      if (!selectedStock) return;
 
-    // Abort any previous stream
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    setSummary("");
-    accumulatedRef.current = "";
+      // Abort any previous stream
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      setSummary("");
+      accumulatedRef.current = "";
 
-    latestStockRef.current = selectedStock;
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-    const signal = abortController.signal;
+      latestStockRef.current = selectedStock;
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+      const signal = abortController.signal;
 
-    isStreamingRef.current = true;
-    try {
-      // Capture pageMode for the API payload
-      const response = await fetch("/api/summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          posts: postsData,
-          ticker: selectedStock,
-          isTopic: pageMode === "topics",
-        }),
-        signal,
-      });
-      if (!response.ok || !response.body) {
-        throw new Error(`HTTP error: ${response.status}`);
+      // Get the current user's session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError || !session) {
+        console.error("Failed to get session:", sessionError?.message || "No session available");
+        setSummary("Please log in to view the summary.");
+        return;
       }
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let chunkCount = 0;
-      while (true) {
-        if (signal.aborted) break;
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunkCount++;
-        const chunk = decoder.decode(value, { stream: true });
-        accumulatedRef.current += chunk;
-        // Append each new chunk to the summary
-        setSummary((prev) => prev + chunk);
+
+      const token = session.access_token;
+      if (!token) {
+        console.error("No access token found in session");
+        setSummary("Authentication error: No access token available.");
+        return;
       }
-      console.log(`Stream completed for ${selectedStock}, total chunks: ${chunkCount}`);
-    } catch (error) {
-      if (!signal.aborted) {
-        console.error("Error streaming summary:", error);
-        setSummary("Failed to generate summary due to an error.");
+
+      isStreamingRef.current = true;
+      try {
+        const response = await fetch("/api/summary", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            posts: postsData,
+            ticker: selectedStock,
+            isTopic: currentPageMode === "topics",
+          }),
+          signal,
+        });
+
+        if (!response.ok || !response.body) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let chunkCount = 0;
+
+        while (true) {
+          if (signal.aborted) break;
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunkCount++;
+          const chunk = decoder.decode(value, { stream: true });
+          accumulatedRef.current += chunk;
+          setSummary((prev) => prev + chunk);
+        }
+        console.log(`Stream completed for ${selectedStock}, total chunks: ${chunkCount}`);
+      } catch (error) {
+        if (!signal.aborted) {
+          console.error("Error streaming summary:", error);
+          setSummary("Failed to generate summary due to an error.");
+        }
+      } finally {
+        isStreamingRef.current = false;
       }
-    } finally {
-      isStreamingRef.current = false;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedStock, postsData]); // Intentionally omitting pageMode
+    },
+    [selectedStock, postsData] // Only depend on selectedStock and postsData
+  );
 
   useEffect(() => {
-    fetchSummaryStream();
+    if (selectedStock) {
+      fetchSummaryStream(pageMode); // Pass pageMode as an argument
+    }
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
       isStreamingRef.current = false;
     };
-  }, [fetchSummaryStream, selectedStock]); // Intentionally omitting pageMode
+  }, [fetchSummaryStream, selectedStock, postsData]); // Consistent dependency array
 
   return (
     <div className="GenAISummary container">
