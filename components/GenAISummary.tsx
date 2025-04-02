@@ -1,160 +1,116 @@
-// components/GenAISummary.tsx
 "use client";
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { PostData } from "../types/api";
+import remarkBreaks from "remark-breaks";
 
 interface GenAISummaryProps {
-  postsData: PostData[];
+  postsData: any[]; // adjust types as needed
   loading: boolean;
   selectedStock: string | null;
-  pageMode: "cashtags" | "topics"; // Add pageMode prop
+  pageMode: "cashtags" | "topics";
 }
 
-export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selectedStock, pageMode }) => {
-  const [summary, setSummary] = useState<string>("");
-  const isStreamingRef = useRef<boolean>(false);
+const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selectedStock, pageMode }) => {
+  const [summary, setSummary] = useState("");
   const abortControllerRef = useRef<AbortController | null>(null);
   const latestStockRef = useRef<string | null>(null);
+  const isStreamingRef = useRef(false);
 
+  // Only re-run the stream when selectedStock (or postsData) changes.
+  // We deliberately leave pageMode out so that switching tabs doesn't re-fetch the summary.
   const fetchSummaryStream = useCallback(async () => {
+    if (!selectedStock) return;
+
+    // Abort any previous stream
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
-      isStreamingRef.current = false;
-      setSummary("");
     }
+    setSummary("");
 
-    if (!selectedStock || postsData.length === 0) {
-      setSummary("");
-      isStreamingRef.current = false;
-      return;
-    }
-
-    abortControllerRef.current = new AbortController();
-    const signal = abortControllerRef.current.signal;
-    isStreamingRef.current = true;
+    // Save the currently selected ticker
     latestStockRef.current = selectedStock;
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    const signal = abortController.signal;
 
-    console.log(`Starting stream for ${selectedStock}, posts: ${postsData.length}, mode: ${pageMode}`);
-
+    isStreamingRef.current = true;
     try {
+      // Capture the current mode as a constant so the request payload is correct
+      const isTopic = pageMode === "topics";
       const response = await fetch("/api/summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          posts: postsData, 
-          ticker: selectedStock, 
-          isTopic: pageMode === "topics" // Add flag to indicate if it's a topic
+        body: JSON.stringify({
+          posts: postsData,
+          ticker: selectedStock,
+          isTopic, // using captured value
         }),
         signal,
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok || !response.body) {
+        throw new Error(`HTTP error: ${response.status}`);
       }
-      if (!response.body) {
-        throw new Error("Response body is null");
-      }
-
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       let chunkCount = 0;
-      let accumulatedSummary = "";
-
       while (true) {
+        if (signal.aborted) break;
         const { done, value } = await reader.read();
-        if (done) {
-          console.log(`Stream completed for ${selectedStock}, total chunks: ${chunkCount}`);
-          accumulatedSummary = accumulatedSummary.replace(/\.\.\.$/, "");
-          if (latestStockRef.current === selectedStock) {
-            setSummary(accumulatedSummary);
-          }
-          isStreamingRef.current = false;
-          break;
-        }
-        if (signal.aborted) {
-          console.log(`Stream for ${selectedStock} aborted`);
-          isStreamingRef.current = false;
-          break;
-        }
-        if (latestStockRef.current !== selectedStock) {
-          console.log(`Discarding stream for ${selectedStock} as a newer request started`);
-          isStreamingRef.current = false;
-          break;
-        }
-
-        const chunk = decoder.decode(value, { stream: true });
+        if (done) break;
         chunkCount++;
-        console.log(`Received chunk ${chunkCount} for ${selectedStock}:`, chunk);
-        accumulatedSummary += chunk;
-        if (latestStockRef.current === selectedStock) {
-          setSummary(accumulatedSummary);
-        }
+        const chunk = decoder.decode(value, { stream: true });
+        // Append each chunk to the current summary
+        setSummary((prev) => prev + chunk);
       }
+      console.log(`Stream completed for ${selectedStock}, total chunks: ${chunkCount}`);
     } catch (error) {
-      if (signal.aborted) {
-        console.log(`Request for ${selectedStock} was canceled`);
-      } else {
+      if (!signal.aborted) {
         console.error("Error streaming summary:", error);
-        if (latestStockRef.current === selectedStock) {
-          setSummary("Failed to generate summary due to an error.");
-        }
+        setSummary("Failed to generate summary due to an error.");
       }
+    } finally {
       isStreamingRef.current = false;
     }
-  }, [postsData, selectedStock, pageMode]); // Add pageMode to dependencies
+  }, [selectedStock, postsData]); // pageMode removed from dependencies
 
   useEffect(() => {
-    if (!selectedStock || postsData.length === 0) {
-      setSummary("");
-      isStreamingRef.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      return;
-    }
-
     fetchSummaryStream();
-
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      isStreamingRef.current = false;
     };
-  }, [fetchSummaryStream, selectedStock, postsData]);
+  }, [fetchSummaryStream, selectedStock]); // pageMode removed here, too
 
   return (
-    <div className="GenAISummary container" key={selectedStock || "no-stock"}>
+    <div className="GenAISummary container">
       <div className="container-header">
         {selectedStock ? (
-          pageMode === "cashtags" ? `$${selectedStock} - ` : `${selectedStock} - `
-        ) : ""}
-        <span style={{ color: "rgba(0, 230, 118)" }}>
-          {pageMode === "cashtags" ? "AI Summary" : "Topic Summary"}
-        </span>
+          <>
+            ${selectedStock} - <span style={{ color: "rgba(0,230,118,1)" }}>AI</span> Summary
+          </>
+        ) : (
+          <>
+            <span style={{ color: "rgba(0,230,118,1)" }}>AI</span> Summary
+          </>
+        )}
         {loading && " (Loading...)"}
       </div>
-      <div className="container-content relative">
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[var(--container-bg)] bg-opacity-75">
-            <div className="spinner"></div>
+      <div className="container-content" style={{ padding: "1rem", minHeight: "200px" }}>
+        {summary ? (
+          <ReactMarkdown remarkPlugins={[remarkBreaks]}>{summary}</ReactMarkdown>
+        ) : (
+          <div className="animated-placeholder flex items-center justify-center h-full">
+            <span>
+              {pageMode === "cashtags" ? "Click a Cashtag" : "Click a Topic"} to see the summary
+            </span>
           </div>
         )}
-        <div className="w-full h-full overflow-auto text-sm GenAISummary-content relative">
-          {summary ? (
-            <ReactMarkdown>{summary}</ReactMarkdown>
-          ) : (
-            <div className="animated-placeholder absolute inset-0 flex items-center justify-center">
-              <span>
-                {pageMode === "cashtags" 
-                  ? "Click a $CASHTAG" 
-                  : "Click a Topic"} to see the summary
-              </span>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
 };
+
+export default GenAISummary;

@@ -8,7 +8,7 @@ import { SubscriptionButton } from "../components/SubscriptionButton";
 import { TickerTape } from "../components/TickerTape";
 import { StockOverview } from "../components/StockOverview";
 import { PostViewer } from "../components/PostViewer";
-import { GenAISummary } from "../components/GenAISummary";
+import GenAISummary from "@/components/GenAISummary";
 import { TickerTapeItem, TopicItem } from "../types/api";
 import ReactMarkdown from "react-markdown";
 
