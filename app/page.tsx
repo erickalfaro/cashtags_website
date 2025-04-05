@@ -373,7 +373,7 @@ export default function Home() {
               </div>
 
              {/* Ticker Tape (Demo) */}
-             <div className="h-[260px] overflow-hidden">
+             <div className="h-[295px] overflow-hidden">
                 <TickerTape
                   data={pageMode === "cashtags" ? mockCashtagData : mockTopicData}
                   loading={false}
@@ -414,12 +414,9 @@ export default function Home() {
           </div>
 
           {/* Call-to-Action Section */}
-          <div className="bg-gradient-to-tr from-[rgba(0,230,118,0.1)] to-transparent border border-[rgba(0,230,118,0.2)] p-4 rounded-xl shadow-lg text-center landing-cta animate-slide-up animation-delay-600">
-            <h2 className="text-3xl font-bold text-white mb-2">Unlock Real-Time Insights</h2>
-            <p className="text-gray-400 mb-4 max-w-xl mx-auto">Join Cashtags AI today for unlimited access to live data, full post history, and continuous AI summaries.</p>
-            <div className="flex justify-center">
-              <AuthButtons />
-            </div>
+          <div className="bg-gradient-to-r from-[#111827] via-[#181f2b] to-[#111827] border-y border-white/10 py-10 text-center landing-cta animate-slide-up animation-delay-600">
+            {/* AuthButtons component (uses new outline button style) */}
+            <AuthButtons />
           </div>
 
           {/* Video Embed */}
