@@ -20,9 +20,7 @@ const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selecte
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null);
   const isStreamingRef = useRef(false);
   const activeTickerRef = useRef<string | null>(null);
-  const lastProcessedTickerRef = useRef<string | null>(null); // Track last ticker that triggered a stream
 
-  // Memoize the summary display to prevent unnecessary re-renders
   const SummaryDisplay = React.memo(({ content }: { content: string }) => (
     <ReactMarkdown remarkPlugins={[remarkBreaks]}>{content}</ReactMarkdown>
   ));
@@ -60,8 +58,16 @@ const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selecte
         return;
       }
 
-      // Abort any existing stream
-      await abortCurrentStream();
+      // Only abort if the ticker changes
+      if (activeTickerRef.current && activeTickerRef.current !== ticker) {
+        await abortCurrentStream();
+      }
+
+      // If already streaming for this ticker, skip starting a new stream
+      if (isStreamingRef.current && activeTickerRef.current === ticker) {
+        console.log(`Stream already in progress for ${ticker}, skipping`);
+        return;
+      }
 
       console.log(`Starting stream for ${ticker} in ${mode} mode`);
       const abortController = new AbortController();
@@ -84,8 +90,7 @@ const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selecte
 
       isStreamingRef.current = true;
       activeTickerRef.current = ticker;
-      lastProcessedTickerRef.current = ticker;
-      setSummary(""); // Reset only when starting a new stream
+      setSummary(""); // Reset summary only for a new ticker
 
       try {
         const response = await fetch("/api/summary", {
@@ -142,18 +147,21 @@ const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selecte
     [abortCurrentStream]
   );
 
-  // Only trigger stream when selectedStock changes due to a click
   useEffect(() => {
-    if (selectedStock && selectedStock !== lastProcessedTickerRef.current && postsData.length) {
-      console.log(`New ticker selected: ${selectedStock}, starting stream`);
+    if (selectedStock && postsData.length > 0 && !loading) {
+      console.log(`Triggering stream for ${selectedStock} with ${postsData.length} posts`);
       startStream(selectedStock, postsData, pageMode);
-    } else if (!selectedStock) {
-      console.log("No selectedStock, clearing summary");
+    } else if (!selectedStock || loading) {
+      console.log("Clearing summary due to no selectedStock or loading state");
       setSummary("");
       abortCurrentStream();
     }
-    // Dependencies limited to selectedStock to ensure only click-driven changes trigger this
-  }, [selectedStock, startStream]); // postsData and pageMode excluded from deps
+
+    return () => {
+      // Only abort on unmount, not on every effect run
+      // abortCurrentStream();
+    };
+  }, [selectedStock, postsData, loading, startStream]); // Removed pageMode from dependencies
 
   return (
     <div className="GenAISummary container">
