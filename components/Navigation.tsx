@@ -13,9 +13,7 @@ export const Navigation: React.FC = () => {
 
   return (
     <>
-      {/* Navigation Bar */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-gray-900 flex items-center justify-between px-6 py-4">
-        {/* Hamburger Button */}
         <button
           className="focus:outline-none"
           onClick={toggleMenu}
@@ -36,8 +34,6 @@ export const Navigation: React.FC = () => {
             />
           </svg>
         </button>
-
-        {/* Cashtags Heading */}
         <Link
           href="/"
           className="text-xl font-bold text-[rgba(0,230,118,1)] hover:text-[rgba(0,255,130,1)] hover:scale-110 hover:no-underline transition-transform duration-200 ease-in-out"
@@ -46,24 +42,23 @@ export const Navigation: React.FC = () => {
         </Link>
       </div>
 
-      {/* Sidebar */}
       <nav
         className={`fixed top-0 left-0 h-full w-64 bg-gray-900 text-gray-200 transform ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         } transition-transform duration-300 ease-in-out z-40`}
       >
         <div className="flex flex-col p-4 space-y-6 mt-16">
-          <Link href="/" onClick={toggleMenu} className="text-lg hover:text-blue-400">Home</Link>
+          <Link href="/" onClick={toggleMenu} className="text-lg hover:text-[rgba(0,230,118,1)]">
+            Home
+          </Link>
           {user && (
-            <>
-              <Link href="/my-account" onClick={toggleMenu} className="text-lg hover:text-blue-400">My Account</Link>
-              <Link href="/billing" onClick={toggleMenu} className="text-lg hover:text-blue-400">Billing</Link>
-            </>
+            <Link href="/my-account" onClick={toggleMenu} className="text-lg hover:text-[rgba(0,230,118,1)]">
+              My Account
+            </Link>
           )}
         </div>
       </nav>
 
-      {/* Overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-30"
