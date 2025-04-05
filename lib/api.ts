@@ -118,17 +118,45 @@ export const fetchTickerTapeDataRealTime = async (tableName: string): Promise<(T
   return transformedData;
 };
 
-// Add this function
 export const fetchTopicPostsData = async (topic: string): Promise<PostData[]> => {
   try {
-    const response = await axios.get(`/api/${topic}/topic-posts`); // Still works with 'topic' as the value
+    // 1. Get the current session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    // 2. Check for errors or invalid session
+    if (sessionError || !session) {
+      console.error("fetchTopicPostsData: No valid session found:", sessionError?.message || "Session is null");
+      throw new Error("User not authenticated");
+    }
+    const token = session.access_token;
+    if (!token) {
+      console.error("fetchTopicPostsData: No access token found in session");
+      throw new Error("No access token available");
+    }
+
+    console.log(`Workspaceing topic posts for: ${topic} with token: ${token.substring(0, 10)}...`);
+
+    // 3. Make the request with the Authorization header
+    const response = await axios.get(`/api/${topic}/topic-posts`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return response.data;
+
   } catch (error) {
     console.error(`Error fetching topic posts for ${topic}:`, error);
-    return [];
+    if (axios.isAxiosError(error)) {
+      console.error("Axios error details:", {
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      // Re-throw or handle specific HTTP errors if needed
+      if (error.response?.status === 401) {
+         console.error("fetchTopicPostsData: Received 401 Unauthorized from API.");
+         // Potentially trigger sign-out or token refresh logic here
+      }
+    }
+    return []; // Return empty array on error
   }
-};
-
-export const fetchSummary = async (posts: PostData[], identifier: string, isTopic: boolean = false): Promise<string> => {
-  return `Sample summary for ${isTopic ? "topic" : "ticker"} ${identifier}`; // Placeholder, update as needed
 };
