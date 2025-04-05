@@ -11,7 +11,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 export const metadata: Metadata = {
   title: "Cashtags Dashboard",
   description: "A stock market dashboard",
-  icons: { icon: "/favicon_io/favicon.ico" },
+  icons: { icon: "/favicon.ico" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -21,6 +21,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta httpEquiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
         <meta httpEquiv="Pragma" content="no-cache" />
         <meta httpEquiv="Expires" content="0" />
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" /> {/* Optional */}
+        <link rel="manifest" href="/favicon_io/site.webmanifest" /> {/* Optional */}
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-900 min-h-screen flex flex-col`}>
         <Navigation />
