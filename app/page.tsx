@@ -224,7 +224,7 @@ export default function Home() {
         }
       };
 
-      intervalRef.current = setInterval(streamSummary, 15);
+      intervalRef.current = setInterval(streamSummary, 10);
 
       // Cleanup function to clear interval when cashtag changes or component unmounts
       return () => {
@@ -321,107 +321,137 @@ export default function Home() {
   // Landing page for unauthenticated users
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0D1117] to-[#1A1F2A] text-gray-200 px-4 pt-12 pb-4">
-        <div className="max-w-4xl mx-auto">
+      // Reduced pt-14 to pt-12 (Minimum padding to clear nav)
+      <div className="min-h-screen bg-gradient-to-br from-[#0D1117] via-[#111827] to-[#161B22] text-gray-300 px-4 pt-6 pb-6"> 
+        {/* Kept space-y-6 */}
+        <div className="max-w-5xl mx-auto space-y-6">
+
           {/* Hero Section */}
-          <div className="text-center">
-            <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-[rgba(0,230,118,1)] to-[rgba(0,255,130,1)] bg-clip-text text-transparent animate-fade-in">
-              Cashtags
+          {/* Removed internal pt-2 -> pt-0 */}
+          <div className="text-center pt-0 pb-0 landing-hero">
+            {/* Change leading-tight to leading-snug, add pb-2 */}
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold mb-6 bg-gradient-to-r from-[rgba(0,230,118,1)] via-[rgba(0,240,125,1)] to-[rgba(0,255,130,1)] bg-clip-text text-transparent animate-fade-in leading-snug pb-2">
+              Cashtags AI
             </h1>
-            <p className="text-lg md:text-xl text-gray-300">
-              Trending Cashtags Summarized with AI. 
-            </p>
-            <p className="text-lg md:text-xl text-gray-300">
-              Try it and Sign up below. 
+            <p className="text-lg sm:text-xl lg:text-2xl text-gray-400 max-w-3xl mx-auto mb-2 animate-slide-up animation-delay-200">
+              Stay ahead of the market. Get AI-powered summaries of trending stock news and topics in real-time.
             </p>
           </div>
 
-          {/* Trending Section */}
-          <div className="mt-2">
-            <div className="flex justify-center mb-2">
-              <div className="toggle-switch inline-flex rounded-full border border-[rgba(48,54,61,0.5)] bg-[#161B22] p-1">
-                <button
-                  className={`px-4 py-2 text-sm font-medium rounded-full transition-colors duration-300 ${
-                    pageMode === "cashtags" ? "bg-[rgba(0,230,118,0.9)] text-white" : "text-gray-400 hover:text-[rgba(0,230,118,1)]"
-                  }`}
-                  onClick={() => setPageMode("cashtags")}
-                >
-                  Trending Cashtags
-                </button>
-                <button
-                  className={`px-4 py-2 text-sm font-medium rounded-full transition-colors duration-300 ${
-                    pageMode === "topics" ? "bg-[rgba(0,230,118,0.9)] text-white" : "text-gray-400 hover:text-[rgba(0,230,118,1)]"
-                  }`}
-                  onClick={() => setPageMode("topics")}
-                >
-                  Trending Topics
-                </button>
+          {/* Interactive Demo Section */}
+          <div className="bg-gradient-to-b from-gray-800/40 to-gray-900/60 border border-[rgba(48,54,61,0.7)] rounded-xl shadow-xl p-4 space-y-3 animate-fade-in animation-delay-400">
+             <h2 className="text-3xl font-bold text-center text-white mb-2">Try It Live</h2>
+             <p className="text-center text-gray-400 mb-3">Click a Cashtag or Topic below to see a sample AI summary.</p>
+
+             {/* Toggle Switch */}
+             <div className="flex justify-center mb-2">
+                {/* Keep container style */}
+                <div className="toggle-switch inline-flex rounded-full border border-[rgba(48,54,61,0.5)] bg-[#161B22] p-1 shadow-md">
+                  <button
+                    // New Active/Inactive Styles
+                    className={`px-5 py-2 text-sm font-semibold rounded-full transition-all duration-300 border ${ // Added base 'border'
+                      pageMode === "cashtags"
+                        ? "text-[rgba(0,230,118,1)] border-[rgba(0,230,118,0.7)] bg-gray-700/30" // Active: Green text, Green border, subtle bg tint
+                        : "text-gray-400 hover:text-[rgba(0,230,118,1)] border-transparent" // Inactive: Gray text, transparent border
+                    }`}
+                    onClick={() => setPageMode("cashtags")}
+                  >
+                    Trending Cashtags
+                  </button>
+                  <button
+                    // New Active/Inactive Styles
+                    className={`px-5 py-2 text-sm font-semibold rounded-full transition-all duration-300 border ${ // Added base 'border'
+                      pageMode === "topics"
+                        ? "text-[rgba(0,230,118,1)] border-[rgba(0,230,118,0.7)] bg-gray-700/30" // Active: Green text, Green border, subtle bg tint
+                        : "text-gray-400 hover:text-[rgba(0,230,118,1)] border-transparent" // Inactive: Gray text, transparent border
+                    }`}
+                    onClick={() => setPageMode("topics")}
+                  >
+                    Trending Topics
+                  </button>
+                </div>
               </div>
-            </div>
-            <TickerTape
-              data={pageMode === "cashtags" ? mockCashtagData : mockTopicData}
-              loading={false}
-              onTickerClick={pageMode === "cashtags" ? handleMockCashtagClick : handleMockTickerClick}
-              onSort={handleSort}
-              sortConfig={sortConfig}
-              user={null}
-              pageMode={pageMode}
-            />
-          </div>
 
-          {/* AI Summary Section */}
-          <div className="container bg-[#161B22] border-[rgba(48,54,61,0.5)] shadow-md mt-0">
-            <div className="container-header">
-              <span style={{ color: "rgba(0, 230, 118)" }}>
-                AI Summary{selectedMockCashtag ? ` for $${selectedMockCashtag}` : ""}
-              </span>
-            </div>
-            <div
-              className="container-content p-4 text-sm text-left no-scrollbar"
-              style={{ height: "200px", overflowY: "auto" }}
-            >
-              {selectedMockCashtag ? (
-                <div className="text-gray-300 w-full relative">
-                  {summaryLines.map((line, index) => (
-                    <div key={index} className="flex items-baseline">
-                      <ReactMarkdown>{line}</ReactMarkdown>
-                      {isStreaming && index === currentLineIndex && (
-                        <span className="inline-block animate-blink text-[rgba(0,230,118,1)] ml-1">█</span>
-                      )}
+             {/* Ticker Tape (Demo) */}
+             <div className="h-[260px] overflow-hidden">
+                <TickerTape
+                  data={pageMode === "cashtags" ? mockCashtagData : mockTopicData}
+                  loading={false}
+                  onTickerClick={pageMode === "cashtags" ? handleMockCashtagClick : handleMockTickerClick}
+                  onSort={handleSort}
+                  sortConfig={sortConfig}
+                  user={null}
+                  pageMode={pageMode}
+                />
+              </div>
+
+             {/* AI Summary Section (Demo) */}
+             <div className="container bg-[#11151C] border border-[rgba(48,54,61,0.6)] rounded-lg shadow-md">
+                <div className="container-header bg-gradient-to-r from-gray-700/50 to-gray-800/50">
+                   <span className="font-semibold text-[rgba(0, 230, 118, 1)]">AI Summary</span>
+                   {selectedMockCashtag ? <span className="text-gray-300"> for ${selectedMockCashtag}</span> : ""}
+                </div>
+                <div className="container-content p-4 text-sm text-left no-scrollbar h-[180px] overflow-y-auto">
+                  {selectedMockCashtag ? (
+                    <div className="text-gray-300 w-full relative space-y-1">
+                      {summaryLines.map((line, index) => (
+                        <div key={index} className="prose prose-sm prose-invert max-w-none flex items-baseline">
+                          <ReactMarkdown>{line}</ReactMarkdown>
+                          {isStreaming && index === currentLineIndex && (
+                            <span className="inline-block animate-blink text-[rgba(0,230,118,1)] ml-1 self-center">▋</span>
+                          )}
+                         </div>
+                      ))}
+                      {summaryLines.length === 0 && !isStreaming && <span>Generating summary...</span>}
                     </div>
-                  ))}
-                  {summaryLines.length === 0 && <span>Generating summary...</span>}
+                  ) : (
+                    <div className="animated-placeholder flex items-center justify-center h-full text-gray-500">
+                      <span>Click a Cashtag or Topic above to see a sample summary</span>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="animated-placeholder flex items-center justify-center h-full">
-                  <span>Click a Cashtag to Preview</span>
-                </div>
-              )}
-            </div>
+             </div>
           </div>
 
           {/* Call-to-Action Section */}
-          <div className="bg-[#1F252E] p-4 rounded-lg border border-[rgba(48,54,61,0.5)] shadow-lg text-center">
-            <h2 className="text-2xl font-bold text-white mb-2">Unlock Full Access</h2>
-            <AuthButtons />
+          <div className="bg-gradient-to-tr from-[rgba(0,230,118,0.1)] to-transparent border border-[rgba(0,230,118,0.2)] p-4 rounded-xl shadow-lg text-center landing-cta animate-slide-up animation-delay-600">
+            <h2 className="text-3xl font-bold text-white mb-2">Unlock Real-Time Insights</h2>
+            <p className="text-gray-400 mb-4 max-w-xl mx-auto">Join Cashtags AI today for unlimited access to live data, full post history, and continuous AI summaries.</p>
+            <div className="flex justify-center">
+              <AuthButtons />
+            </div>
           </div>
 
           {/* Video Embed */}
-          <div className="w-full max-w-3xl mx-auto mt-4">
-            <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl animate-fade-in">
+          <div className="w-full max-w-4xl mx-auto mt-6 animate-fade-in animation-delay-800">
+             <h3 className="text-2xl font-semibold text-center text-white mb-4">See It In Action</h3>
+             <div className="relative aspect-video rounded-xl overflow-hidden shadow-2xl border border-[rgba(48,54,61,0.5)]">
               <iframe
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                // IMPORTANT: Replace with your actual video URL
+                src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=0&modestbranding=1&rel=0" // Example URL (Rick Roll - replace!)
                 title="Cashtags Demo Video"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
-                className="w-full h-full"
+                className="absolute top-0 left-0 w-full h-full"
               ></iframe>
             </div>
           </div>
+
         </div>
+         {/* Global styles for animations and prose */}
+         <style jsx global>{`
+            .animation-delay-200 { animation-delay: 0.2s; }
+            .animation-delay-400 { animation-delay: 0.4s; }
+            .animation-delay-600 { animation-delay: 0.6s; }
+            .animation-delay-800 { animation-delay: 0.8s; }
+            .animate-fade-in { animation-fill-mode: backwards; }
+            .animate-slide-up { animation-fill-mode: backwards; }
+            .prose strong { color: #00e676; }
+         `}</style>
       </div>
     );
   }
+
 
   // Authenticated user content (unchanged)
   const isFree = subscription.status !== "PREMIUM";
@@ -492,16 +522,27 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="toggle-container mt-4 flex justify-center">
-        <div className="toggle-switch">
+      <div className="mt-4 flex justify-center">
+        {/* Keep container style */}
+        <div className="inline-flex rounded-full border border-[rgba(48,54,61,0.5)] bg-[#161B22] p-1 shadow-md">
           <button
-            className={`toggle-btn ${pageMode === "cashtags" ? "active" : ""}`}
+            // New Active/Inactive Styles
+            className={`px-5 py-2 text-sm font-semibold rounded-full transition-all duration-300 border ${ // Added base 'border'
+              pageMode === "cashtags"
+                ? "text-[rgba(0,230,118,1)] border-[rgba(0,230,118,0.7)] bg-gray-700/30" // Active: Green text, Green border, subtle bg tint
+                : "text-gray-400 hover:text-[rgba(0,230,118,1)] border-transparent" // Inactive: Gray text, transparent border
+            }`}
             onClick={() => setPageMode("cashtags")}
           >
             Cashtags
           </button>
           <button
-            className={`toggle-btn ${pageMode === "topics" ? "active" : ""}`}
+            // New Active/Inactive Styles
+            className={`px-5 py-2 text-sm font-semibold rounded-full transition-all duration-300 border ${ // Added base 'border'
+              pageMode === "topics"
+                ? "text-[rgba(0,230,118,1)] border-[rgba(0,230,118,0.7)] bg-gray-700/30" // Active: Green text, Green border, subtle bg tint
+                : "text-gray-400 hover:text-[rgba(0,230,118,1)] border-transparent" // Inactive: Gray text, transparent border
+            }`}
             onClick={() => setPageMode("topics")}
           >
             Topics
