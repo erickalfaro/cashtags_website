@@ -1,160 +1,197 @@
 // components/GenAISummary.tsx
 "use client";
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { PostData } from "../types/api";
+import remarkBreaks from "remark-breaks";
+import { PostData } from "@/types/api";
+import { supabase } from "@/lib/supabase";
 
 interface GenAISummaryProps {
   postsData: PostData[];
   loading: boolean;
   selectedStock: string | null;
-  pageMode: "cashtags" | "topics"; // Add pageMode prop
+  pageMode: "cashtags" | "topics";
 }
 
-export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selectedStock, pageMode }) => {
-  const [summary, setSummary] = useState<string>("");
-  const isStreamingRef = useRef<boolean>(false);
+const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selectedStock, pageMode }) => {
+  const [summary, setSummary] = useState("");
   const abortControllerRef = useRef<AbortController | null>(null);
-  const latestStockRef = useRef<string | null>(null);
+  const readerRef = useRef<ReadableStreamDefaultReader | null>(null);
+  const fetchPromiseRef = useRef<Promise<void> | null>(null);
+  const isStreamingRef = useRef(false);
 
-  const fetchSummaryStream = useCallback(async () => {
-    if (abortControllerRef.current) {
+  const abortCurrentStream = useCallback(async () => {
+    if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
+      console.log(`Aborting current stream for ${selectedStock}`);
       abortControllerRef.current.abort();
-      isStreamingRef.current = false;
-      setSummary("");
-    }
 
-    if (!selectedStock || postsData.length === 0) {
-      setSummary("");
-      isStreamingRef.current = false;
-      return;
-    }
-
-    abortControllerRef.current = new AbortController();
-    const signal = abortControllerRef.current.signal;
-    isStreamingRef.current = true;
-    latestStockRef.current = selectedStock;
-
-    console.log(`Starting stream for ${selectedStock}, posts: ${postsData.length}, mode: ${pageMode}`);
-
-    try {
-      const response = await fetch("/api/summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          posts: postsData, 
-          ticker: selectedStock, 
-          isTopic: pageMode === "topics" // Add flag to indicate if it's a topic
-        }),
-        signal,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      if (!response.body) {
-        throw new Error("Response body is null");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let chunkCount = 0;
-      let accumulatedSummary = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          console.log(`Stream completed for ${selectedStock}, total chunks: ${chunkCount}`);
-          accumulatedSummary = accumulatedSummary.replace(/\.\.\.$/, "");
-          if (latestStockRef.current === selectedStock) {
-            setSummary(accumulatedSummary);
+      if (readerRef.current) {
+        // Only cancel reader if stream is still active
+        try {
+          await readerRef.current.cancel();
+        } catch (err) {
+          if (err instanceof DOMException && err.name === "AbortError") {
+            console.log(`Reader already aborted for ${selectedStock}, ignoring error`);
+          } else {
+            console.error("Error cancelling reader:", err);
           }
-          isStreamingRef.current = false;
-          break;
         }
-        if (signal.aborted) {
-          console.log(`Stream for ${selectedStock} aborted`);
-          isStreamingRef.current = false;
-          break;
-        }
-        if (latestStockRef.current !== selectedStock) {
-          console.log(`Discarding stream for ${selectedStock} as a newer request started`);
-          isStreamingRef.current = false;
-          break;
-        }
+        readerRef.current = null;
+      }
 
-        const chunk = decoder.decode(value, { stream: true });
-        chunkCount++;
-        console.log(`Received chunk ${chunkCount} for ${selectedStock}:`, chunk);
-        accumulatedSummary += chunk;
-        if (latestStockRef.current === selectedStock) {
-          setSummary(accumulatedSummary);
-        }
+      if (fetchPromiseRef.current) {
+        await fetchPromiseRef.current.catch(() => {}); // Wait for fetch to settle
       }
-    } catch (error) {
-      if (signal.aborted) {
-        console.log(`Request for ${selectedStock} was canceled`);
-      } else {
-        console.error("Error streaming summary:", error);
-        if (latestStockRef.current === selectedStock) {
-          setSummary("Failed to generate summary due to an error.");
-        }
-      }
+
       isStreamingRef.current = false;
+      abortControllerRef.current = null;
+      fetchPromiseRef.current = null;
+      console.log(`Stream fully aborted for ${selectedStock}`);
     }
-  }, [postsData, selectedStock, pageMode]); // Add pageMode to dependencies
+  }, [selectedStock]);
 
-  useEffect(() => {
-    if (!selectedStock || postsData.length === 0) {
-      setSummary("");
-      isStreamingRef.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+  const startNewStream = useCallback(async (ticker: string, currentPageMode: "cashtags" | "topics") => {
+    if (!ticker || !postsData.length) return;
+
+    // Ensure any existing stream is fully aborted first
+    await abortCurrentStream();
+
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    const signal = abortController.signal;
+
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      console.error("Failed to get session:", sessionError?.message || "No session available");
+      setSummary("Please log in to view the summary.");
       return;
     }
 
-    fetchSummaryStream();
+    const token = session.access_token;
+    if (!token) {
+      console.error("No access token found in session");
+      setSummary("Authentication error: No access token available.");
+      return;
+    }
 
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+    isStreamingRef.current = true;
+    setSummary("");
+    console.log(`Starting new stream for ${ticker} in ${currentPageMode} mode`);
+
+    const fetchPromise = (async () => {
+      try {
+        const response = await fetch("/api/summary", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            posts: postsData,
+            ticker: ticker,
+            isTopic: currentPageMode === "topics",
+          }),
+          signal,
+        });
+
+        if (!response.ok || !response.body) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+
+        const reader = response.body.getReader();
+        readerRef.current = reader;
+        const decoder = new TextDecoder("utf-8");
+        let chunkCount = 0;
+
+        while (true) {
+          if (signal.aborted) {
+            console.log(`Stream aborted for ${ticker} before reading next chunk`);
+            break;
+          }
+
+          const { done, value } = await reader.read();
+          if (done) {
+            console.log(`Stream completed for ${ticker}, total chunks: ${chunkCount}`);
+            break;
+          }
+
+          if (signal.aborted) {
+            console.log(`Stream aborted for ${ticker} during read`);
+            break;
+          }
+
+          chunkCount++;
+          const chunk = decoder.decode(value, { stream: true });
+          console.log(`Received chunk ${chunkCount} for ${ticker}: "${chunk}"`);
+          setSummary((prev) => prev + chunk);
+        }
+      } catch (error) {
+        if (!signal.aborted) {
+          console.error("Error streaming summary:", error);
+          setSummary("Failed to generate summary due to an error.");
+        } else {
+          console.log(`Stream for ${ticker} was intentionally aborted`);
+        }
+      } finally {
+        isStreamingRef.current = false;
+        readerRef.current = null;
+        if (!signal.aborted) {
+          abortControllerRef.current = null;
+        }
       }
+    })();
+
+    fetchPromiseRef.current = fetchPromise;
+    await fetchPromise; // Ensure the fetch completes or aborts
+  }, [postsData, abortCurrentStream]);
+
+  const handleTickerChange = useCallback(async (newTicker: string) => {
+    if (newTicker === selectedStock && isStreamingRef.current) {
+      console.log(`Stream already active for ${newTicker}, skipping`);
+      return;
+    }
+    await startNewStream(newTicker, pageMode);
+  }, [selectedStock, pageMode, startNewStream]);
+
+  // Trigger stream when selectedStock changes
+  useEffect(() => {
+    if (selectedStock && postsData.length) {
+      handleTickerChange(selectedStock);
+    }
+    return () => {
+      // Minimal cleanup to reset state, full abort handled in startNewStream
+      isStreamingRef.current = false;
     };
-  }, [fetchSummaryStream, selectedStock, postsData]);
+  }, [selectedStock, postsData, handleTickerChange]);
 
   return (
-    <div className="GenAISummary container" key={selectedStock || "no-stock"}>
+    <div className="GenAISummary container">
       <div className="container-header">
         {selectedStock ? (
-          pageMode === "cashtags" ? `$${selectedStock} - ` : `${selectedStock} - `
-        ) : ""}
-        <span style={{ color: "rgba(0, 230, 118)" }}>
-          {pageMode === "cashtags" ? "AI Summary" : "Topic Summary"}
-        </span>
+          <>
+            ${selectedStock} - <span style={{ color: "rgba(0,230,118,1)" }}>AI</span> Summary
+          </>
+        ) : (
+          <>
+            <span style={{ color: "rgba(0,230,118,1)" }}>AI</span> Summary
+          </>
+        )}
         {loading && " (Loading...)"}
       </div>
-      <div className="container-content relative">
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[var(--container-bg)] bg-opacity-75">
-            <div className="spinner"></div>
+      <div className="container-content" style={{ padding: "1rem", minHeight: "200px" }}>
+        {summary ? (
+          <ReactMarkdown remarkPlugins={[remarkBreaks]}>{summary}</ReactMarkdown>
+        ) : (
+          <div className="animated-placeholder flex items-center justify-center h-full">
+            <span>
+              {pageMode === "cashtags" ? "Click a Cashtag" : "Click a Topic"} to see the summary
+            </span>
           </div>
         )}
-        <div className="w-full h-full overflow-auto text-sm GenAISummary-content relative">
-          {summary ? (
-            <ReactMarkdown>{summary}</ReactMarkdown>
-          ) : (
-            <div className="animated-placeholder absolute inset-0 flex items-center justify-center">
-              <span>
-                {pageMode === "cashtags" 
-                  ? "Click a $CASHTAG" 
-                  : "Click a Topic"} to see the summary
-              </span>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
 };
+
+export default GenAISummary;

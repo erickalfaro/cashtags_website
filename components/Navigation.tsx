@@ -60,7 +60,6 @@ export const Navigation: React.FC = () => {
               <Link href="/billing" onClick={toggleMenu} className="text-lg hover:text-blue-400">Billing</Link>
             </>
           )}
-          <Link href="/legal" onClick={toggleMenu} className="text-lg hover:text-blue-400">Legal</Link>
         </div>
       </nav>
 
