@@ -18,21 +18,27 @@ const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selecte
   const [summary, setSummary] = useState("");
   const abortControllerRef = useRef<AbortController | null>(null);
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null);
-  const fetchPromiseRef = useRef<Promise<void> | null>(null);
   const isStreamingRef = useRef(false);
+  const activeTickerRef = useRef<string | null>(null);
+  const lastProcessedTickerRef = useRef<string | null>(null); // Track last ticker that triggered a stream
+
+  // Memoize the summary display to prevent unnecessary re-renders
+  const SummaryDisplay = React.memo(({ content }: { content: string }) => (
+    <ReactMarkdown remarkPlugins={[remarkBreaks]}>{content}</ReactMarkdown>
+  ));
+  SummaryDisplay.displayName = "SummaryDisplay";
 
   const abortCurrentStream = useCallback(async () => {
     if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
-      console.log(`Aborting current stream for ${selectedStock}`);
+      console.log(`Aborting stream for ${activeTickerRef.current}`);
       abortControllerRef.current.abort();
 
       if (readerRef.current) {
-        // Only cancel reader if stream is still active
         try {
           await readerRef.current.cancel();
         } catch (err) {
           if (err instanceof DOMException && err.name === "AbortError") {
-            console.log(`Reader already aborted for ${selectedStock}, ignoring error`);
+            console.log(`Reader already aborted for ${activeTickerRef.current}`);
           } else {
             console.error("Error cancelling reader:", err);
           }
@@ -40,57 +46,58 @@ const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selecte
         readerRef.current = null;
       }
 
-      if (fetchPromiseRef.current) {
-        await fetchPromiseRef.current.catch(() => {}); // Wait for fetch to settle
-      }
-
       isStreamingRef.current = false;
       abortControllerRef.current = null;
-      fetchPromiseRef.current = null;
-      console.log(`Stream fully aborted for ${selectedStock}`);
+      activeTickerRef.current = null;
     }
-  }, [selectedStock]);
+  }, []);
 
-  const startNewStream = useCallback(async (ticker: string, currentPageMode: "cashtags" | "topics") => {
-    if (!ticker || !postsData.length) return;
+  const startStream = useCallback(
+    async (ticker: string, posts: PostData[], mode: "cashtags" | "topics") => {
+      if (!ticker || !posts.length) {
+        console.log("No ticker or posts, skipping stream");
+        setSummary("");
+        return;
+      }
 
-    // Ensure any existing stream is fully aborted first
-    await abortCurrentStream();
+      // Abort any existing stream
+      await abortCurrentStream();
 
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-    const signal = abortController.signal;
+      console.log(`Starting stream for ${ticker} in ${mode} mode`);
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+      const signal = abortController.signal;
 
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-      console.error("Failed to get session:", sessionError?.message || "No session available");
-      setSummary("Please log in to view the summary.");
-      return;
-    }
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        console.error("Session error:", sessionError?.message);
+        setSummary("Please log in to view the summary.");
+        return;
+      }
 
-    const token = session.access_token;
-    if (!token) {
-      console.error("No access token found in session");
-      setSummary("Authentication error: No access token available.");
-      return;
-    }
+      const token = session.access_token;
+      if (!token) {
+        console.error("No access token");
+        setSummary("Authentication error: No access token.");
+        return;
+      }
 
-    isStreamingRef.current = true;
-    setSummary("");
-    console.log(`Starting new stream for ${ticker} in ${currentPageMode} mode`);
+      isStreamingRef.current = true;
+      activeTickerRef.current = ticker;
+      lastProcessedTickerRef.current = ticker;
+      setSummary(""); // Reset only when starting a new stream
 
-    const fetchPromise = (async () => {
       try {
         const response = await fetch("/api/summary", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            posts: postsData,
+            posts: posts,
             ticker: ticker,
-            isTopic: currentPageMode === "topics",
+            isTopic: mode === "topics",
           }),
           signal,
         });
@@ -102,68 +109,51 @@ const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selecte
         const reader = response.body.getReader();
         readerRef.current = reader;
         const decoder = new TextDecoder("utf-8");
-        let chunkCount = 0;
 
         while (true) {
           if (signal.aborted) {
-            console.log(`Stream aborted for ${ticker} before reading next chunk`);
+            console.log(`Stream aborted for ${ticker}`);
             break;
           }
 
           const { done, value } = await reader.read();
           if (done) {
-            console.log(`Stream completed for ${ticker}, total chunks: ${chunkCount}`);
+            console.log(`Stream completed for ${ticker}`);
             break;
           }
 
-          if (signal.aborted) {
-            console.log(`Stream aborted for ${ticker} during read`);
-            break;
-          }
-
-          chunkCount++;
           const chunk = decoder.decode(value, { stream: true });
-          console.log(`Received chunk ${chunkCount} for ${ticker}: "${chunk}"`);
           setSummary((prev) => prev + chunk);
         }
       } catch (error) {
         if (!signal.aborted) {
-          console.error("Error streaming summary:", error);
-          setSummary("Failed to generate summary due to an error.");
-        } else {
-          console.log(`Stream for ${ticker} was intentionally aborted`);
+          console.error("Streaming error:", error);
+          setSummary("Failed to generate summary.");
         }
       } finally {
         isStreamingRef.current = false;
         readerRef.current = null;
         if (!signal.aborted) {
           abortControllerRef.current = null;
+          activeTickerRef.current = null;
         }
       }
-    })();
+    },
+    [abortCurrentStream]
+  );
 
-    fetchPromiseRef.current = fetchPromise;
-    await fetchPromise; // Ensure the fetch completes or aborts
-  }, [postsData, abortCurrentStream]);
-
-  const handleTickerChange = useCallback(async (newTicker: string) => {
-    if (newTicker === selectedStock && isStreamingRef.current) {
-      console.log(`Stream already active for ${newTicker}, skipping`);
-      return;
-    }
-    await startNewStream(newTicker, pageMode);
-  }, [selectedStock, pageMode, startNewStream]);
-
-  // Trigger stream when selectedStock changes
+  // Only trigger stream when selectedStock changes due to a click
   useEffect(() => {
-    if (selectedStock && postsData.length) {
-      handleTickerChange(selectedStock);
+    if (selectedStock && selectedStock !== lastProcessedTickerRef.current && postsData.length) {
+      console.log(`New ticker selected: ${selectedStock}, starting stream`);
+      startStream(selectedStock, postsData, pageMode);
+    } else if (!selectedStock) {
+      console.log("No selectedStock, clearing summary");
+      setSummary("");
+      abortCurrentStream();
     }
-    return () => {
-      // Minimal cleanup to reset state, full abort handled in startNewStream
-      isStreamingRef.current = false;
-    };
-  }, [selectedStock, postsData, handleTickerChange]);
+    // Dependencies limited to selectedStock to ensure only click-driven changes trigger this
+  }, [selectedStock, startStream]); // postsData and pageMode excluded from deps
 
   return (
     <div className="GenAISummary container">
@@ -181,12 +171,10 @@ const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selecte
       </div>
       <div className="container-content" style={{ padding: "1rem", minHeight: "200px" }}>
         {summary ? (
-          <ReactMarkdown remarkPlugins={[remarkBreaks]}>{summary}</ReactMarkdown>
+          <SummaryDisplay content={summary} />
         ) : (
           <div className="animated-placeholder flex items-center justify-center h-full">
-            <span>
-              {pageMode === "cashtags" ? "Click a Cashtag" : "Click a Topic"} to see the summary
-            </span>
+            <span>{pageMode === "cashtags" ? "Click a Cashtag" : "Click a Topic"} to see the summary</span>
           </div>
         )}
       </div>
