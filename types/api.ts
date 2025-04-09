@@ -9,7 +9,7 @@ export interface AlpacaBar {
   n: number;
   vw: number;
 }
-// types/api.ts
+
 export interface TickerTapeItem {
   id: number;
   cashtag: string;
@@ -25,7 +25,7 @@ export interface TickerTapeItem {
 export interface TopicItem {
   id: number;
   topic: string;
-  trend: number[]; // Assuming this represents mentions over time
+  trend: number[];
   rowId?: number;
   key?: string;
 }
@@ -45,5 +45,6 @@ export interface MarketCanvasData {
 export interface PostData {
   hours: number;
   text: string;
-  tweet_id: number;
+  tweet_id?: number; // For X posts
+  article_url?: string; // For news articles
 }

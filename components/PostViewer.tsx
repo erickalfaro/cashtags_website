@@ -2,39 +2,38 @@
 "use client";
 
 import React from "react";
-import { useSubscription } from "../lib/hooks"; // Import useSubscription
+import { useSubscription } from "../lib/hooks";
 import { User } from "@supabase/supabase-js";
-
-interface PostData {
-  hours: number;
-  text: string;
-  tweet_id: number;
-}
+import { PostData } from "../types/api"; // Import from types/api.ts, not lib/api.ts
 
 interface PostViewerProps {
   data: PostData[];
   loading: boolean;
   selectedStock: string | null;
-  user: User | null; // Add user prop to access subscription status
+  user: User | null;
 }
 
 export const PostViewer: React.FC<PostViewerProps> = ({ data, loading, selectedStock, user }) => {
-  const { subscription } = useSubscription(user); // Get subscription status
+  const { subscription } = useSubscription(user);
 
-  const handlePostClick = (tweetId: number) => {
-    const url = `https://x.com/post/status/${tweetId}`;
-    window.open(url, "_blank");
+  const handleItemClick = (item: PostData) => {
+    if (item.tweet_id) {
+      const url = `https://x.com/post/status/${item.tweet_id}`;
+      window.open(url, "_blank");
+    } else if (item.article_url) {
+      window.open(item.article_url, "_blank");
+    }
   };
 
   return (
     <div className="mt-6 PostViewer" key={selectedStock || "no-stock"}>
       <div className="container-header">
-        Most Recent Posts {loading ? "(Loading...)" : ""}
+        Most Recent Posts & News {loading ? "(Loading...)" : ""}
       </div>
       <div className="container-content">
         {subscription.status === "FREE" ? (
           <div className="p-4 text-center text-gray-200">
-            <p>Posts are available only to PREMIUM subscribers.</p>
+            <p>Posts and news are available only to PREMIUM subscribers.</p>
             <p className="mt-2">Subscribe for $10/month to unlock this feature!</p>
           </div>
         ) : (
@@ -42,31 +41,35 @@ export const PostViewer: React.FC<PostViewerProps> = ({ data, loading, selectedS
             <thead>
               <tr className="bg-gray-800">
                 <th className="border border-gray-700 p-1 text-center">Hours Ago</th>
-                <th className="border border-gray-700 p-1 text-center">Post</th>
+                <th className="border border-gray-700 p-1 text-center">Post/News</th>
+                <th className="border border-gray-700 p-1 text-center">Source</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={2} className="border border-gray-700 p-4 text-center">
-                    Loading posts...
+                  <td colSpan={3} className="border border-gray-700 p-4 text-center">
+                    Loading posts and news...
                   </td>
                 </tr>
               ) : data.length > 0 ? (
-                data.map((post, index) => (
+                data.map((item, index) => (
                   <tr
                     key={index}
                     className="hover:bg-gray-800 cursor-pointer"
-                    onClick={() => handlePostClick(post.tweet_id)}
+                    onClick={() => handleItemClick(item)}
                   >
-                    <td className="border border-gray-700 p-1 text-center">{post.hours.toFixed(1)}</td>
-                    <td className="border border-gray-700 p-1 text-left">{post.text}</td>
+                    <td className="border border-gray-700 p-1 text-center">{item.hours.toFixed(1)}</td>
+                    <td className="border border-gray-700 p-1 text-left">{item.text}</td>
+                    <td className="border border-gray-700 p-1 text-center">
+                      {item.tweet_id ? "X Post" : "News Article"}
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={2} className="border border-gray-700 p-4 text-center">
-                    No posts available for {selectedStock || "selected stock"}
+                  <td colSpan={3} className="border border-gray-700 p-4 text-center">
+                    No posts or news available for {selectedStock || "selected stock"}
                   </td>
                 </tr>
               )}
