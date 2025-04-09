@@ -91,31 +91,51 @@ const mockTopicData: TopicItem[] = [
   {
     id: 1,
     topic: "AI Revolution",
-    trend: [10, 15, 20, 25, 30],
+    trend: [
+      50, 52, 55, 58, 60, 63, 65, 68, 70, 73,
+      75, 74, 72, 70, 71, 73, 76, 80, 83, 85,
+      88, 90, 87, 85, 82, 80, 79, 78, 77, 76
+    ],
     key: "mock-topic-1",
   },
   {
     id: 2,
     topic: "Electric Vehicles",
-    trend: [8, 12, 18, 22, 28],
+    trend: [
+      40, 42, 45, 48, 50, 55, 60, 62, 61, 60,
+      58, 57, 59, 63, 68, 70, 72, 75, 78, 80,
+      82, 80, 77, 74, 73, 75, 76, 78, 79, 80
+    ],
     key: "mock-topic-2",
   },
   {
     id: 3,
     topic: "Crypto Boom",
-    trend: [5, 10, 15, 20, 25],
+    trend: [
+      70, 68, 65, 62, 60, 63, 67, 72, 78, 85,
+      90, 88, 82, 75, 70, 68, 72, 78, 85, 90,
+      95, 92, 88, 83, 80, 77, 75, 73, 72, 70
+    ],
     key: "mock-topic-3",
   },
   {
     id: 4,
     topic: "Tech Earnings",
-    trend: [12, 14, 16, 18, 20],
+    trend: [
+      55, 56, 58, 60, 62, 61, 60, 59, 58, 60,
+      63, 67, 70, 74, 78, 80, 79, 77, 75, 73,
+      72, 74, 76, 78, 80, 82, 83, 84, 85, 86
+    ],
     key: "mock-topic-4",
   },
   {
     id: 5,
     topic: "Green Energy",
-    trend: [7, 9, 11, 13, 15],
+    trend: [
+      45, 48, 50, 52, 55, 58, 60, 62, 65, 68,
+      70, 72, 75, 73, 71, 70, 72, 74, 76, 78,
+      80, 82, 84, 85, 83, 81, 80, 79, 78, 77
+    ],
     key: "mock-topic-5",
   },
 ];
@@ -159,6 +179,44 @@ const cashtagHeadlines: { [key: string]: string } = {
   `,
 };
 
+const topicHeadlines: { [key: string]: string } = {
+  "AI Revolution": `
+➤ **Tech Leap:** AI breakthroughs dominate headlines as companies race to deploy sentient assistants.\n
+➤ **Market Hype:** AI startups see 200% funding surge, driving investor frenzy.\n
+➤ **Social Buzz:** Twitter abuzz with AI ethics debates, mentions up 50% this week.\n
+➤ **Industry Shift:** Major firms pivot to AI-first strategies, reshaping tech landscape.\n
+➤ **Future Bets:** Analysts predict AI will add $15T to global economy by 2030.
+  `,
+  "Electric Vehicles": `
+➤ **Innovation Surge:** New EV battery tech promises 500-mile range, stocks soar.\n
+➤ **Market Hype:** EV sales outpace gas cars in Q1, sparking 20% rally in sector.\n
+➤ **Social Buzz:** Viral videos of self-driving EVs flood TikTok, mentions triple.\n
+➤ **Policy Push:** Governments offer $5B in EV subsidies, boosting adoption.\n
+➤ **Competition Heat:** Tesla vs. Rivian rivalry heats up with new model leaks.
+  `,
+  "Crypto Boom": `
+➤ **Price Surge:** Bitcoin hits $100K, igniting a 30% crypto market rally.\n
+➤ **Social Buzz:** #CryptoBoom trends as influencers tout altcoin gains.\n
+➤ **Regulation Talk:** SEC hints at crypto ETF approval, mentions spike 40%.\n
+➤ **Tech Leap:** New blockchain speeds up transactions, drawing investor hype.\n
+➤ **Market Mood:** Sentiment turns bullish with $2B inflows in 24 hours.
+  `,
+  "Tech Earnings": `
+➤ **Earnings Beat:** FAANG stocks crush estimates, up 15% post-earnings.\n
+➤ **Social Buzz:** Twitter lights up with #TechEarnings memes, mentions double.\n
+➤ **Growth Story:** Cloud revenue drives 25% profit gains across sector.\n
+➤ **Analyst Take:** Price targets raised as tech giants signal AI focus.\n
+➤ **Market Hype:** Investors pile in, pushing Nasdaq to record highs.
+  `,
+  "Green Energy": `
+➤ **Tech Leap:** Solar panel efficiency hits 40%, stocks jump 10%.\n
+➤ **Policy Win:** $10B green energy bill passes, mentions soar 60%.\n
+➤ **Social Buzz:** #GreenEnergy trends as activists praise wind farm boom.\n
+➤ **Industry Shift:** Oil giants pivot to renewables, sparking debate.\n
+➤ **Future Bets:** Analysts see green tech doubling market cap by 2028.
+  `,
+};
+
 export default function Home() {
   const { user } = useAuth();
   const [pageMode, setPageMode] = useState<"cashtags" | "topics">("cashtags");
@@ -179,11 +237,11 @@ export default function Home() {
   } = useTickerData(user, pageMode);
 
   // Hooks for the landing page
-  const [selectedMockCashtag, setSelectedMockCashtag] = useState<string | null>(null);
-  const [summaryLines, setSummaryLines] = useState<string[]>([]); // Array of lines
-  const [currentLineIndex, setCurrentLineIndex] = useState<number>(0); // Track the current streaming line
+  const [selectedMockItem, setSelectedMockItem] = useState<string | null>(null); // Renamed for clarity
+  const [summaryLines, setSummaryLines] = useState<string[]>([]);
+  const [currentLineIndex, setCurrentLineIndex] = useState<number>(0);
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null); // Ref to store interval ID
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const [sortConfig, setSortConfig] = useState<{
     key: keyof TickerTapeItem | keyof TopicItem | null;
@@ -193,28 +251,25 @@ export default function Home() {
     direction: "asc",
   });
 
-  // Streaming effect for summary with blinking cursor at the end of the current line
+  // Streaming effect for mock summary
   useEffect(() => {
-    if (!user && selectedMockCashtag) {
-      // Clean up any existing interval
+    if (!user && selectedMockItem) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
 
-      // Reset state for a new stream
       setSummaryLines([]);
       setCurrentLineIndex(0);
       setIsStreaming(true);
 
-      // Use the specific headlines for the selected cashtag, or fallback to a generic message
-      const selectedHeadlines = cashtagHeadlines[selectedMockCashtag] || `
-➤ **Notice:** No headlines available for ${selectedMockCashtag}. Please select another cashtag.
+      const headlines = pageMode === "cashtags" ? cashtagHeadlines : topicHeadlines;
+      const selectedHeadlines = headlines[selectedMockItem] || `
+➤ **Notice:** No headlines available for ${selectedMockItem}. Please select another item.
       `;
 
-      // Split the headlines into an array of lines and initialize summaryLines with empty strings
       const lines = selectedHeadlines.trim().split("\n");
-      setSummaryLines(Array(lines.length).fill("")); // Initialize with empty strings for all lines
+      setSummaryLines(Array(lines.length).fill(""));
 
       let charIndex = 0;
       let lineIndex = 0;
@@ -223,7 +278,6 @@ export default function Home() {
         if (lineIndex < lines.length) {
           const currentLine = lines[lineIndex];
           if (charIndex < currentLine.length) {
-            // Stream the current line character by character
             setSummaryLines((prev) => {
               const newLines = [...prev];
               newLines[lineIndex] = currentLine.slice(0, charIndex + 1);
@@ -231,13 +285,11 @@ export default function Home() {
             });
             charIndex++;
           } else {
-            // Move to the next line
             lineIndex++;
             setCurrentLineIndex(lineIndex);
             charIndex = 0;
           }
         } else {
-          // Streaming complete
           clearInterval(intervalRef.current!);
           intervalRef.current = null;
           setIsStreaming(false);
@@ -246,16 +298,15 @@ export default function Home() {
 
       intervalRef.current = setInterval(streamSummary, 10);
 
-      // Cleanup function to clear interval when cashtag changes or component unmounts
       return () => {
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
-          setIsStreaming(false); // Ensure streaming stops
+          setIsStreaming(false);
         }
       };
     }
-  }, [user, selectedMockCashtag]);
+  }, [user, selectedMockItem, pageMode]); // Added pageMode to dependencies
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -330,26 +381,18 @@ export default function Home() {
     setTickerTapeData(sortedData);
   };
 
-  const handleMockTickerClick = (ticker: string) => {
-    console.log(`Mock ticker clicked: ${ticker}`);
-  };
-
-  const handleMockCashtagClick = (cashtag: string) => {
-    setSelectedMockCashtag(cashtag);
+  const handleMockItemClick = (item: string) => {
+    console.log(`Mock item clicked: ${item}`);
+    setSelectedMockItem(item); // Use unified handler for both cashtags and topics
   };
 
   // Landing page for unauthenticated users
   if (!user) {
     return (
-      // Reduced pt-14 to pt-12 (Minimum padding to clear nav)
-      <div className="min-h-screen bg-gradient-to-br from-[#0D1117] via-[#111827] to-[#161B22] text-gray-300 px-4 pt-6 pb-6"> 
-        {/* Kept space-y-6 */}
+      <div className="min-h-screen bg-gradient-to-br from-[#0D1117] via-[#111827] to-[#161B22] text-gray-300 px-4 pt-6 pb-6">
         <div className="max-w-5xl mx-auto space-y-6">
-
           {/* Hero Section */}
-          {/* Removed internal pt-2 -> pt-0 */}
           <div className="text-center pt-0 pb-0 landing-hero">
-            {/* Change leading-tight to leading-snug, add pb-2 */}
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold mb-6 bg-gradient-to-r from-[rgba(0,230,118,1)] via-[rgba(0,240,125,1)] to-[rgba(0,255,130,1)] bg-clip-text text-transparent animate-fade-in leading-snug pb-2">
               Cashtags AI
             </h1>
@@ -360,92 +403,91 @@ export default function Home() {
 
           {/* Interactive Demo Section */}
           <div className="bg-gradient-to-b from-gray-800/40 to-gray-900/60 border border-[rgba(48,54,61,0.7)] rounded-xl shadow-xl p-4 space-y-3 animate-fade-in animation-delay-400">
-             <h2 className="text-3xl font-bold text-center text-white mb-2">Try It Live</h2>
-             <p className="text-center text-gray-400 mb-3">Click a Cashtag or Topic below to see a sample AI summary.</p>
+            <h2 className="text-3xl font-bold text-center text-white mb-2">Try It Live</h2>
+            <p className="text-center text-gray-400 mb-3">Click a Cashtag or Topic below to see a sample AI summary.</p>
 
-             {/* Toggle Switch */}
-             <div className="flex justify-center mb-2">
-                {/* Keep container style */}
-                <div className="toggle-switch inline-flex rounded-full border border-[rgba(48,54,61,0.5)] bg-[#161B22] p-1 shadow-md">
-                  <button
-                    // New Active/Inactive Styles
-                    className={`px-5 py-2 text-sm font-semibold rounded-full transition-all duration-300 border ${ // Added base 'border'
-                      pageMode === "cashtags"
-                        ? "text-[rgba(0,230,118,1)] border-[rgba(0,230,118,0.7)] bg-gray-700/30" // Active: Green text, Green border, subtle bg tint
-                        : "text-gray-400 hover:text-[rgba(0,230,118,1)] border-transparent" // Inactive: Gray text, transparent border
-                    }`}
-                    onClick={() => setPageMode("cashtags")}
-                  >
-                    Trending Cashtags
-                  </button>
-                  <button
-                    // New Active/Inactive Styles
-                    className={`px-5 py-2 text-sm font-semibold rounded-full transition-all duration-300 border ${ // Added base 'border'
-                      pageMode === "topics"
-                        ? "text-[rgba(0,230,118,1)] border-[rgba(0,230,118,0.7)] bg-gray-700/30" // Active: Green text, Green border, subtle bg tint
-                        : "text-gray-400 hover:text-[rgba(0,230,118,1)] border-transparent" // Inactive: Gray text, transparent border
-                    }`}
-                    onClick={() => setPageMode("topics")}
-                  >
-                    Trending Topics
-                  </button>
-                </div>
+            {/* Toggle Switch */}
+            <div className="flex justify-center mb-2">
+              <div className="toggle-switch inline-flex rounded-full border border-[rgba(48,54,61,0.5)] bg-[#161B22] p-1 shadow-md">
+                <button
+                  className={`px-5 py-2 text-sm font-semibold rounded-full transition-all duration-300 border ${
+                    pageMode === "cashtags"
+                      ? "text-[rgba(0,230,118,1)] border-[rgba(0,230,118,0.7)] bg-gray-700/30"
+                      : "text-gray-400 hover:text-[rgba(0,230,118,1)] border-transparent"
+                  }`}
+                  onClick={() => setPageMode("cashtags")}
+                >
+                  Trending Cashtags
+                </button>
+                <button
+                  className={`px-5 py-2 text-sm font-semibold rounded-full transition-all duration-300 border ${
+                    pageMode === "topics"
+                      ? "text-[rgba(0,230,118,1)] border-[rgba(0,230,118,0.7)] bg-gray-700/30"
+                      : "text-gray-400 hover:text-[rgba(0,230,118,1)] border-transparent"
+                  }`}
+                  onClick={() => setPageMode("topics")}
+                >
+                  Trending Topics
+                </button>
               </div>
+            </div>
 
-             {/* Ticker Tape (Demo) */}
-             <div className="h-[295px] overflow-hidden">
-                <TickerTape
-                  data={pageMode === "cashtags" ? mockCashtagData : mockTopicData}
-                  loading={false}
-                  onTickerClick={pageMode === "cashtags" ? handleMockCashtagClick : handleMockTickerClick}
-                  onSort={handleSort}
-                  sortConfig={sortConfig}
-                  user={null}
-                  pageMode={pageMode}
-                />
+            {/* Ticker Tape (Demo) */}
+            <div className="h-[295px] overflow-hidden">
+              <TickerTape
+                data={pageMode === "cashtags" ? mockCashtagData : mockTopicData}
+                loading={false}
+                onTickerClick={handleMockItemClick} // Unified handler
+                onSort={handleSort}
+                sortConfig={sortConfig}
+                user={null}
+                pageMode={pageMode}
+              />
+            </div>
+
+            {/* AI Summary Section (Demo) */}
+            <div className="container bg-[#11151C] border border-[rgba(48,54,61,0.6)] rounded-lg shadow-md">
+              <div className="container-header bg-gradient-to-r from-gray-700/50 to-gray-800/50">
+                <span className="font-semibold text-[rgba(0, 230, 118, 1)]">AI Summary</span>
+                {selectedMockItem ? (
+                  <span className="text-gray-300">
+                    {pageMode === "cashtags" ? ` for $${selectedMockItem}` : ` for ${selectedMockItem}`}
+                  </span>
+                ) : ""}
               </div>
-
-             {/* AI Summary Section (Demo) */}
-             <div className="container bg-[#11151C] border border-[rgba(48,54,61,0.6)] rounded-lg shadow-md">
-                <div className="container-header bg-gradient-to-r from-gray-700/50 to-gray-800/50">
-                   <span className="font-semibold text-[rgba(0, 230, 118, 1)]">AI Summary</span>
-                   {selectedMockCashtag ? <span className="text-gray-300"> for ${selectedMockCashtag}</span> : ""}
-                </div>
-                <div className="container-content p-4 text-sm text-left no-scrollbar h-[180px] overflow-y-auto">
-                  {selectedMockCashtag ? (
-                    <div className="text-gray-300 w-full relative space-y-1">
-                      {summaryLines.map((line, index) => (
-                        <div key={index} className="prose prose-sm prose-invert max-w-none flex items-baseline">
-                          <ReactMarkdown>{line}</ReactMarkdown>
-                          {isStreaming && index === currentLineIndex && (
-                            <span className="inline-block animate-blink text-[rgba(0,230,118,1)] ml-1 self-center">▋</span>
-                          )}
-                         </div>
-                      ))}
-                      {summaryLines.length === 0 && !isStreaming && <span>Generating summary...</span>}
-                    </div>
-                  ) : (
-                    <div className="animated-placeholder flex items-center justify-center h-full text-gray-500">
-                      <span>Click a Cashtag or Topic above to see a sample summary</span>
-                    </div>
-                  )}
-                </div>
-             </div>
+              <div className="container-content p-4 text-sm text-left no-scrollbar h-[180px] overflow-y-auto">
+                {selectedMockItem ? (
+                  <div className="text-gray-300 w-full relative space-y-1">
+                    {summaryLines.map((line, index) => (
+                      <div key={index} className="prose prose-sm prose-invert max-w-none flex items-baseline">
+                        <ReactMarkdown>{line}</ReactMarkdown>
+                        {isStreaming && index === currentLineIndex && (
+                          <span className="inline-block animate-blink text-[rgba(0,230,118,1)] ml-1 self-center">▋</span>
+                        )}
+                      </div>
+                    ))}
+                    {summaryLines.length === 0 && !isStreaming && <span>Generating summary...</span>}
+                  </div>
+                ) : (
+                  <div className="animated-placeholder flex items-center justify-center h-full text-gray-500">
+                    <span>Click a Cashtag or Topic above to see a sample summary</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Call-to-Action Section */}
           <div className="bg-gradient-to-r from-[#111827] via-[#181f2b] to-[#111827] border-y border-white/10 py-10 text-center landing-cta animate-slide-up animation-delay-600">
-            {/* AuthButtons component (uses new outline button style) */}
             <AuthButtons />
           </div>
 
           {/* Video Embed */}
           <div className="w-full max-w-4xl mx-auto mt-6 animate-fade-in animation-delay-800">
-             <h3 className="text-2xl font-semibold text-center text-white mb-4">See It In Action</h3>
-             <div className="relative aspect-video rounded-xl overflow-hidden shadow-2xl border border-[rgba(48,54,61,0.5)]">
+            <h3 className="text-2xl font-semibold text-center text-white mb-4">See It In Action</h3>
+            <div className="relative aspect-video rounded-xl overflow-hidden shadow-2xl border border-[rgba(48,54,61,0.5)]">
               <iframe
-                // IMPORTANT: Replace with your actual video URL
-                src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=0&modestbranding=1&rel=0" // Example URL (Rick Roll - replace!)
+                src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=0&modestbranding=1&rel=0"
                 title="Cashtags Demo Video"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -453,18 +495,16 @@ export default function Home() {
               ></iframe>
             </div>
           </div>
-
         </div>
-         {/* Global styles for animations and prose */}
-         <style jsx global>{`
-            .animation-delay-200 { animation-delay: 0.2s; }
-            .animation-delay-400 { animation-delay: 0.4s; }
-            .animation-delay-600 { animation-delay: 0.6s; }
-            .animation-delay-800 { animation-delay: 0.8s; }
-            .animate-fade-in { animation-fill-mode: backwards; }
-            .animate-slide-up { animation-fill-mode: backwards; }
-            .prose strong { color: #00e676; }
-         `}</style>
+        <style jsx global>{`
+          .animation-delay-200 { animation-delay: 0.2s; }
+          .animation-delay-400 { animation-delay: 0.4s; }
+          .animation-delay-600 { animation-delay: 0.6s; }
+          .animation-delay-800 { animation-delay: 0.8s; }
+          .animate-fade-in { animation-fill-mode: backwards; }
+          .animate-slide-up { animation-fill-mode: backwards; }
+          .prose strong { color: #00e676; }
+        `}</style>
       </div>
     );
   }
