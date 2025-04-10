@@ -58,7 +58,6 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
   const chartRef = useRef<ChartJS<"bar" | "line">>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
 
-  // Format magnitude with K, M, B suffixes
   const formatMagnitude = (value: number): string => {
     if (value >= 1e9) return `${(value / 1e9).toFixed(1)}B`;
     if (value >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
@@ -66,7 +65,6 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
     return value.toFixed(0);
   };
 
-  // Filter out weekends and create continuous labels
   const filterWeekends = (
     timestamps: string[],
     lineData: number[],
@@ -87,10 +85,6 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
     const labels = filtered.map((item) =>
       item.timestamp.toLocaleString("en-US", { month: "short", day: "numeric" })
     );
-
-    console.log("Raw timestamps:", timestamps.map((ts) => new Date(ts).toISOString()));
-    console.log("Filtered timestamps:", filtered.map((item) => item.timestamp.toISOString()));
-    console.log("Chart labels:", labels);
 
     return {
       filteredTimestamps: filtered.map((item) => item.timestamp),
@@ -190,8 +184,9 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
           const price = filteredLineData[dataIndex];
           const volume = filteredBarData[dataIndex] ?? 0;
 
+          // Updated tooltip HTML with smaller size and styling
           tooltipEl.innerHTML = `
-            <div class="bg-[rgba(22,27,34,0.9)] text-white p-3 rounded-lg border border-[rgba(0,230,118,0.7)] shadow-lg">
+            <div class="bg-[rgba(22,27,34,0.9)] text-white p-2 rounded-lg border border-[rgba(0,230,118,0.7)] shadow-lg text-xs max-w-[150px]">
               <div class="font-bold">${date.toLocaleString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -205,11 +200,35 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
 
           tooltipEl.style.opacity = "1";
           const chartRect = chart.canvas.getBoundingClientRect();
-          const fixedYPosition = chartRect.top - 60; // Move 60px above chart top
+          const chartHeight = chartRect.height;
+          const chartWidth = chartRect.width;
+
+          // Position tooltip inside chart area, below title (~30px padding)
+          const titleHeight = 30; // Approximate height of title
+          const tooltipHeight = tooltipEl.offsetHeight;
+          const tooltipWidth = tooltipEl.offsetWidth;
+          const yPosition = chartRect.top + titleHeight + 10; // 10px below title
+
+          // Horizontal positioning: offset to right or left based on caretX
+          let xPosition = chartRect.left + tooltip.caretX;
+          const isLeftHalf = tooltip.caretX < chartWidth / 2;
+          if (isLeftHalf) {
+            // Offset to the right
+            xPosition += 10; // Small offset from cursor
+            if (xPosition + tooltipWidth > chartRect.right) {
+              xPosition = chartRect.right - tooltipWidth; // Keep within right edge
+            }
+          } else {
+            // Offset to the left
+            xPosition -= tooltipWidth + 10;
+            if (xPosition < chartRect.left) {
+              xPosition = chartRect.left; // Keep within left edge
+            }
+          }
+
           tooltipEl.style.position = "absolute";
-          tooltipEl.style.left = `${chartRect.left + tooltip.caretX}px`;
-          tooltipEl.style.top = `${fixedYPosition}px`;
-          tooltipEl.style.transform = "translateX(-50%)";
+          tooltipEl.style.left = `${xPosition}px`;
+          tooltipEl.style.top = `${yPosition}px`;
           tooltipEl.style.pointerEvents = "none";
         },
       },
@@ -243,7 +262,7 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
         grid: { display: false },
         ticks: {
           color: "#c9d1d9",
-          callback: (value) => formatMagnitude(Number(value)), // Use K, M, B formatting
+          callback: (value) => formatMagnitude(Number(value)),
           padding: 2,
         },
         max: filteredBarData.length ? Math.max(...filteredBarData) * 1.2 || 1000 : 1000,
