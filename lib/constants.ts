@@ -2,7 +2,7 @@
 export const SUMMARY_PROMPT = `
 - Provide a summary of the input text in bullet point format.  
 - Keep each bullet point SHORT.  
-- Focus your summary on this ticker {ticker}.  
+- Focus your summary on this ticker {ticker}.
 - Format with simple Markdown.  
 - The summary should be in the order of the input text.  
 - Prepend each bullet with a relevant theme based on its context.  

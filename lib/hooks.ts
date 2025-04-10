@@ -2,13 +2,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { User, RealtimeChannel } from "@supabase/supabase-js"; // Import RealtimeChannel
+import { User, RealtimeChannel } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { supabase } from "./supabase";
 import { getEnvironment } from "./utils";
 import { debounce } from "./utils";
-import { fetchTickerTapeDataRealTime } from "./api";
-import { fetchStockLedgerData, fetchMarketCanvasData, fetchPostsData, fetchTopicPostsData } from "./api";
+import { fetchTickerTapeDataRealTime, fetchStockLedgerData, fetchMarketCanvasData, fetchPostsData, fetchTopicPostsData, fetchNewsData } from "./api";
 import { TickerTapeItem, TopicItem, StockLedgerData, MarketCanvasData, PostData } from "../types/api";
 
 interface SupabaseError {
@@ -40,6 +39,7 @@ export interface TickerData {
   marketCanvasData: MarketCanvasData;
   setMarketCanvasData: React.Dispatch<React.SetStateAction<MarketCanvasData>>;
   postsData: PostData[];
+  setPostsData: React.Dispatch<React.SetStateAction<PostData[]>>; // Added setPostsData
   loading: boolean;
   stockLedgerLoading: boolean;
   postsLoading: boolean;
@@ -262,6 +262,7 @@ export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"
     ticker: "",
     lineData: [],
     barData: [],
+    timestamps: [], // Added
   });
   const [postsData, setPostsData] = useState<PostData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -291,37 +292,43 @@ export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"
 
   const handleTickerClick = async (identifier: string) => {
     if (!user) return;
-
+  
     if (subscription.status === "FREE" && subscription.clicksLeft <= 0) {
       setErrorMessage("No clicks left. Subscribe to PREMIUM for unlimited access.");
       return;
     }
-
+  
     setSelectedStock(identifier);
     setStockLedgerLoading(true);
     setPostsLoading(true);
     setErrorMessage(null);
-
+  
     try {
       if (pageMode === "cashtags") {
-        const [ledger, canvas, posts] = await Promise.all([
+        const [ledger, canvas, posts, news] = await Promise.all([
           fetchStockLedgerData(identifier),
           fetchMarketCanvasData(identifier),
           fetchPostsData(identifier),
+          fetchNewsData(identifier),
         ]);
-
-        console.log("Fetched data:", { ledger, canvas, posts }); // Debug log
-
+  
+        console.log("Fetched data:", { ledger, canvas, posts, news });
         setStockLedgerData(ledger);
-        setMarketCanvasData(canvas);
-        setPostsData(posts);
+        setMarketCanvasData(canvas); // This should already include timestamps from the API
+        const combinedData = [...posts, ...news].sort((a, b) => a.hours - b.hours);
+        setPostsData(combinedData);
       } else if (pageMode === "topics") {
         const posts = await fetchTopicPostsData(identifier);
         setPostsData(posts);
         setStockLedgerData({ stockName: "", description: "", marketCap: "" });
-        setMarketCanvasData({ ticker: "", lineData: [], barData: [] });
+        setMarketCanvasData({
+          ticker: "",
+          lineData: [],
+          barData: [],
+          timestamps: [], // Add this
+        });
       }
-
+  
       if (subscription.status === "FREE") {
         const environment = getEnvironment();
         const tableName = environment === "dev" ? "user_subscriptions_preview" : "user_subscriptions_prod";
@@ -330,16 +337,14 @@ export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"
           .from(tableName)
           .update({ ticker_click_count: newClickCount })
           .eq("user_id", user.id);
-
+  
         if (error) throw error;
-
+  
         setSubscription((prev) => ({
           ...prev,
           clicksLeft: Math.max(10 - newClickCount, 0),
         }));
       }
-
-      console.log(`${pageMode === "cashtags" ? "Ticker" : "Topic"} clicked: ${identifier}, data fetched successfully`);
     } catch (error) {
       console.error(`Error fetching data for ${pageMode === "cashtags" ? "ticker" : "topic"} ${identifier}:`, error);
       setErrorMessage(`Failed to load data for ${pageMode === "cashtags" ? "$" : ""}${identifier}.`);
@@ -366,12 +371,12 @@ export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"
           .on(
             "postgres_changes",
             { event: "INSERT", schema: "public", table: tableName },
-            () => debouncedFetchTickerTapeData() // Use debounced version
+            () => debouncedFetchTickerTapeData()
           )
           .on(
             "postgres_changes",
             { event: "UPDATE", schema: "public", table: tableName },
-            () => debouncedFetchTickerTapeData() // Use debounced version
+            () => debouncedFetchTickerTapeData()
           )
           .subscribe((status: string) => {
             if (status === "SUBSCRIBED") {
@@ -433,6 +438,7 @@ export function useTickerData(user: User | null, pageMode: "cashtags" | "topics"
     marketCanvasData,
     setMarketCanvasData,
     postsData,
+    setPostsData,
     loading,
     stockLedgerLoading,
     postsLoading,

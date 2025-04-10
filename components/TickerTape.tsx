@@ -59,7 +59,6 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
 
   const isCashtagsMode = pageMode === "cashtags";
 
-  // Use useMemo to determine the header content, but render it in JSX
   const headerContent = useMemo(() => {
     return isCashtagsMode ? (
       <>
@@ -79,18 +78,17 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
         <span className="absolute right-3 text-sm">
           {subscription.status === "PREMIUM" ? (
             <span className="text-lg font-bold text-red-500 animate-pulse-live">LIVE</span>
-          ) : (
+          ) : user ? ( // Only show the prompt if user is authenticated
             <span className="text-gray-500">(Subscribe for real-time updates)</span>
-          )}
+          ) : null}
         </span>
       </div>
-        <div className="container-content relative">
-
-          {loading && (
-            <div className="absolute inset-0 bg-[var(--container-bg)] bg-opacity-75 flex items-center justify-center z-10">
-              <div className="spinner"></div>
-            </div>
-          )}
+      <div className="container-content relative">
+        {loading && (
+          <div className="absolute inset-0 bg-[var(--container-bg)] bg-opacity-75 flex items-center justify-center z-10">
+            <div className="spinner"></div>
+          </div>
+        )}
         <table className="border-collapse w-full">
           <thead>
             <tr className="bg-gray-800 text-center">

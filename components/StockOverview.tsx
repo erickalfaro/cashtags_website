@@ -1,7 +1,7 @@
 // components/StockOverview.tsx
 "use client";
 
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { Chart } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -39,6 +39,7 @@ interface StockOverviewData {
     ticker: string;
     lineData: number[];
     barData: number[];
+    timestamps?: string[];
   };
   stockLedger: {
     stockName: string;
@@ -54,20 +55,70 @@ interface StockOverviewProps {
 }
 
 export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStock, loading }) => {
-  const hourlyLabels = data.marketCanvas.lineData.length
+  const chartRef = useRef<ChartJS<"bar" | "line">>(null);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+
+  const formatMagnitude = (value: number): string => {
+    if (value >= 1e9) return `${(value / 1e9).toFixed(1)}B`;
+    if (value >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
+    if (value >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
+    return value.toFixed(0);
+  };
+
+  const filterWeekends = (
+    timestamps: string[],
+    lineData: number[],
+    barData: number[]
+  ): { filteredTimestamps: Date[]; filteredLineData: number[]; filteredBarData: number[]; labels: string[] } => {
+    const filtered = timestamps
+      .map((ts, index) => {
+        const date = new Date(ts);
+        return {
+          timestamp: date,
+          line: lineData[index],
+          bar: barData[index],
+          day: date.getUTCDay(),
+        };
+      })
+      .filter((item) => item.day !== 0 && item.day !== 6);
+
+    const labels = filtered.map((item) =>
+      item.timestamp.toLocaleString("en-US", { month: "short", day: "numeric" })
+    );
+
+    return {
+      filteredTimestamps: filtered.map((item) => item.timestamp),
+      filteredLineData: filtered.map((item) => item.line),
+      filteredBarData: filtered.map((item) => item.bar),
+      labels,
+    };
+  };
+
+  const rawTimestamps = data.marketCanvas.timestamps?.length
+    ? data.marketCanvas.timestamps
+    : data.marketCanvas.lineData.length
     ? Array.from({ length: data.marketCanvas.lineData.length }, (_, i) => {
         const date = new Date();
         date.setHours(date.getHours() - (data.marketCanvas.lineData.length - 1 - i));
-        return date;
+        date.setMinutes(0, 0, 0);
+        return date.toISOString();
       })
     : [];
 
+  const { filteredTimestamps, filteredLineData, filteredBarData, labels } = filterWeekends(
+    rawTimestamps,
+    data.marketCanvas.lineData,
+    data.marketCanvas.barData
+  );
+
   const chartData: ChartData<"bar" | "line"> = {
-    labels: hourlyLabels,
+    labels: labels,
     datasets: [
       {
         type: "line" as const,
-        data: data.marketCanvas.lineData,
+        label: "Price ($)",
+        data: filteredLineData,
         borderColor: "#00C805",
         backgroundColor: "rgba(0, 200, 5, 0.1)",
         fill: false,
@@ -78,7 +129,8 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
       },
       {
         type: "bar" as const,
-        data: data.marketCanvas.barData,
+        label: "Volume",
+        data: filteredBarData,
         backgroundColor: "rgba(128, 128, 128, 0.5)",
         borderColor: "rgba(128, 128, 128, 1)",
         borderWidth: 1,
@@ -87,8 +139,8 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
     ],
   };
 
-  const priceMin = data.marketCanvas.lineData.length ? Math.min(...data.marketCanvas.lineData) : 0;
-  const priceMax = data.marketCanvas.lineData.length ? Math.max(...data.marketCanvas.lineData) : 100;
+  const priceMin = filteredLineData.length ? Math.min(...filteredLineData) : 0;
+  const priceMax = filteredLineData.length ? Math.max(...filteredLineData) : 100;
   const priceRange = priceMax - priceMin;
   const buffer = priceRange * 0.1 || 10;
   const yPriceMin = priceMin - buffer;
@@ -104,45 +156,89 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
         display: true,
         text: `$${selectedStock || "No Stock Selected"} - 7 Day Hourly Price & Volume`,
         color: "#c9d1d9",
-        font: { size: 16, weight: "bold" }, // Match container-header font size
+        font: { size: 16, weight: "bold" },
         padding: { top: 5, bottom: 5 },
       },
       tooltip: {
-        mode: "index",
-        intersect: false,
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        titleColor: "#fff",
-        bodyColor: "#fff",
-        callbacks: {
-          title: () => "",
-          label: (context) => (context.datasetIndex === 0 ? `$${context.parsed.y.toFixed(2)}` : ""),
+        enabled: false,
+        external: (context) => {
+          const { chart, tooltip } = context;
+          let tooltipEl = tooltipRef.current;
+
+          if (!tooltipEl) {
+            tooltipEl = document.createElement("div");
+            tooltipEl.className = "chart-tooltip";
+            chartContainerRef.current?.appendChild(tooltipEl);
+            tooltipRef.current = tooltipEl;
+          }
+
+          if (tooltip.opacity === 0) {
+            tooltipEl.style.opacity = "0";
+            tooltipEl.style.transition = "opacity 0.1s ease-out"; // Smooth fade out
+            return;
+          }
+
+          const dataIndex = tooltip.dataPoints[0]?.dataIndex;
+          if (dataIndex === undefined) return;
+
+          const date = filteredTimestamps[dataIndex];
+          const price = filteredLineData[dataIndex];
+          const volume = filteredBarData[dataIndex] ?? 0;
+
+          tooltipEl.innerHTML = `
+            <div class="bg-[rgba(22,27,34,0.9)] text-white p-2 rounded-lg border border-[rgba(0,230,118,0.7)] shadow-lg text-xs max-w-[150px]">
+              <div class="font-bold">${date.toLocaleString("en-US", {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}</div>
+              <div>Price: $${price.toFixed(2)}</div>
+              <div>Volume: ${formatMagnitude(volume)}</div>
+            </div>
+          `;
+
+          tooltipEl.style.opacity = "1";
+          tooltipEl.style.transition = "left 0.1s ease-out, top 0.1s ease-out, opacity 0.1s ease-out"; // Smooth movement
+          const chartArea = chart.chartArea;
+
+          const tooltipWidth = tooltipEl.offsetWidth;
+          const tooltipHeight = tooltipEl.offsetHeight;
+
+          // Offset values
+          const xOffset = 20; // Pixels to the right of the cursor
+          const yOffset = 20; // Pixels below the cursor
+
+          // X position: Offset right from caretX, clamp within plot area
+          let xPosition = tooltip.caretX + xOffset;
+          if (xPosition + tooltipWidth > chartArea.right) {
+            xPosition = tooltip.caretX - tooltipWidth - xOffset; // Flip to left if overflowing right
+          }
+          xPosition = Math.max(chartArea.left, Math.min(xPosition, chartArea.right - tooltipWidth));
+
+          // Y position: Offset below caretY if space, above if not, clamp within plot area
+          let yPosition;
+          const spaceBelow = chartArea.bottom - tooltip.caretY;
+          if (spaceBelow >= tooltipHeight + yOffset) {
+            yPosition = tooltip.caretY + yOffset; // Below cursor
+          } else {
+            yPosition = tooltip.caretY - tooltipHeight - yOffset; // Above cursor
+          }
+          yPosition = Math.max(chartArea.top, Math.min(yPosition, chartArea.bottom - tooltipHeight));
+
+          tooltipEl.style.position = "absolute";
+          tooltipEl.style.left = `${xPosition}px`;
+          tooltipEl.style.top = `${yPosition}px`;
+          tooltipEl.style.pointerEvents = "none";
         },
       },
     },
     scales: {
       x: {
-        type: "time" as const,
-        time: {
-          unit: "day",
-          displayFormats: { day: "DD-dd-yy" },
-          tooltipFormat: "MM-dd-yy HH:mm",
-        },
+        type: "category",
+        labels: labels,
         grid: { display: false },
-        ticks: {
-          source: "auto",
-          callback: (value) => {
-            const date = new Date(value);
-            const isNoon = date.getHours() === 12 && date.getMinutes() === 0;
-            return isNoon
-              ? `${date.getDate().toString().padStart(2, "0")}-${(date.getMonth() + 1)
-                  .toString()
-                  .padStart(2, "0")}-${date.getFullYear().toString().slice(-2)}`
-              : null;
-          },
-          color: "#c9d1d9",
-          maxTicksLimit: 7,
-          padding: 0,
-        },
+        ticks: { display: false },
       },
       yPrice: {
         type: "linear" as const,
@@ -164,13 +260,26 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
         grid: { display: false },
         ticks: {
           color: "#c9d1d9",
-          callback: (value) => `${(Number(value) / 1000).toFixed(0)}K`,
+          callback: (value) => formatMagnitude(Number(value)),
           padding: 2,
         },
-        max: data.marketCanvas.barData.length ? Math.max(...data.marketCanvas.barData) * 1.2 || 1000 : 1000,
+        max: filteredBarData.length ? Math.max(...filteredBarData) * 1.2 || 1000 : 1000,
       },
     },
+    interaction: {
+      mode: "index",
+      intersect: false,
+    },
   };
+
+  useEffect(() => {
+    const currentTooltip = tooltipRef.current;
+    return () => {
+      if (currentTooltip && chartContainerRef.current?.contains(currentTooltip)) {
+        chartContainerRef.current.removeChild(currentTooltip);
+      }
+    };
+  }, []);
 
   return (
     <div className="StockOverview container mt-5">
@@ -178,16 +287,19 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
         Stock Overview {loading ? "(Loading...)" : ""}
       </div>
       <div className="container-content p-0 flex flex-col">
-        {/* Chart Section */}
         <div className="chart-section relative border-b border-[var(--border-color)]">
           {loading && (
             <div className="absolute inset-0 flex items-center justify-center bg-[var(--container-bg)] bg-opacity-75">
               <div className="spinner"></div>
             </div>
           )}
-          <div className="chart-wrapper p-[var(--spacing-md)]" style={{ height: "var(--stock-overview-chart-height)" }}>
-            {data.marketCanvas.lineData.length > 0 ? (
-              <Chart type="bar" data={chartData} options={chartOptions} />
+          <div
+            ref={chartContainerRef}
+            className="chart-wrapper p-[var(--spacing-md)] relative"
+            style={{ height: "var(--stock-overview-chart-height)" }}
+          >
+            {filteredLineData.length > 0 ? (
+              <Chart ref={chartRef} type="bar" data={chartData} options={chartOptions} />
             ) : (
               <p className="text-center text-[var(--text-primary)] absolute inset-0 flex items-center justify-center">
                 No chart data available
@@ -195,7 +307,6 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
             )}
           </div>
         </div>
-        {/* Table Section */}
         <div className="table-section">
           <table className="w-full border-collapse bg-[var(--container-bg)] text-[11px]">
             <thead>
