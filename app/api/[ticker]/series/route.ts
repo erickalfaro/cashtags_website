@@ -55,16 +55,15 @@ export async function GET(req: Request, ctx: ContextParams) {
       const bars = response.data.bars || [];
       console.log(`Alpaca response for ${ticker}:`, response.data);
 
-      const lineData = bars.length ? bars.map((bar: AlpacaBar) => bar.c) : [];
-      const barData = bars.length ? bars.map((bar: AlpacaBar) => bar.v) : [];
-
-      console.log(`Processed data for ${ticker}:`, { ticker, lineData, barData });
-
-      return NextResponse.json({
+      const transformedData = {
         ticker,
-        lineData,
-        barData,
-      });
+        lineData: bars.map((bar) => bar.c),
+        barData: bars.map((bar) => bar.v),
+        timestamps: bars.map((bar) => bar.t),
+      };
+
+      console.log(`Processed data for ${ticker}:`, transformedData);
+      return NextResponse.json(transformedData);
     } catch (error) {
       console.error("Error fetching Alpaca data:", error);
       return NextResponse.json(
@@ -72,8 +71,9 @@ export async function GET(req: Request, ctx: ContextParams) {
           ticker,
           lineData: [],
           barData: [],
+          timestamps: [], // Include timestamps in error case
         },
-        { status: 200 } // Return 200 with empty data
+        { status: 200 }
       );
     }
   });

@@ -40,6 +40,7 @@ export interface MarketCanvasData {
   ticker: string;
   lineData: number[];
   barData: number[];
+  timestamps: string[]; // Add timestamps
 }
 
 export interface PostData {
