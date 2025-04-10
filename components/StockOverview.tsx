@@ -56,6 +56,7 @@ interface StockOverviewProps {
 
 export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStock, loading }) => {
   const chartRef = useRef<ChartJS<"bar" | "line">>(null);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
 
   const formatMagnitude = (value: number): string => {
@@ -166,14 +167,14 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
 
           if (!tooltipEl) {
             tooltipEl = document.createElement("div");
-            tooltipEl.style.opacity = "0";
-            tooltipEl.style.zIndex = "1000";
-            document.body.appendChild(tooltipEl);
+            tooltipEl.className = "chart-tooltip";
+            chartContainerRef.current?.appendChild(tooltipEl);
             tooltipRef.current = tooltipEl;
           }
 
           if (tooltip.opacity === 0) {
             tooltipEl.style.opacity = "0";
+            tooltipEl.style.transition = "opacity 0.1s ease-out"; // Smooth fade out
             return;
           }
 
@@ -184,7 +185,6 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
           const price = filteredLineData[dataIndex];
           const volume = filteredBarData[dataIndex] ?? 0;
 
-          // Updated tooltip HTML with smaller size and styling
           tooltipEl.innerHTML = `
             <div class="bg-[rgba(22,27,34,0.9)] text-white p-2 rounded-lg border border-[rgba(0,230,118,0.7)] shadow-lg text-xs max-w-[150px]">
               <div class="font-bold">${date.toLocaleString("en-US", {
@@ -199,32 +199,32 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
           `;
 
           tooltipEl.style.opacity = "1";
-          const chartRect = chart.canvas.getBoundingClientRect();
-          // const chartHeight = chartRect.height;
-          const chartWidth = chartRect.width;
+          tooltipEl.style.transition = "left 0.1s ease-out, top 0.1s ease-out, opacity 0.1s ease-out"; // Smooth movement
+          const chartArea = chart.chartArea;
 
-          // Position tooltip inside chart area, below title (~30px padding)
-          const titleHeight = 30; // Approximate height of title
-          // const tooltipHeight = tooltipEl.offsetHeight;
           const tooltipWidth = tooltipEl.offsetWidth;
-          const yPosition = chartRect.top + titleHeight + 10; // 10px below title
+          const tooltipHeight = tooltipEl.offsetHeight;
 
-          // Horizontal positioning: offset to right or left based on caretX
-          let xPosition = chartRect.left + tooltip.caretX;
-          const isLeftHalf = tooltip.caretX < chartWidth / 2;
-          if (isLeftHalf) {
-            // Offset to the right
-            xPosition += 10; // Small offset from cursor
-            if (xPosition + tooltipWidth > chartRect.right) {
-              xPosition = chartRect.right - tooltipWidth; // Keep within right edge
-            }
-          } else {
-            // Offset to the left
-            xPosition -= tooltipWidth + 10;
-            if (xPosition < chartRect.left) {
-              xPosition = chartRect.left; // Keep within left edge
-            }
+          // Offset values
+          const xOffset = 20; // Pixels to the right of the cursor
+          const yOffset = 20; // Pixels below the cursor
+
+          // X position: Offset right from caretX, clamp within plot area
+          let xPosition = tooltip.caretX + xOffset;
+          if (xPosition + tooltipWidth > chartArea.right) {
+            xPosition = tooltip.caretX - tooltipWidth - xOffset; // Flip to left if overflowing right
           }
+          xPosition = Math.max(chartArea.left, Math.min(xPosition, chartArea.right - tooltipWidth));
+
+          // Y position: Offset below caretY if space, above if not, clamp within plot area
+          let yPosition;
+          const spaceBelow = chartArea.bottom - tooltip.caretY;
+          if (spaceBelow >= tooltipHeight + yOffset) {
+            yPosition = tooltip.caretY + yOffset; // Below cursor
+          } else {
+            yPosition = tooltip.caretY - tooltipHeight - yOffset; // Above cursor
+          }
+          yPosition = Math.max(chartArea.top, Math.min(yPosition, chartArea.bottom - tooltipHeight));
 
           tooltipEl.style.position = "absolute";
           tooltipEl.style.left = `${xPosition}px`;
@@ -238,9 +238,7 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
         type: "category",
         labels: labels,
         grid: { display: false },
-        ticks: {
-          display: false,
-        },
+        ticks: { display: false },
       },
       yPrice: {
         type: "linear" as const,
@@ -277,8 +275,8 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
   useEffect(() => {
     const currentTooltip = tooltipRef.current;
     return () => {
-      if (currentTooltip && document.body.contains(currentTooltip)) {
-        document.body.removeChild(currentTooltip);
+      if (currentTooltip && chartContainerRef.current?.contains(currentTooltip)) {
+        chartContainerRef.current.removeChild(currentTooltip);
       }
     };
   }, []);
@@ -295,7 +293,11 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
               <div className="spinner"></div>
             </div>
           )}
-          <div className="chart-wrapper p-[var(--spacing-md)]" style={{ height: "var(--stock-overview-chart-height)" }}>
+          <div
+            ref={chartContainerRef}
+            className="chart-wrapper p-[var(--spacing-md)] relative"
+            style={{ height: "var(--stock-overview-chart-height)" }}
+          >
             {filteredLineData.length > 0 ? (
               <Chart ref={chartRef} type="bar" data={chartData} options={chartOptions} />
             ) : (
