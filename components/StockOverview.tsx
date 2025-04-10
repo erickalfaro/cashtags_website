@@ -200,12 +200,12 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ data, selectedStoc
 
           tooltipEl.style.opacity = "1";
           const chartRect = chart.canvas.getBoundingClientRect();
-          const chartHeight = chartRect.height;
+          // const chartHeight = chartRect.height;
           const chartWidth = chartRect.width;
 
           // Position tooltip inside chart area, below title (~30px padding)
           const titleHeight = 30; // Approximate height of title
-          const tooltipHeight = tooltipEl.offsetHeight;
+          // const tooltipHeight = tooltipEl.offsetHeight;
           const tooltipWidth = tooltipEl.offsetWidth;
           const yPosition = chartRect.top + titleHeight + 10; // 10px below title
 
